@@ -325,14 +325,38 @@
       display: block;
     }
 
+    body.student-open .home-screen,
+    body.student-open .tracker-app {
+      display: none;
+    }
+
+    body.student-open .student-app {
+      display: block;
+    }
+
     #homeButton,
     .teacher-control {
       display: none;
     }
 
     body.tracker-open #homeButton,
+    body.student-open #homeButton,
     body.tracker-open .teacher-control {
       display: inline-flex;
+    }
+
+    .student-app {
+      display: none;
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .student-stat {
+      border-left-color: var(--accent);
     }
 
     .notice {
@@ -429,6 +453,7 @@
       <p>Use this page for class updates, helpful links, and classroom routines.</p>
       <div class="home-actions">
         <button id="openTeacherLogin">Teacher Tools</button>
+        <button class="secondary" id="openStudentLogin">Student Demo</button>
       </div>
     </section>
 
@@ -453,6 +478,24 @@
         <p id="googleAuthStatus" class="auth-status">Google sign-in is not configured yet.</p>
       </div>
       <p class="notice">The passcode is a backup for this device. Google sign-in with approval is the better path once Firebase is configured.</p>
+    </section>
+
+    <section class="panel teacher-login" id="studentLogin">
+      <h2>Student Demo Login</h2>
+      <p class="muted">Prototype login for Matthew Bohms.</p>
+      <form id="studentLoginForm">
+        <div class="form-row">
+          <div class="field-12">
+            <label for="studentDemoPassword">Password</label>
+            <input id="studentDemoPassword" type="password" autocomplete="current-password">
+          </div>
+          <div class="field-12">
+            <button type="submit">Open Student Page</button>
+          </div>
+        </div>
+      </form>
+      <p id="studentLoginMessage" class="error"></p>
+      <p class="notice">This is a mock student page for testing. We should move student logins to Google sign-in before using real student data.</p>
     </section>
 
     <section class="panel">
@@ -586,10 +629,45 @@
     </div>
   </main>
 
+  <main id="studentApp" class="student-app">
+    <section class="hero-panel">
+      <h2>Matthew Bohms</h2>
+      <p class="muted">Student progress dashboard prototype</p>
+    </section>
+
+    <section class="panel">
+      <h2>Incentive Status</h2>
+      <div class="student-grid" id="studentIncentiveStats"></div>
+    </section>
+
+    <section class="panel">
+      <h2>House Standing</h2>
+      <div class="stat-grid" id="studentHouseStats"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Freckle Math Goal</h2>
+      <p><strong>Current goal:</strong> Complete 3 Freckle math sessions this week.</p>
+      <p><strong>Progress:</strong> Add Matthew's current Freckle data here.</p>
+      <p class="muted">Later, this can come from a Google Sheet or Freckle report export.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Scratch Assignments</h2>
+      <ul>
+        <li><strong>Current:</strong> Add current Scratch assignment.</li>
+        <li><strong>Completed:</strong> Add completed Scratch projects.</li>
+        <li><strong>Next step:</strong> Add what Matthew should work on next.</li>
+      </ul>
+    </section>
+  </main>
+
   <script>
     const storageKey = "room113HouseTracker";
     const passcodeKey = "room113TeacherPasscode";
     const defaultTeacherPasscode = "room113";
+    const demoStudentName = "Matthew Bohms";
+    const demoStudentPassword = "Bohms";
     const today = new Date();
 
     const starterState = {
@@ -627,13 +705,20 @@
     const teacherLogin = document.getElementById("teacherLogin");
     const teacherPasscode = document.getElementById("teacherPasscode");
     const loginMessage = document.getElementById("loginMessage");
+    const studentLogin = document.getElementById("studentLogin");
+    const studentDemoPassword = document.getElementById("studentDemoPassword");
+    const studentLoginMessage = document.getElementById("studentLoginMessage");
+    const studentIncentiveStats = document.getElementById("studentIncentiveStats");
+    const studentHouseStats = document.getElementById("studentHouseStats");
 
     studentForm.addEventListener("submit", addStudent);
     pointForm.addEventListener("submit", addPoint);
     document.getElementById("homeButton").addEventListener("click", showHome);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
+    document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
     document.getElementById("loginForm").addEventListener("submit", checkTeacherPasscode);
+    document.getElementById("studentLoginForm").addEventListener("submit", checkStudentPassword);
     document.getElementById("addHouseButton").addEventListener("click", addHouse);
     document.getElementById("saveSettingsButton").addEventListener("click", saveSettings);
     document.getElementById("savePasscodeButton").addEventListener("click", savePasscode);
@@ -678,25 +763,49 @@
     }
 
     function showTeacherLogin() {
-      document.body.classList.remove("tracker-open");
+      document.body.classList.remove("tracker-open", "student-open");
+      studentLogin.classList.remove("active");
       teacherLogin.classList.add("active");
       loginMessage.textContent = "";
       teacherPasscode.focus();
     }
 
-    function showHome() {
-      document.body.classList.remove("tracker-open");
+    function showStudentLogin() {
+      document.body.classList.remove("tracker-open", "student-open");
       teacherLogin.classList.remove("active");
+      studentLogin.classList.add("active");
+      studentLoginMessage.textContent = "";
+      studentDemoPassword.focus();
+    }
+
+    function showHome() {
+      document.body.classList.remove("tracker-open", "student-open");
+      teacherLogin.classList.remove("active");
+      studentLogin.classList.remove("active");
       teacherPasscode.value = "";
+      studentDemoPassword.value = "";
       loginMessage.textContent = "";
+      studentLoginMessage.textContent = "";
     }
 
     function openTracker() {
+      document.body.classList.remove("student-open");
       document.body.classList.add("tracker-open");
       teacherLogin.classList.remove("active");
+      studentLogin.classList.remove("active");
       teacherPasscode.value = "";
       loginMessage.textContent = "";
       render();
+    }
+
+    function openStudentPage() {
+      document.body.classList.remove("tracker-open");
+      document.body.classList.add("student-open");
+      teacherLogin.classList.remove("active");
+      studentLogin.classList.remove("active");
+      studentDemoPassword.value = "";
+      studentLoginMessage.textContent = "";
+      renderStudentPage();
     }
 
     function checkTeacherPasscode(event) {
@@ -707,6 +816,16 @@
       }
 
       loginMessage.textContent = "That passcode did not work.";
+    }
+
+    function checkStudentPassword(event) {
+      event.preventDefault();
+      if (studentDemoPassword.value === demoStudentPassword) {
+        openStudentPage();
+        return;
+      }
+
+      studentLoginMessage.textContent = "That password did not work.";
     }
 
     function savePasscode() {
@@ -1041,6 +1160,75 @@
           <p class="muted">${week.cleanCount} clean-week students</p>
         </div>
       `).join("");
+    }
+
+    function findDemoStudent() {
+      const target = demoStudentName.toLowerCase();
+      return state.students.find(student => student.name.toLowerCase() === target)
+        || state.students.find(student => student.name.toLowerCase().includes("matthew") && student.name.toLowerCase().includes("bohms"));
+    }
+
+    function renderStudentPage() {
+      const student = findDemoStudent();
+      const weekPoints = currentWeekPoints();
+      const weeklyTotals = totalsByHouse(weekPoints);
+      const semesterTotals = totalsByHouse(state.points);
+
+      if (!student) {
+        studentIncentiveStats.innerHTML = `
+          <div class="stat student-stat">
+            <span class="muted">Student record</span>
+            <strong>Not found</strong>
+            <span class="muted">Add Matthew Bohms in Teacher Tools to connect live points.</span>
+          </div>
+        `;
+        studentHouseStats.innerHTML = `<p class="empty">House standing will appear after Matthew is added to a house.</p>`;
+        return;
+      }
+
+      const weekly = studentWeeklyTotal(student.id);
+      const semester = studentSemesterTotal(student.id);
+      const canPlay = weekly < state.settings.funFridayLimit;
+      const houseWeekly = weeklyTotals[student.house] || 0;
+      const houseSemester = semesterTotals[student.house] || 0;
+      const weeklyWinnerText = lowestHouseLabel(weeklyTotals);
+      const semesterWinnerText = lowestHouseLabel(semesterTotals);
+
+      studentIncentiveStats.innerHTML = `
+        <div class="stat student-stat">
+          <span class="muted">This week</span>
+          <strong>${weekly}</strong>
+          <span class="muted">incentive points</span>
+        </div>
+        <div class="stat student-stat">
+          <span class="muted">Semester</span>
+          <strong>${semester}</strong>
+          <span class="muted">total points</span>
+        </div>
+        <div class="stat student-stat">
+          <span class="muted">Fun Friday</span>
+          <strong>${canPlay ? "Yes" : "Hold"}</strong>
+          <span class="muted">${canPlay ? "Eligible right now" : "Over the point limit"}</span>
+        </div>
+        <div class="stat student-stat">
+          <span class="muted">Clean week prize</span>
+          <strong>${weekly === 0 ? "Yes" : "Not yet"}</strong>
+          <span class="muted">${weekly === 0 ? "No points this week" : "Earned points this week"}</span>
+        </div>
+      `;
+
+      studentHouseStats.innerHTML = `
+        <div class="stat">
+          <span class="muted">${escapeHtml(student.house)} this week</span>
+          <strong>${houseWeekly}</strong>
+          <span class="muted">Winning house: ${escapeHtml(weeklyWinnerText)}</span>
+        </div>
+        <div class="stat">
+          <span class="muted">${escapeHtml(student.house)} semester</span>
+          <strong>${houseSemester}</strong>
+          <span class="muted">Semester leader: ${escapeHtml(semesterWinnerText)}</span>
+        </div>
+      `;
     }
   </script>
   <script type="module">
