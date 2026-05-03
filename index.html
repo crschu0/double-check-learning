@@ -5,105 +5,829 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Room 113</title>
   <style>
+    :root {
+      --ink: #1f2a33;
+      --muted: #667580;
+      --line: #d9e2e8;
+      --page: #f5f8fa;
+      --panel: #ffffff;
+      --brand: #2f7d95;
+      --brand-dark: #245e70;
+      --accent: #f5c451;
+      --danger: #b64b4b;
+      --ok: #3f7f5f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #24313d;
-      background: #f7f9fb;
+      line-height: 1.5;
+      color: var(--ink);
+      background: var(--page);
     }
 
     header {
-      background: #2f7d95;
+      background: var(--brand);
       color: white;
-      padding: 32px 20px;
-      text-align: center;
+      padding: 26px 20px;
     }
 
-    header h1 {
+    .topbar,
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 2.1rem;
+    }
+
+    .subtitle {
       margin: 0;
-      font-size: 2.5rem;
-    }
-
-    header p {
-      margin: 8px 0 0;
-      font-size: 1.1rem;
+      color: #e7f3f7;
     }
 
     main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 20px 40px;
+      padding: 22px 18px 40px;
     }
 
-    section {
-      background: white;
-      border: 1px solid #dce5ea;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
       border-radius: 8px;
-      margin-bottom: 18px;
-      padding: 20px;
+      padding: 18px;
     }
 
-    h2 {
-      margin-top: 0;
-      color: #2f7d95;
+    .span-4 {
+      grid-column: span 4;
     }
 
-    ul {
-      padding-left: 22px;
+    .span-5 {
+      grid-column: span 5;
     }
 
-    .note {
-      background: #fff7d6;
-      border-color: #ead27a;
+    .span-7 {
+      grid-column: span 7;
     }
 
-    footer {
-      color: #5d6b78;
-      font-size: 0.9rem;
-      padding: 20px;
-      text-align: center;
+    .span-8,
+    .span-12 {
+      grid-column: span 12;
+    }
+
+    .span-8 {
+      grid-column: span 8;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--brand);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdfe;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.8rem;
+      line-height: 1.1;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c7d3db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: white;
+      color: var(--ink);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .field-3 {
+      grid-column: span 3;
+    }
+
+    .field-4 {
+      grid-column: span 4;
+    }
+
+    .field-5 {
+      grid-column: span 5;
+    }
+
+    .field-6 {
+      grid-column: span 6;
+    }
+
+    .field-12 {
+      grid-column: span 12;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 13px;
+      color: white;
+      background: var(--brand);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover,
+    button:focus {
+      background: var(--brand-dark);
+    }
+
+    button.secondary {
+      color: var(--brand-dark);
+      background: #e6f1f4;
+    }
+
+    button.secondary:hover,
+    button.secondary:focus {
+      background: #d4e8ee;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #40505c;
+      background: #f0f5f7;
+      font-size: 0.86rem;
+      text-transform: uppercase;
+    }
+
+    .points-cell {
+      width: 110px;
+      font-weight: 700;
+    }
+
+    .quick-button {
+      min-height: 34px;
+      padding: 6px 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #eef4f6;
+      color: #3b4c57;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .tag.ok {
+      background: #e5f3eb;
+      color: var(--ok);
+    }
+
+    .tag.warning {
+      background: #fff3cf;
+      color: #7a5b00;
+    }
+
+    .empty {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .span-4,
+      .span-5,
+      .span-7,
+      .span-8,
+      .span-12,
+      .field-3,
+      .field-4,
+      .field-5,
+      .field-6,
+      .field-12 {
+        grid-column: span 12;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 8px;
+        background: white;
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 6px 0;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Room 113</h1>
-    <p>Welcome to our classroom website.</p>
+    <div class="topbar">
+      <div>
+        <h1>Room 113</h1>
+        <p class="subtitle">House points tracker</p>
+      </div>
+      <div class="button-row">
+        <button class="secondary" id="exportButton">Export Backup</button>
+        <button class="secondary" id="importButton">Import Backup</button>
+        <input id="importFile" type="file" accept="application/json" hidden>
+      </div>
+    </div>
   </header>
 
   <main>
-    <section class="note">
-      <h2>Class Announcements</h2>
-      <p>Add your most important classroom updates here.</p>
-    </section>
+    <div class="grid">
+      <section class="panel span-8">
+        <h2>House Standings</h2>
+        <div class="stat-grid" id="houseStats"></div>
+      </section>
 
-    <section>
-      <h2>This Week</h2>
-      <ul>
-        <li>Monday: Add your lesson or reminder.</li>
-        <li>Wednesday: Add your lesson or reminder.</li>
-        <li>Friday: Add your lesson or reminder.</li>
-      </ul>
-    </section>
+      <section class="panel span-4">
+        <h2>Prize List</h2>
+        <p><strong>This week:</strong> <span id="weeklyWinner">Add students to begin.</span></p>
+        <p><strong>Semester:</strong> <span id="semesterWinner">Add students to begin.</span></p>
+        <p><strong>Clean week:</strong> <span id="cleanCount">0</span> students</p>
+        <p><strong>Fun Friday limit:</strong> <span id="limitText">5</span> points</p>
+      </section>
 
-    <section>
-      <h2>Helpful Links</h2>
-      <ul>
-        <li><a href="#">School website</a></li>
-        <li><a href="#">Class resources</a></li>
-        <li><a href="#">Homework help</a></li>
-      </ul>
-    </section>
+      <section class="panel span-5">
+        <h2>Add Student</h2>
+        <form id="studentForm">
+          <div class="form-row">
+            <div class="field-6">
+              <label for="studentName">Student name</label>
+              <input id="studentName" autocomplete="off" required>
+            </div>
+            <div class="field-6">
+              <label for="studentHouse">House</label>
+              <select id="studentHouse"></select>
+            </div>
+          </div>
+          <button type="submit">Add Student</button>
+        </form>
+      </section>
 
-    <section>
-      <h2>Contact</h2>
-      <p>Email: teacher@example.com</p>
-    </section>
+      <section class="panel span-7">
+        <h2>Add Point</h2>
+        <form id="pointForm">
+          <div class="form-row">
+            <div class="field-4">
+              <label for="pointStudent">Student</label>
+              <select id="pointStudent"></select>
+            </div>
+            <div class="field-4">
+              <label for="pointReason">Reason</label>
+              <select id="pointReason">
+                <option>Not prepared</option>
+                <option>Class disruption</option>
+                <option>Missing work</option>
+                <option>Off task</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field-3">
+              <label for="pointValue">Points</label>
+              <input id="pointValue" type="number" min="1" max="10" value="1">
+            </div>
+            <div class="field-12">
+              <button type="submit">Add Point</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel span-12">
+        <div class="button-row">
+          <h2 style="margin-right:auto;">Students</h2>
+          <button class="secondary" id="startWeekButton">Start New Week</button>
+          <button class="secondary" id="downloadCsvButton">Download CSV</button>
+        </div>
+        <div id="studentTable"></div>
+      </section>
+
+      <section class="panel span-5">
+        <h2>Settings</h2>
+        <div class="form-row">
+          <div class="field-6">
+            <label for="newHouseName">New house</label>
+            <input id="newHouseName" autocomplete="off">
+          </div>
+          <div class="field-6">
+            <button id="addHouseButton" type="button">Add House</button>
+          </div>
+          <div class="field-6">
+            <label for="funFridayLimit">Fun Friday limit</label>
+            <input id="funFridayLimit" type="number" min="1" max="50">
+          </div>
+          <div class="field-6">
+            <button id="saveSettingsButton" type="button">Save Settings</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel span-7">
+        <h2>Recent Points</h2>
+        <div id="recentLog"></div>
+      </section>
+
+      <section class="panel span-12">
+        <h2>Weekly History</h2>
+        <div class="history-list" id="historyList"></div>
+      </section>
+    </div>
   </main>
 
-  <footer>
-    <p>Room 113</p>
-  </footer>
+  <script>
+    const storageKey = "room113HouseTracker";
+    const today = new Date();
+
+    const starterState = {
+      houses: ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"],
+      students: [],
+      points: [],
+      history: [],
+      settings: {
+        funFridayLimit: 5,
+        currentWeekStart: getMonday(today)
+      }
+    };
+
+    let state = loadState();
+
+    const studentForm = document.getElementById("studentForm");
+    const pointForm = document.getElementById("pointForm");
+    const studentName = document.getElementById("studentName");
+    const studentHouse = document.getElementById("studentHouse");
+    const pointStudent = document.getElementById("pointStudent");
+    const pointReason = document.getElementById("pointReason");
+    const pointValue = document.getElementById("pointValue");
+    const houseStats = document.getElementById("houseStats");
+    const studentTable = document.getElementById("studentTable");
+    const recentLog = document.getElementById("recentLog");
+    const weeklyWinner = document.getElementById("weeklyWinner");
+    const semesterWinner = document.getElementById("semesterWinner");
+    const cleanCount = document.getElementById("cleanCount");
+    const limitText = document.getElementById("limitText");
+    const funFridayLimit = document.getElementById("funFridayLimit");
+    const newHouseName = document.getElementById("newHouseName");
+    const historyList = document.getElementById("historyList");
+
+    studentForm.addEventListener("submit", addStudent);
+    pointForm.addEventListener("submit", addPoint);
+    document.getElementById("addHouseButton").addEventListener("click", addHouse);
+    document.getElementById("saveSettingsButton").addEventListener("click", saveSettings);
+    document.getElementById("startWeekButton").addEventListener("click", startNewWeek);
+    document.getElementById("exportButton").addEventListener("click", exportBackup);
+    document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", importBackup);
+    document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
+
+    render();
+
+    function loadState() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) return starterState;
+
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...starterState,
+          ...parsed,
+          settings: {
+            ...starterState.settings,
+            ...parsed.settings
+          }
+        };
+      } catch {
+        return starterState;
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function getMonday(date) {
+      const nextDate = new Date(date);
+      const day = nextDate.getDay();
+      const difference = nextDate.getDate() - day + (day === 0 ? -6 : 1);
+      nextDate.setDate(difference);
+      nextDate.setHours(0, 0, 0, 0);
+      return nextDate.toISOString().slice(0, 10);
+    }
+
+    function currentWeekPoints() {
+      return state.points.filter(point => point.date >= state.settings.currentWeekStart);
+    }
+
+    function totalsByHouse(points) {
+      const totals = Object.fromEntries(state.houses.map(house => [house, 0]));
+      points.forEach(point => {
+        totals[point.house] = (totals[point.house] || 0) + point.value;
+      });
+      return totals;
+    }
+
+    function studentWeeklyTotal(studentId) {
+      return currentWeekPoints()
+        .filter(point => point.studentId === studentId)
+        .reduce((sum, point) => sum + point.value, 0);
+    }
+
+    function studentSemesterTotal(studentId) {
+      return state.points
+        .filter(point => point.studentId === studentId)
+        .reduce((sum, point) => sum + point.value, 0);
+    }
+
+    function lowestHouseLabel(totals) {
+      if (!state.houses.length) return "No houses yet.";
+      const lowest = Math.min(...state.houses.map(house => totals[house] || 0));
+      return state.houses
+        .filter(house => (totals[house] || 0) === lowest)
+        .join(", ");
+    }
+
+    function addStudent(event) {
+      event.preventDefault();
+      const name = studentName.value.trim();
+      const house = studentHouse.value;
+      if (!name || !house) return;
+
+      state.students.push({
+        id: crypto.randomUUID(),
+        name,
+        house
+      });
+
+      studentName.value = "";
+      saveState();
+      render();
+    }
+
+    function addPoint(event) {
+      event.preventDefault();
+      const student = state.students.find(item => item.id === pointStudent.value);
+      const value = Number(pointValue.value);
+      if (!student || value < 1) return;
+
+      state.points.push({
+        id: crypto.randomUUID(),
+        studentId: student.id,
+        studentName: student.name,
+        house: student.house,
+        reason: pointReason.value,
+        value,
+        date: new Date().toISOString().slice(0, 10)
+      });
+
+      pointValue.value = 1;
+      saveState();
+      render();
+    }
+
+    function addQuickPoint(studentId) {
+      const student = state.students.find(item => item.id === studentId);
+      if (!student) return;
+
+      state.points.push({
+        id: crypto.randomUUID(),
+        studentId: student.id,
+        studentName: student.name,
+        house: student.house,
+        reason: "Quick add",
+        value: 1,
+        date: new Date().toISOString().slice(0, 10)
+      });
+
+      saveState();
+      render();
+    }
+
+    function addHouse() {
+      const house = newHouseName.value.trim();
+      if (!house || state.houses.includes(house)) return;
+      state.houses.push(house);
+      newHouseName.value = "";
+      saveState();
+      render();
+    }
+
+    function saveSettings() {
+      const limit = Number(funFridayLimit.value);
+      if (limit >= 1) {
+        state.settings.funFridayLimit = limit;
+        saveState();
+        render();
+      }
+    }
+
+    function startNewWeek() {
+      const weekPoints = currentWeekPoints();
+      const totals = totalsByHouse(weekPoints);
+      const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
+
+      state.history.unshift({
+        id: crypto.randomUUID(),
+        ended: new Date().toISOString().slice(0, 10),
+        winner: lowestHouseLabel(totals),
+        cleanCount: cleanStudents.length,
+        totals
+      });
+
+      state.settings.currentWeekStart = new Date().toISOString().slice(0, 10);
+      saveState();
+      render();
+    }
+
+    function exportBackup() {
+      const file = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      downloadFile(file, "room-113-house-points-backup.json");
+    }
+
+    function importBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          state = JSON.parse(reader.result);
+          saveState();
+          render();
+        } catch {
+          alert("That backup file could not be imported.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function downloadCsv() {
+      const rows = [["Date", "Student", "House", "Reason", "Points"]];
+      state.points.forEach(point => {
+        rows.push([point.date, point.studentName, point.house, point.reason, point.value]);
+      });
+
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      downloadFile(new Blob([csv], { type: "text/csv" }), "room-113-points.csv");
+    }
+
+    function downloadFile(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+
+    function removeStudent(studentId) {
+      if (!confirm("Remove this student from the tracker? Their past points stay in reports.")) return;
+      state.students = state.students.filter(student => student.id !== studentId);
+      saveState();
+      render();
+    }
+
+    function render() {
+      const weekPoints = currentWeekPoints();
+      const weeklyTotals = totalsByHouse(weekPoints);
+      const semesterTotals = totalsByHouse(state.points);
+      const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
+
+      studentHouse.innerHTML = state.houses.map(house => `<option value="${escapeAttribute(house)}">${escapeHtml(house)}</option>`).join("");
+      pointStudent.innerHTML = state.students.map(student => `<option value="${student.id}">${escapeHtml(student.name)}</option>`).join("");
+      pointForm.querySelector("button").disabled = state.students.length === 0;
+      funFridayLimit.value = state.settings.funFridayLimit;
+      limitText.textContent = state.settings.funFridayLimit;
+      cleanCount.textContent = cleanStudents.length;
+      weeklyWinner.textContent = state.students.length ? lowestHouseLabel(weeklyTotals) : "Add students to begin.";
+      semesterWinner.textContent = state.students.length ? lowestHouseLabel(semesterTotals) : "Add students to begin.";
+
+      houseStats.innerHTML = state.houses.map(house => `
+        <div class="stat">
+          <span class="muted">${escapeHtml(house)}</span>
+          <strong>${weeklyTotals[house] || 0}</strong>
+          <span class="muted">${semesterTotals[house] || 0} semester points</span>
+        </div>
+      `).join("");
+
+      renderStudents();
+      renderLog();
+      renderHistory();
+    }
+
+    function renderStudents() {
+      if (!state.students.length) {
+        studentTable.innerHTML = `<p class="empty">No students have been added yet.</p>`;
+        return;
+      }
+
+      studentTable.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>House</th>
+              <th>This Week</th>
+              <th>Semester</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.students.map(student => {
+              const weekly = studentWeeklyTotal(student.id);
+              const semester = studentSemesterTotal(student.id);
+              const canPlay = weekly < state.settings.funFridayLimit;
+              return `
+                <tr>
+                  <td><strong>${escapeHtml(student.name)}</strong></td>
+                  <td>${escapeHtml(student.house)}</td>
+                  <td class="points-cell">${weekly}</td>
+                  <td class="points-cell">${semester}</td>
+                  <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
+                  <td class="button-row">
+                    <button class="quick-button" onclick="addQuickPoint('${student.id}')">+1</button>
+                    <button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove</button>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderLog() {
+      const recent = state.points.slice(-8).reverse();
+      if (!recent.length) {
+        recentLog.innerHTML = `<p class="empty">No points have been added yet.</p>`;
+        return;
+      }
+
+      recentLog.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Student</th>
+              <th>Reason</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recent.map(point => `
+              <tr>
+                <td>${escapeHtml(point.date)}</td>
+                <td>${escapeHtml(point.studentName)}</td>
+                <td>${escapeHtml(point.reason)}</td>
+                <td>${point.value}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderHistory() {
+      if (!state.history.length) {
+        historyList.innerHTML = `<p class="empty">No weeks have been archived yet.</p>`;
+        return;
+      }
+
+      historyList.innerHTML = state.history.map(week => `
+        <div class="history-item">
+          <p><strong>${escapeHtml(week.ended)}</strong> winner: ${escapeHtml(week.winner)}</p>
+          <p class="muted">${week.cleanCount} clean-week students</p>
+        </div>
+      `).join("");
+    }
+  </script>
 </body>
 </html>
