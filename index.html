@@ -357,6 +357,7 @@
       <section class="panel span-4">
         <h2>Prize List</h2>
         <p><strong>This week:</strong> <span id="weeklyWinner">Add students to begin.</span></p>
+        <p><strong>Incentive week:</strong> Friday to Thursday</p>
         <p><strong>Semester:</strong> <span id="semesterWinner">Add students to begin.</span></p>
         <p><strong>Clean week:</strong> <span id="cleanCount">0</span> students</p>
         <p><strong>Fun Friday limit:</strong> <span id="limitText">5</span> points</p>
@@ -460,7 +461,8 @@
       history: [],
       settings: {
         funFridayLimit: 5,
-        currentWeekStart: getMonday(today)
+        currentWeekStart: getFriday(today),
+        weekStartsOn: "Friday"
       }
     };
 
@@ -502,7 +504,7 @@
 
       try {
         const parsed = JSON.parse(saved);
-        return {
+        const nextState = {
           ...starterState,
           ...parsed,
           settings: {
@@ -510,6 +512,11 @@
             ...parsed.settings
           }
         };
+        if (nextState.settings.weekStartsOn !== "Friday") {
+          nextState.settings.currentWeekStart = getFriday(today);
+          nextState.settings.weekStartsOn = "Friday";
+        }
+        return nextState;
       } catch {
         return starterState;
       }
@@ -519,12 +526,25 @@
       localStorage.setItem(storageKey, JSON.stringify(state));
     }
 
-    function getMonday(date) {
+    function getFriday(date) {
       const nextDate = new Date(date);
       const day = nextDate.getDay();
-      const difference = nextDate.getDate() - day + (day === 0 ? -6 : 1);
+      const daysSinceFriday = (day + 2) % 7;
+      const difference = nextDate.getDate() - daysSinceFriday;
       nextDate.setDate(difference);
       nextDate.setHours(0, 0, 0, 0);
+      return nextDate.toISOString().slice(0, 10);
+    }
+
+    function getNextFriday(dateText) {
+      const nextDate = new Date(`${dateText}T00:00:00`);
+      nextDate.setDate(nextDate.getDate() + 7);
+      return nextDate.toISOString().slice(0, 10);
+    }
+
+    function getDayBefore(dateText) {
+      const nextDate = new Date(`${dateText}T00:00:00`);
+      nextDate.setDate(nextDate.getDate() - 1);
       return nextDate.toISOString().slice(0, 10);
     }
 
@@ -638,16 +658,18 @@
       const weekPoints = currentWeekPoints();
       const totals = totalsByHouse(weekPoints);
       const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
+      const nextWeekStart = getNextFriday(state.settings.currentWeekStart);
 
       state.history.unshift({
         id: crypto.randomUUID(),
-        ended: new Date().toISOString().slice(0, 10),
+        ended: getDayBefore(nextWeekStart),
         winner: lowestHouseLabel(totals),
         cleanCount: cleanStudents.length,
         totals
       });
 
-      state.settings.currentWeekStart = new Date().toISOString().slice(0, 10);
+      state.settings.currentWeekStart = nextWeekStart;
+      state.settings.weekStartsOn = "Friday";
       saveState();
       render();
     }
