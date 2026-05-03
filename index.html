@@ -285,6 +285,69 @@
       background: #fbfdfe;
     }
 
+    .home-screen {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-panel {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .home-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .teacher-login {
+      display: none;
+      max-width: 460px;
+    }
+
+    .teacher-login.active {
+      display: block;
+    }
+
+    .tracker-app {
+      display: none;
+    }
+
+    body.tracker-open .home-screen {
+      display: none;
+    }
+
+    body.tracker-open .tracker-app {
+      display: block;
+    }
+
+    #homeButton,
+    .teacher-control {
+      display: none;
+    }
+
+    body.tracker-open #homeButton,
+    body.tracker-open .teacher-control {
+      display: inline-flex;
+    }
+
+    .notice {
+      border: 1px solid #ead27a;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff7d6;
+      color: #594600;
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
     @media (max-width: 820px) {
       .topbar {
         align-items: flex-start;
@@ -337,17 +400,61 @@
     <div class="topbar">
       <div>
         <h1>Room 113</h1>
-        <p class="subtitle">House points tracker</p>
+        <p class="subtitle">Classroom website</p>
       </div>
       <div class="button-row">
-        <button class="secondary" id="exportButton">Export Backup</button>
-        <button class="secondary" id="importButton">Import Backup</button>
+        <button class="secondary" id="homeButton">Home</button>
+        <button class="secondary" id="teacherButton">Teacher Tools</button>
+        <button class="secondary teacher-control" id="exportButton">Export Backup</button>
+        <button class="secondary teacher-control" id="importButton">Import Backup</button>
         <input id="importFile" type="file" accept="application/json" hidden>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="homeScreen" class="home-screen">
+    <section class="hero-panel">
+      <h2>Welcome to Room 113</h2>
+      <p>Use this page for class updates, helpful links, and classroom routines.</p>
+      <div class="home-actions">
+        <button id="openTeacherLogin">Teacher Tools</button>
+      </div>
+    </section>
+
+    <section class="panel teacher-login" id="teacherLogin">
+      <h2>Teacher Login</h2>
+      <p class="muted">Enter the teacher passcode to open the house points tracker on this device.</p>
+      <form id="loginForm">
+        <div class="form-row">
+          <div class="field-12">
+            <label for="teacherPasscode">Passcode</label>
+            <input id="teacherPasscode" type="password" autocomplete="current-password">
+          </div>
+          <div class="field-12">
+            <button type="submit">Open Tracker</button>
+          </div>
+        </div>
+      </form>
+      <p id="loginMessage" class="error"></p>
+      <p class="notice">This keeps the tracker off the main screen, but GitHub Pages is still public. For true approved-user accounts, this should connect to a secure login service.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Class Announcements</h2>
+      <p>Add your most important classroom updates here.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Helpful Links</h2>
+      <ul>
+        <li><a href="#">School website</a></li>
+        <li><a href="#">Class resources</a></li>
+        <li><a href="#">Homework help</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <main id="trackerApp" class="tracker-app">
     <div class="grid">
       <section class="panel span-8">
         <h2>House Standings</h2>
@@ -435,6 +542,13 @@
           <div class="field-6">
             <button id="saveSettingsButton" type="button">Save Settings</button>
           </div>
+          <div class="field-6">
+            <label for="newPasscode">Teacher passcode</label>
+            <input id="newPasscode" type="password" autocomplete="new-password" placeholder="Leave blank to keep current">
+          </div>
+          <div class="field-6">
+            <button id="savePasscodeButton" type="button">Change Passcode</button>
+          </div>
         </div>
       </section>
 
@@ -452,6 +566,8 @@
 
   <script>
     const storageKey = "room113HouseTracker";
+    const passcodeKey = "room113TeacherPasscode";
+    const defaultTeacherPasscode = "room113";
     const today = new Date();
 
     const starterState = {
@@ -484,12 +600,21 @@
     const limitText = document.getElementById("limitText");
     const funFridayLimit = document.getElementById("funFridayLimit");
     const newHouseName = document.getElementById("newHouseName");
+    const newPasscode = document.getElementById("newPasscode");
     const historyList = document.getElementById("historyList");
+    const teacherLogin = document.getElementById("teacherLogin");
+    const teacherPasscode = document.getElementById("teacherPasscode");
+    const loginMessage = document.getElementById("loginMessage");
 
     studentForm.addEventListener("submit", addStudent);
     pointForm.addEventListener("submit", addPoint);
+    document.getElementById("homeButton").addEventListener("click", showHome);
+    document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
+    document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
+    document.getElementById("loginForm").addEventListener("submit", checkTeacherPasscode);
     document.getElementById("addHouseButton").addEventListener("click", addHouse);
     document.getElementById("saveSettingsButton").addEventListener("click", saveSettings);
+    document.getElementById("savePasscodeButton").addEventListener("click", savePasscode);
     document.getElementById("startWeekButton").addEventListener("click", startNewWeek);
     document.getElementById("exportButton").addEventListener("click", exportBackup);
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
@@ -524,6 +649,51 @@
 
     function saveState() {
       localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function getTeacherPasscode() {
+      return localStorage.getItem(passcodeKey) || defaultTeacherPasscode;
+    }
+
+    function showTeacherLogin() {
+      document.body.classList.remove("tracker-open");
+      teacherLogin.classList.add("active");
+      loginMessage.textContent = "";
+      teacherPasscode.focus();
+    }
+
+    function showHome() {
+      document.body.classList.remove("tracker-open");
+      teacherLogin.classList.remove("active");
+      teacherPasscode.value = "";
+      loginMessage.textContent = "";
+    }
+
+    function openTracker() {
+      document.body.classList.add("tracker-open");
+      teacherLogin.classList.remove("active");
+      teacherPasscode.value = "";
+      loginMessage.textContent = "";
+      render();
+    }
+
+    function checkTeacherPasscode(event) {
+      event.preventDefault();
+      if (teacherPasscode.value === getTeacherPasscode()) {
+        openTracker();
+        return;
+      }
+
+      loginMessage.textContent = "That passcode did not work.";
+    }
+
+    function savePasscode() {
+      const passcode = newPasscode.value.trim();
+      if (!passcode) return;
+
+      localStorage.setItem(passcodeKey, passcode);
+      newPasscode.value = "";
+      alert("Teacher passcode changed on this device.");
     }
 
     function getFriday(date) {
