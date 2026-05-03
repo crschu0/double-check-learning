@@ -1,109 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Prime Time Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room 113</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #1E73BE, #2ECC71);
+      line-height: 1.6;
+      color: #24313d;
+      background: #f7f9fb;
+    }
+
+    header {
+      background: #2f7d95;
       color: white;
+      padding: 32px 20px;
       text-align: center;
-      padding: 30px;
     }
 
-    h1 {
-      font-size: 50px;
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
     }
 
-    input {
-      padding: 8px;
-      margin: 5px;
+    header p {
+      margin: 8px 0 0;
+      font-size: 1.1rem;
     }
 
-    button {
-      padding: 8px 15px;
-      cursor: pointer;
-      margin: 5px;
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
     }
 
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
+    section {
       background: white;
-      color: black;
+      border: 1px solid #dce5ea;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      padding: 20px;
     }
 
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px 15px;
+    h2 {
+      margin-top: 0;
+      color: #2f7d95;
     }
 
-    th {
-      background: #1E73BE;
-      color: white;
+    ul {
+      padding-left: 22px;
     }
 
-    .code {
-      margin-top: 20px;
-      font-size: 20px;
-      background: white;
-      color: #333;
-      padding: 8px;
-      display: inline-block;
-      border-radius: 6px;
+    .note {
+      background: #fff7d6;
+      border-color: #ead27a;
+    }
+
+    footer {
+      color: #5d6b78;
+      font-size: 0.9rem;
+      padding: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Room 113</h1>
+    <p>Welcome to our classroom website.</p>
+  </header>
 
-  <h1>PRIME TIME</h1>
-  <h2>Double Check Learning</h2>
-  <p>Mr Schuchard</p>
+  <main>
+    <section class="note">
+      <h2>Class Announcements</h2>
+      <p>Add your most important classroom updates here.</p>
+    </section>
 
-  <div class="code">
-    Freckle Code: wpcs9p
-  </div>
+    <section>
+      <h2>This Week</h2>
+      <ul>
+        <li>Monday: Add your lesson or reminder.</li>
+        <li>Wednesday: Add your lesson or reminder.</li>
+        <li>Friday: Add your lesson or reminder.</li>
+      </ul>
+    </section>
 
-  <h2>Add Student</h2>
+    <section>
+      <h2>Helpful Links</h2>
+      <ul>
+        <li><a href="#">School website</a></li>
+        <li><a href="#">Class resources</a></li>
+        <li><a href="#">Homework help</a></li>
+      </ul>
+    </section>
 
-  <input id="name" placeholder="Student Name">
-  <input id="score" placeholder="Score">
-  <button onclick="addStudent()">Add</button>
+    <section>
+      <h2>Contact</h2>
+      <p>Email: teacher@example.com</p>
+    </section>
+  </main>
 
-  <h2>Class Tracker</h2>
-
-  <table id="table">
-    <tr>
-      <th>Name</th>
-      <th>Score</th>
-    </tr>
-  </table>
-
-  <script>
-    function addStudent() {
-      const name = document.getElementById("name").value;
-      const score = document.getElementById("score").value;
-
-      if (name === "" || score === "") return;
-
-      const table = document.getElementById("table");
-      const row = table.insertRow();
-
-      row.insertCell(0).innerText = name;
-      row.insertCell(1).innerText = score;
-
-      document.getElementById("name").value = "";
-      document.getElementById("score").value = "";
-    }
-  </script>
-
-</body>
-</html>
-
-
-  <div class="code">
-    Freckle Code: wpcs9p
-  </div>
-
+  <footer>
+    <p>Room 113</p>
+  </footer>
 </body>
 </html>
