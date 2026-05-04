@@ -676,7 +676,8 @@
     const defaultTeacherPasscode = "room113";
     const demoStudents = [
       { name: "Matthew Bohms", password: "Bohms" },
-      { name: "Aidan Rossler", password: "Rossler" }
+      { name: "Aidan Rossler", password: "Rossler" },
+      { name: "Jace Hampton", password: "Hampton" }
     ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
     let activeDemoStudent = demoStudents[0];
@@ -696,6 +697,22 @@
           questions: "4",
           lastPracticed: "Math Adaptive Practice",
           reportDates: "Apr 27, 2026 - May 3, 2026",
+          importedAt: "2026-05-04"
+        },
+        "jace hampton": {
+          name: "Jace Hampton",
+          accuracy: "67",
+          timePracticed: "17",
+          questions: "27",
+          correctTotal: "18 / 27",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "April 27, 2026 - May 3, 2026",
+          focusDomain: "Operations & Algebraic Thinking",
+          startingGrade: "4.6",
+          lowestGrade: "3.9",
+          highestGrade: "5",
+          latestGrade: "4.8",
+          adaptiveLevelsPassed: "1",
           importedAt: "2026-05-04"
         }
       },
@@ -1412,7 +1429,7 @@
           </div>
           <div class="stat student-stat">
             <span class="muted">Questions</span>
-            <strong>${escapeHtml(freckle.questions)}</strong>
+            <strong>${escapeHtml(freckle.correctTotal || freckle.questions)}</strong>
             <span class="muted">answered this report</span>
           </div>
           <div class="stat student-stat">
@@ -1421,6 +1438,30 @@
             <span class="muted">${escapeHtml(freckle.reportDates || "Imported report")}</span>
           </div>
         </div>
+        ${freckle.focusDomain ? `
+          <div class="student-grid" style="margin-top:16px;">
+            <div class="stat student-stat">
+              <span class="muted">Focus domain</span>
+              <strong>${escapeHtml(freckle.focusDomain)}</strong>
+              <span class="muted">adaptive practice</span>
+            </div>
+            <div class="stat student-stat">
+              <span class="muted">Latest grade level</span>
+              <strong>${escapeHtml(freckle.latestGrade || "-")}</strong>
+              <span class="muted">started at ${escapeHtml(freckle.startingGrade || "-")}</span>
+            </div>
+            <div class="stat student-stat">
+              <span class="muted">Highest grade level</span>
+              <strong>${escapeHtml(freckle.highestGrade || "-")}</strong>
+              <span class="muted">lowest ${escapeHtml(freckle.lowestGrade || "-")}</span>
+            </div>
+            <div class="stat student-stat">
+              <span class="muted">Levels passed</span>
+              <strong>${escapeHtml(freckle.adaptiveLevelsPassed || "0")}</strong>
+              <span class="muted">this report</span>
+            </div>
+          </div>
+        ` : ""}
         <p class="muted">Freckle report imported ${escapeHtml(freckle.importedAt)}.</p>
       `;
     }
