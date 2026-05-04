@@ -223,6 +223,10 @@
       font-size: 0.95rem;
     }
 
+    .table-wrap {
+      overflow-x: auto;
+    }
+
     th,
     td {
       border-bottom: 1px solid var(--line);
@@ -594,6 +598,12 @@
         <div id="studentTable"></div>
       </section>
 
+      <section class="panel span-12">
+        <h2>Student Progress</h2>
+        <p class="muted">Approved teachers can see every student's incentive, Freckle, and Scratch status here.</p>
+        <div id="teacherProgressTable"></div>
+      </section>
+
       <section class="panel span-5">
         <h2>Settings</h2>
         <div class="form-row">
@@ -662,11 +672,7 @@
 
     <section class="panel">
       <h2>Scratch Assignments</h2>
-      <ul>
-        <li><strong>Current:</strong> Add current Scratch assignment.</li>
-        <li><strong>Completed:</strong> Add completed Scratch projects.</li>
-        <li><strong>Next step:</strong> Add what Matthew should work on next.</li>
-      </ul>
+      <div id="studentScratchStats"></div>
     </section>
   </main>
 
@@ -723,6 +729,23 @@
           importedAt: "2026-05-04"
         }
       },
+      scratch: {
+        "matthew bohms": {
+          current: "Add current Scratch assignment.",
+          completed: "Add completed Scratch projects.",
+          nextStep: "Add what Matthew should work on next."
+        },
+        "aidan rossler": {
+          current: "Add current Scratch assignment.",
+          completed: "Add completed Scratch projects.",
+          nextStep: "Add Aidan's next Scratch step."
+        },
+        "jace hampton": {
+          current: "Add current Scratch assignment.",
+          completed: "Add completed Scratch projects.",
+          nextStep: "Add Jace's next Scratch step."
+        }
+      },
       settings: {
         funFridayLimit: 5,
         currentWeekStart: getFriday(today),
@@ -742,6 +765,7 @@
     const houseStats = document.getElementById("houseStats");
     const studentTable = document.getElementById("studentTable");
     const recentLog = document.getElementById("recentLog");
+    const teacherProgressTable = document.getElementById("teacherProgressTable");
     const weeklyWinner = document.getElementById("weeklyWinner");
     const semesterWinner = document.getElementById("semesterWinner");
     const cleanCount = document.getElementById("cleanCount");
@@ -760,6 +784,7 @@
     const studentIncentiveStats = document.getElementById("studentIncentiveStats");
     const studentHouseStats = document.getElementById("studentHouseStats");
     const studentFreckleStats = document.getElementById("studentFreckleStats");
+    const studentScratchStats = document.getElementById("studentScratchStats");
 
     studentForm.addEventListener("submit", addStudent);
     pointForm.addEventListener("submit", addPoint);
@@ -798,6 +823,10 @@
           freckle: {
             ...starterState.freckle,
             ...(parsed.freckle || {})
+          },
+          scratch: {
+            ...starterState.scratch,
+            ...(parsed.scratch || {})
           },
           settings: {
             ...starterState.settings,
@@ -1246,6 +1275,7 @@
       `).join("");
 
       renderStudents();
+      renderTeacherProgress();
       renderLog();
       renderHistory();
     }
@@ -1290,6 +1320,85 @@
           </tbody>
         </table>
       `;
+    }
+
+    function renderTeacherProgress() {
+      const records = allProgressRecords();
+      if (!records.length) {
+        teacherProgressTable.innerHTML = `<p class="empty">Add students or import Freckle data to build the teacher progress view.</p>`;
+        return;
+      }
+
+      teacherProgressTable.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>House</th>
+                <th>Week Points</th>
+                <th>Freckle Report</th>
+                <th>Accuracy</th>
+                <th>Practice</th>
+                <th>Scratch</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(record => {
+                const freckle = state.freckle[record.name.toLowerCase()];
+                const scratch = getScratchRecord(record.name);
+                return `
+                  <tr>
+                    <td><strong>${escapeHtml(record.name)}</strong></td>
+                    <td>${record.student ? escapeHtml(record.student.house) : `<span class="muted">Not in tracker</span>`}</td>
+                    <td class="points-cell">${record.student ? studentWeeklyTotal(record.student.id) : "-"}</td>
+                    <td>${freckle ? escapeHtml(freckle.reportDates || freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
+                    <td>${freckle ? `${escapeHtml(freckle.accuracy)}${freckle.accuracy === "-" ? "" : "%"}` : "-"}</td>
+                    <td>${freckle ? escapeHtml(freckle.correctTotal || freckle.questions || "Imported") : "-"}</td>
+                    <td>${escapeHtml(scratch.current)}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function allProgressRecords() {
+      const names = new Map();
+      state.students.forEach(student => names.set(student.name.toLowerCase(), { name: student.name, student }));
+      Object.values(state.freckle || {}).forEach(freckle => {
+        if (!names.has(freckle.name.toLowerCase())) {
+          names.set(freckle.name.toLowerCase(), { name: freckle.name, student: findTrackerStudentByName(freckle.name) });
+        }
+      });
+      Object.keys(state.scratch || {}).forEach(name => {
+        if (!names.has(name)) {
+          const label = titleCaseName(name);
+          names.set(name, { name: label, student: findTrackerStudentByName(label) });
+        }
+      });
+      return Array.from(names.values()).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function findTrackerStudentByName(name) {
+      const target = name.toLowerCase();
+      const nameParts = target.split(" ");
+      return state.students.find(student => student.name.toLowerCase() === target)
+        || state.students.find(student => nameParts.every(part => student.name.toLowerCase().includes(part)));
+    }
+
+    function titleCaseName(name) {
+      return name.split(" ").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+    }
+
+    function getScratchRecord(studentName) {
+      return (state.scratch || {})[studentName.toLowerCase()] || {
+        current: "Add current Scratch assignment.",
+        completed: "Add completed Scratch projects.",
+        nextStep: "Add the student's next Scratch step."
+      };
     }
 
     function renderLog() {
@@ -1361,6 +1470,7 @@
         `;
         studentHouseStats.innerHTML = `<p class="empty">House standing will appear after this student is added to a house.</p>`;
         renderFreckleStats(activeDemoStudent.name);
+        renderScratchStats(activeDemoStudent.name);
         return;
       }
 
@@ -1408,6 +1518,7 @@
         </div>
       `;
       renderFreckleStats(student.name);
+      renderScratchStats(student.name);
     }
 
     function renderFreckleStats(studentName) {
@@ -1482,6 +1593,17 @@
           </div>
         ` : ""}
         <p class="muted">Freckle report imported ${escapeHtml(freckle.importedAt)}.</p>
+      `;
+    }
+
+    function renderScratchStats(studentName) {
+      const scratch = getScratchRecord(studentName);
+      studentScratchStats.innerHTML = `
+        <ul>
+          <li><strong>Current:</strong> ${escapeHtml(scratch.current)}</li>
+          <li><strong>Completed:</strong> ${escapeHtml(scratch.completed)}</li>
+          <li><strong>Next step:</strong> ${escapeHtml(scratch.nextStep)}</li>
+        </ul>
       `;
     }
   </script>
