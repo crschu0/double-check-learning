@@ -695,6 +695,7 @@
           timePracticed: "2",
           questions: "4",
           lastPracticed: "Math Adaptive Practice",
+          reportDates: "Apr 27, 2026 - May 3, 2026",
           importedAt: "2026-05-04"
         }
       },
@@ -1114,6 +1115,7 @@
             timePracticed: record["Time Practiced"] || "0",
             questions: record.Questions || "0",
             lastPracticed: record["Last Practiced"] || "-",
+            reportDates: getFreckleReportDates(file.name),
             importedAt: new Date().toISOString().slice(0, 10)
           };
         });
@@ -1160,6 +1162,11 @@
       row.push(value);
       if (row.some(cell => cell.trim() !== "")) rows.push(row);
       return rows;
+    }
+
+    function getFreckleReportDates(filename) {
+      const match = filename.match(/Freckle Activity (.+?)(?: [^\\/.]+)?\.csv$/i);
+      return match ? match[1] : "Imported report";
     }
 
     function downloadFile(blob, filename) {
@@ -1411,9 +1418,10 @@
           <div class="stat student-stat">
             <span class="muted">Last practiced</span>
             <strong>${escapeHtml(freckle.lastPracticed)}</strong>
-            <span class="muted">imported ${escapeHtml(freckle.importedAt)}</span>
+            <span class="muted">${escapeHtml(freckle.reportDates || "Imported report")}</span>
           </div>
         </div>
+        <p class="muted">Freckle report imported ${escapeHtml(freckle.importedAt)}.</p>
       `;
     }
   </script>
