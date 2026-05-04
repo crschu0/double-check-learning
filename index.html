@@ -584,6 +584,8 @@
           <h2 style="margin-right:auto;">Students</h2>
           <button class="secondary" id="startWeekButton">Start New Week</button>
           <button class="secondary" id="downloadCsvButton">Download CSV</button>
+          <button class="secondary" id="importFreckleButton">Import Freckle CSV</button>
+          <input id="freckleFile" type="file" accept=".csv,text/csv" hidden>
         </div>
         <div id="studentTable"></div>
       </section>
@@ -651,9 +653,7 @@
 
     <section class="panel">
       <h2>Freckle Math Goal</h2>
-      <p><strong>Current goal:</strong> Complete 3 Freckle math sessions this week.</p>
-      <p><strong>Progress:</strong> Add Matthew's current Freckle data here.</p>
-      <p class="muted">Later, this can come from a Google Sheet or Freckle report export.</p>
+      <div id="studentFreckleStats"></div>
     </section>
 
     <section class="panel">
@@ -682,6 +682,7 @@
       students: [],
       points: [],
       history: [],
+      freckle: {},
       settings: {
         funFridayLimit: 5,
         currentWeekStart: getFriday(today),
@@ -718,6 +719,7 @@
     const studentDashboardName = document.getElementById("studentDashboardName");
     const studentIncentiveStats = document.getElementById("studentIncentiveStats");
     const studentHouseStats = document.getElementById("studentHouseStats");
+    const studentFreckleStats = document.getElementById("studentFreckleStats");
 
     studentForm.addEventListener("submit", addStudent);
     pointForm.addEventListener("submit", addPoint);
@@ -735,6 +737,8 @@
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
+    document.getElementById("importFreckleButton").addEventListener("click", () => document.getElementById("freckleFile").click());
+    document.getElementById("freckleFile").addEventListener("change", importFreckleCsv);
 
     render();
 
@@ -1028,6 +1032,77 @@
       downloadFile(new Blob([csv], { type: "text/csv" }), "room-113-points.csv");
     }
 
+    function importFreckleCsv(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rows = parseCsv(reader.result);
+        if (rows.length < 2) {
+          alert("That Freckle CSV did not include student rows.");
+          return;
+        }
+
+        const headers = rows[0].map(header => header.trim());
+        rows.slice(1).forEach(row => {
+          const record = Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]));
+          if (!record.Name) return;
+
+          state.freckle[record.Name.toLowerCase()] = {
+            name: record.Name,
+            accuracy: record.Accuracy || "-",
+            timePracticed: record["Time Practiced"] || "0",
+            questions: record.Questions || "0",
+            lastPracticed: record["Last Practiced"] || "-",
+            importedAt: new Date().toISOString().slice(0, 10)
+          };
+        });
+
+        saveState();
+        if (document.body.classList.contains("student-open")) {
+          renderStudentPage();
+        }
+        alert("Freckle CSV imported.");
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let inQuotes = false;
+
+      for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        const nextChar = text[index + 1];
+
+        if (char === '"' && inQuotes && nextChar === '"') {
+          value += '"';
+          index++;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          row.push(value);
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && nextChar === "\n") index++;
+          row.push(value);
+          if (row.some(cell => cell.trim() !== "")) rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+
+      row.push(value);
+      if (row.some(cell => cell.trim() !== "")) rows.push(row);
+      return rows;
+    }
+
     function downloadFile(blob, filename) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -1195,6 +1270,7 @@
           </div>
         `;
         studentHouseStats.innerHTML = `<p class="empty">House standing will appear after this student is added to a house.</p>`;
+        renderFreckleStats(activeDemoStudent.name);
         return;
       }
 
@@ -1239,6 +1315,45 @@
           <span class="muted">${escapeHtml(student.house)} semester</span>
           <strong>${houseSemester}</strong>
           <span class="muted">Semester leader: ${escapeHtml(semesterWinnerText)}</span>
+        </div>
+      `;
+      renderFreckleStats(student.name);
+    }
+
+    function renderFreckleStats(studentName) {
+      const freckle = state.freckle[studentName.toLowerCase()];
+
+      if (!freckle) {
+        studentFreckleStats.innerHTML = `
+          <p><strong>Current goal:</strong> Complete 3 Freckle math sessions this week.</p>
+          <p><strong>Progress:</strong> Import a Freckle activity CSV to show current progress.</p>
+          <p class="muted">Teacher Tools can import the Freckle activity report.</p>
+        `;
+        return;
+      }
+
+      studentFreckleStats.innerHTML = `
+        <div class="student-grid">
+          <div class="stat student-stat">
+            <span class="muted">Accuracy</span>
+            <strong>${escapeHtml(freckle.accuracy)}${freckle.accuracy === "-" ? "" : "%"}</strong>
+            <span class="muted">from imported Freckle report</span>
+          </div>
+          <div class="stat student-stat">
+            <span class="muted">Time practiced</span>
+            <strong>${escapeHtml(freckle.timePracticed)}</strong>
+            <span class="muted">minutes this report</span>
+          </div>
+          <div class="stat student-stat">
+            <span class="muted">Questions</span>
+            <strong>${escapeHtml(freckle.questions)}</strong>
+            <span class="muted">answered this report</span>
+          </div>
+          <div class="stat student-stat">
+            <span class="muted">Last practiced</span>
+            <strong>${escapeHtml(freckle.lastPracticed)}</strong>
+            <span class="muted">imported ${escapeHtml(freckle.importedAt)}</span>
+          </div>
         </div>
       `;
     }
