@@ -713,6 +713,13 @@
           highestGrade: "5",
           latestGrade: "4.8",
           adaptiveLevelsPassed: "1",
+          domainPractice: [
+            { domain: "Operations & Algebraic Thinking", questions: "31" },
+            { domain: "Expressions & Equations", questions: "3" },
+            { domain: "Statistics & Probability", questions: "6" },
+            { domain: "Geometry", questions: "22" },
+            { domain: "Number System", questions: "15" }
+          ],
           importedAt: "2026-05-04"
         }
       },
@@ -1460,6 +1467,18 @@
               <strong>${escapeHtml(freckle.adaptiveLevelsPassed || "0")}</strong>
               <span class="muted">this report</span>
             </div>
+          </div>
+        ` : ""}
+        ${freckle.domainPractice ? `
+          <h3 style="margin-top:18px;">Practice by Domain</h3>
+          <div class="student-grid">
+            ${freckle.domainPractice.map(item => `
+              <div class="stat student-stat">
+                <span class="muted">${escapeHtml(item.domain)}</span>
+                <strong>${escapeHtml(item.questions)}</strong>
+                <span class="muted">questions practiced</span>
+              </div>
+            `).join("")}
           </div>
         ` : ""}
         <p class="muted">Freckle report imported ${escapeHtml(freckle.importedAt)}.</p>
