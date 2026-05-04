@@ -1584,7 +1584,16 @@
         approveButton.type = "button";
         approveButton.textContent = "Approve";
         approveButton.addEventListener("click", () => approveUser(requestDoc.id, request));
+
+        const denyButton = document.createElement("button");
+        denyButton.type = "button";
+        denyButton.className = "secondary";
+        denyButton.textContent = "Deny";
+        denyButton.addEventListener("click", () => denyUser(requestDoc.id));
+
         row.appendChild(approveButton);
+        row.appendChild(document.createTextNode(" "));
+        row.appendChild(denyButton);
         accessRequests.appendChild(row);
       });
     }
@@ -1609,6 +1618,14 @@
       await updateDoc(doc(db, "accessRequests", uid), {
         status: "approved",
         approvedAt: serverTimestamp()
+      });
+      await loadAccessRequests();
+    }
+
+    async function denyUser(uid) {
+      await updateDoc(doc(db, "accessRequests", uid), {
+        status: "denied",
+        deniedAt: serverTimestamp()
       });
       await loadAccessRequests();
     }
