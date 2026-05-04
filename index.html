@@ -390,8 +390,10 @@
       color: var(--muted);
     }
 
-    .hidden-fallback {
-      display: none;
+    .testing-fallback {
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
     }
 
     @media (max-width: 820px) {
@@ -472,8 +474,13 @@
     <section class="panel teacher-login" id="teacherLogin">
       <h2>Teacher Login</h2>
       <p class="muted">Sign in with an approved Google account to open the house points tracker.</p>
-      <form id="loginForm" class="hidden-fallback">
+      <form id="loginForm" class="testing-fallback">
+        <p class="muted">Testing back door: use the teacher passcode to preview another approved teacher's view.</p>
         <div class="form-row">
+          <div class="field-12">
+            <label for="teacherViewAs">View as</label>
+            <select id="teacherViewAs"></select>
+          </div>
           <div class="field-12">
             <label for="teacherPasscode">Passcode</label>
             <input id="teacherPasscode" type="password" autocomplete="current-password">
@@ -526,6 +533,11 @@
   </main>
 
   <main id="trackerApp" class="tracker-app">
+    <section class="panel">
+      <h2>Teacher View</h2>
+      <p id="activeTeacherViewLabel" class="muted">Viewing as approved teacher.</p>
+    </section>
+
     <div class="grid">
       <section class="panel span-8">
         <h2>House Standings</h2>
@@ -680,6 +692,15 @@
     const storageKey = "room113HouseTracker";
     const passcodeKey = "room113TeacherPasscode";
     const defaultTeacherPasscode = "room113";
+    const teacherViewProfiles = [
+      { name: "Mrs. Cunniff", email: "lcunniff@maldenschool.org" },
+      { name: "Miss Nichols", email: "anichols@maldenschool.org" },
+      { name: "Mr. Lennon", email: "slennon@maldenschool.org" },
+      { name: "Mr. Patterson", email: "mpatterson@maldenschool.org" },
+      { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org" },
+      { name: "Mrs. Ribas", email: "jribas@maldenschool.org" },
+      { name: "Double Check Learning", email: "doublechecklearning@gmail.com" }
+    ];
     const demoStudents = [
       { name: "Matthew Bohms", password: "Bohms" },
       { name: "Aidan Rossler", password: "Rossler" },
@@ -687,6 +708,7 @@
     ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
     let activeDemoStudent = demoStudents[0];
+    let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
     const today = new Date();
 
@@ -776,6 +798,8 @@
     const historyList = document.getElementById("historyList");
     const teacherLogin = document.getElementById("teacherLogin");
     const teacherPasscode = document.getElementById("teacherPasscode");
+    const teacherViewAs = document.getElementById("teacherViewAs");
+    const activeTeacherViewLabel = document.getElementById("activeTeacherViewLabel");
     const loginMessage = document.getElementById("loginMessage");
     const studentLogin = document.getElementById("studentLogin");
     const studentDemoPassword = document.getElementById("studentDemoPassword");
@@ -805,6 +829,10 @@
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
     document.getElementById("importFreckleButton").addEventListener("click", () => document.getElementById("freckleFile").click());
     document.getElementById("freckleFile").addEventListener("change", importFreckleCsv);
+    teacherViewAs.innerHTML = teacherViewProfiles.map(profile => `
+      <option value="${escapeAttribute(profile.email)}">${escapeHtml(profile.name)} (${escapeHtml(profile.email)})</option>
+    `).join("");
+    teacherViewAs.value = activeTeacherView.email;
     ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach(eventName => {
       document.addEventListener(eventName, resetIdleLogoutTimer, { passive: true });
     });
@@ -918,9 +946,12 @@
       studentLogin.classList.remove("active");
       teacherPasscode.value = "";
       loginMessage.textContent = "";
+      renderTeacherIdentity();
       render();
       resetIdleLogoutTimer();
     }
+
+    window.openTeacherTracker = openTracker;
 
     function openStudentPage() {
       document.body.classList.remove("tracker-open");
@@ -936,6 +967,7 @@
     function checkTeacherPasscode(event) {
       event.preventDefault();
       if (teacherPasscode.value === getTeacherPasscode()) {
+        setActiveTeacherView(teacherViewAs.value);
         openTracker();
         return;
       }
@@ -962,6 +994,23 @@
       localStorage.setItem(passcodeKey, passcode);
       newPasscode.value = "";
       alert("Teacher passcode changed on this device.");
+    }
+
+    function setActiveTeacherView(email) {
+      activeTeacherView = teacherViewProfiles.find(profile => profile.email === email) || {
+        name: "Approved Teacher",
+        email: email || "Google sign-in"
+      };
+      if (teacherViewAs && teacherViewProfiles.some(profile => profile.email === activeTeacherView.email)) {
+        teacherViewAs.value = activeTeacherView.email;
+      }
+      renderTeacherIdentity();
+    }
+
+    window.setActiveTeacherView = setActiveTeacherView;
+
+    function renderTeacherIdentity() {
+      activeTeacherViewLabel.textContent = `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). All approved teachers currently see all students and all houses.`;
     }
 
     function getFriday(date) {
@@ -1747,6 +1796,13 @@
     }
 
     function openApprovedTracker() {
+      if (window.setActiveTeacherView && auth.currentUser) {
+        window.setActiveTeacherView(auth.currentUser.email);
+      }
+      if (window.openTeacherTracker) {
+        window.openTeacherTracker();
+        return;
+      }
       document.body.classList.add("tracker-open");
     }
 
