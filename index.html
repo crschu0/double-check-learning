@@ -335,12 +335,15 @@
     }
 
     #homeButton,
+    #logoutButton,
     .teacher-control {
       display: none;
     }
 
     body.tracker-open #homeButton,
     body.student-open #homeButton,
+    body.tracker-open #logoutButton,
+    body.student-open #logoutButton,
     body.tracker-open .teacher-control {
       display: inline-flex;
     }
@@ -443,6 +446,7 @@
       </div>
       <div class="button-row">
         <button class="secondary" id="homeButton">Home</button>
+        <button class="secondary" id="logoutButton">Logout</button>
         <button class="secondary" id="teacherButton">Teacher Tools</button>
         <button class="secondary teacher-control" id="exportButton">Export Backup</button>
         <button class="secondary teacher-control" id="importButton">Import Backup</button>
@@ -724,6 +728,7 @@
     studentForm.addEventListener("submit", addStudent);
     pointForm.addEventListener("submit", addPoint);
     document.getElementById("homeButton").addEventListener("click", showHome);
+    document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
@@ -803,6 +808,15 @@
       studentDemoPassword.value = "";
       loginMessage.textContent = "";
       studentLoginMessage.textContent = "";
+    }
+
+    function logoutCurrentScreen() {
+      if (document.body.classList.contains("tracker-open") && window.signOutTeacherAccount) {
+        window.signOutTeacherAccount();
+        return;
+      }
+
+      showHome();
     }
 
     function openTracker() {
@@ -1423,7 +1437,7 @@
 
       googleAuthStatus.textContent = "Sign in with Google to request or open access.";
       googleSignInButton.addEventListener("click", signInWithGoogle);
-      googleSignOutButton.addEventListener("click", () => signOut(auth));
+      googleSignOutButton.addEventListener("click", signOutTeacherAccount);
       onAuthStateChanged(auth, handleSignedInUser);
       window.openTeacherToolsIfSignedIn = () => {
         window.teacherToolsRequested = true;
@@ -1431,6 +1445,7 @@
           handleSignedInUser(auth.currentUser);
         }
       };
+      window.signOutTeacherAccount = signOutTeacherAccount;
     } else {
       googleSignInButton.disabled = true;
       googleSignOutButton.disabled = true;
@@ -1448,6 +1463,13 @@
       } catch (error) {
         googleAuthStatus.textContent = `Google sign-in did not finish: ${error.message}`;
       }
+    }
+
+    async function signOutTeacherAccount() {
+      window.teacherToolsRequested = false;
+      await signOut(auth);
+      document.body.classList.remove("tracker-open", "student-open");
+      googleAuthStatus.textContent = "Signed out.";
     }
 
     async function handleSignedInUser(user) {
