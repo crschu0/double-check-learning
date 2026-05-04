@@ -1,14 +1,21 @@
-# Room 113 Google Sign-In Setup
+# Room 113 Firebase Setup
 
-This site has a Google sign-in approval flow built in, but it needs a Firebase project before it can run.
+This site uses Firebase for Google sign-in and shared classroom data.
 
 1. Create a Firebase project.
 2. In Firebase Authentication, enable Google as a sign-in provider.
 3. In Firestore Database, create a database.
-4. Copy the Firebase web app config into `index.html` where the `firebaseConfig` values say `PASTE_...`.
+4. Copy the Firebase web app config into `index.html`.
 5. Publish the rules in `firestore.rules` to Firestore.
-6. Sign in with `doublechecklearning@gmail.com` first. That account is the teacher account that can approve requests.
+6. Sign in with `cschuchard@maldenschool.org` first. That account creates the shared Firebase tracker documents and is the only admin account.
 
-Students or other teachers can then sign in with Google. If they are not approved yet, the site creates an access request. The teacher account can approve requests from the tracker page.
+Approved teachers can sign in with Google and use the incentive tracker. They can add and remove points.
 
-Important: the current points tracker still stores point data in the browser on the teacher device. The next step for a fully shared secure version is moving students, houses, points, and history into Firestore under `trackerData`.
+Mr. Schuchard can also manage students, houses, settings, access requests, Freckle data, and Scratch project data.
+
+Firestore data layout:
+
+- `trackerData/incentives`: shared incentive data for approved teachers.
+- `privateProgress/progress`: Freckle and Scratch data. Firestore rules allow only `cschuchard@maldenschool.org` to read or write this document.
+
+Important: changes to `firestore.rules` only protect Firebase after the rules are published in the Firebase console or deployed with the Firebase CLI.

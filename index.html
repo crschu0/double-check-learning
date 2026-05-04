@@ -694,6 +694,7 @@
 
   <script>
     const storageKey = "room113HouseTracker";
+    const firebaseStatusKey = "room113FirebaseStatus";
     const passcodeKey = "room113TeacherPasscode";
     const defaultTeacherPasscode = "room113";
     const teacherViewProfiles = [
@@ -702,8 +703,7 @@
       { name: "Mr. Lennon", email: "slennon@maldenschool.org" },
       { name: "Mr. Patterson", email: "mpatterson@maldenschool.org" },
       { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org" },
-      { name: "Mrs. Ribas", email: "jribas@maldenschool.org" },
-      { name: "Double Check Learning", email: "doublechecklearning@gmail.com" }
+      { name: "Mrs. Ribas", email: "jribas@maldenschool.org" }
     ];
     const demoStudents = [
       { name: "Matthew Bohms", password: "Bohms" },
@@ -714,6 +714,7 @@
     let activeDemoStudent = demoStudents[0];
     let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
+    let firebaseStateReady = false;
     const today = new Date();
 
     const starterState = {
@@ -877,7 +878,46 @@
 
     function saveState() {
       localStorage.setItem(storageKey, JSON.stringify(state));
+      if (firebaseStateReady && window.saveRoom113Data) {
+        window.saveRoom113Data(state);
+      }
     }
+
+    function splitStateForFirebase(nextState) {
+      const { freckle, scratch, ...incentives } = nextState;
+      return {
+        incentives,
+        progress: { freckle: freckle || {}, scratch: scratch || {} }
+      };
+    }
+
+    function mergeFirebaseState(incentives, progress) {
+      state = {
+        ...state,
+        ...(incentives || {}),
+        freckle: canManageProgram() ? {
+          ...starterState.freckle,
+          ...((progress && progress.freckle) || {})
+        } : {},
+        scratch: canManageProgram() ? {
+          ...starterState.scratch,
+          ...((progress && progress.scratch) || {})
+        } : {}
+      };
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      renderTeacherIdentity();
+      render();
+      if (document.body.classList.contains("student-open")) {
+        renderStudentPage();
+      }
+    }
+
+    window.getRoom113StateForFirebase = () => splitStateForFirebase(state);
+    window.mergeRoom113FirebaseState = mergeFirebaseState;
+    window.markRoom113FirebaseReady = () => {
+      firebaseStateReady = true;
+      localStorage.setItem(firebaseStatusKey, "connected");
+    };
 
     function getTeacherPasscode() {
       return localStorage.getItem(passcodeKey) || defaultTeacherPasscode;
@@ -1718,7 +1758,6 @@
     } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
     const teacherEmails = [
-      "doublechecklearning@gmail.com",
       "cschuchard@maldenschool.org"
     ];
     const approvedEmails = [
@@ -1743,9 +1782,12 @@
     const googleAuthStatus = document.getElementById("googleAuthStatus");
     const approvalPanel = document.getElementById("approvalPanel");
     const accessRequests = document.getElementById("accessRequests");
+    const incentivesDocId = "incentives";
+    const progressDocId = "progress";
 
     let auth;
     let db;
+    let saveTimer;
     window.teacherToolsRequested = false;
 
     if (hasFirebaseConfig(firebaseConfig)) {
@@ -1764,6 +1806,7 @@
         }
       };
       window.signOutTeacherAccount = signOutTeacherAccount;
+      window.saveRoom113Data = saveRoom113Data;
     } else {
       googleSignInButton.disabled = true;
       googleSignOutButton.disabled = true;
@@ -1785,6 +1828,7 @@
 
     async function signOutTeacherAccount() {
       window.teacherToolsRequested = false;
+      if (saveTimer) clearTimeout(saveTimer);
       await signOut(auth);
       document.body.classList.remove("tracker-open", "student-open");
       if (window.clearIdleLogoutTimer) window.clearIdleLogoutTimer();
@@ -1838,11 +1882,72 @@
       if (window.setActiveTeacherView && auth.currentUser) {
         window.setActiveTeacherView(auth.currentUser.email);
       }
-      if (window.openTeacherTracker) {
-        window.openTeacherTracker();
-        return;
+      loadRoom113Data().then(() => {
+        if (window.openTeacherTracker) {
+          window.openTeacherTracker();
+          return;
+        }
+        document.body.classList.add("tracker-open");
+      }).catch(error => {
+        googleAuthStatus.textContent = `Firebase data did not load: ${error.message}`;
+      });
+    }
+
+    async function loadRoom113Data() {
+      const incentivesRef = doc(db, "trackerData", incentivesDocId);
+      const progressRef = doc(db, "privateProgress", progressDocId);
+      const incentivesSnap = await getDoc(incentivesRef);
+      let progressData = {};
+
+      if (window.canManageProgram && window.canManageProgram()) {
+        const progressSnap = await getDoc(progressRef);
+        progressData = progressSnap.exists() ? progressSnap.data() : {};
       }
-      document.body.classList.add("tracker-open");
+
+      if (!incentivesSnap.exists()) {
+        if (!window.canManageProgram || !window.canManageProgram()) {
+          throw new Error("Mr. Schuchard needs to open the tracker once to create the shared Firebase data.");
+        }
+        const currentState = window.getRoom113StateForFirebase ? window.getRoom113StateForFirebase() : null;
+        if (currentState) {
+          await setDoc(incentivesRef, {
+            ...currentState.incentives,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          if (window.canManageProgram && window.canManageProgram()) {
+            await setDoc(progressRef, {
+              ...currentState.progress,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            progressData = currentState.progress;
+          }
+          window.markRoom113FirebaseReady();
+          return;
+        }
+      }
+
+      if (window.mergeRoom113FirebaseState) {
+        window.mergeRoom113FirebaseState(incentivesSnap.exists() ? incentivesSnap.data() : {}, progressData);
+      }
+      if (window.markRoom113FirebaseReady) window.markRoom113FirebaseReady();
+    }
+
+    function saveRoom113Data(nextState) {
+      if (!auth || !auth.currentUser || !window.getRoom113StateForFirebase) return;
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        const splitState = window.getRoom113StateForFirebase();
+        await setDoc(doc(db, "trackerData", incentivesDocId), {
+          ...splitState.incentives,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        if (window.canManageProgram && window.canManageProgram()) {
+          await setDoc(doc(db, "privateProgress", progressDocId), {
+            ...splitState.progress,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+      }, 400);
     }
 
     async function loadAccessRequests() {

@@ -6,32 +6,55 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isTeacher() {
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == "cschuchard@maldenschool.org";
+    }
+
+    function hasApprovedEmail() {
       return signedIn()
         && request.auth.token.email in [
-          "doublechecklearning@gmail.com",
-          "cschuchard@maldenschool.org"
+          "cschuchard@maldenschool.org",
+          "lcunniff@maldenschool.org",
+          "anichols@maldenschool.org",
+          "slennon@maldenschool.org",
+          "mpatterson@maldenschool.org",
+          "jribas@maldenschool.org"
         ];
     }
 
-    function isApprovedUser(uid) {
+    function hasApprovedUserDoc(uid) {
       return signedIn()
         && exists(/databases/$(database)/documents/approvedUsers/$(uid))
         && get(/databases/$(database)/documents/approvedUsers/$(uid)).data.status == "approved";
     }
 
+    function isApprovedTeacher() {
+      return hasApprovedEmail() || hasApprovedUserDoc(request.auth.uid);
+    }
+
     match /accessRequests/{uid} {
-      allow create, update: if signedIn() && request.auth.uid == uid;
-      allow read, update, delete: if isTeacher();
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.status == "pending";
+      allow read, update, delete: if isAdmin();
     }
 
     match /approvedUsers/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isTeacher());
-      allow create, update, delete: if isTeacher();
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update, delete: if isAdmin();
     }
 
-    match /trackerData/{document=**} {
-      allow read, write: if isTeacher() || isApprovedUser(request.auth.uid);
+    match /trackerData/incentives {
+      allow read: if isApprovedTeacher();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (isApprovedTeacher()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["points", "updatedAt"]));
+    }
+
+    match /privateProgress/progress {
+      allow read, write: if isAdmin();
     }
   }
 }
