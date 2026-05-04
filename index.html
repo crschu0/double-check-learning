@@ -53,6 +53,23 @@
       gap: 16px;
     }
 
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .site-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      flex: 0 0 auto;
+    }
+
     h1,
     h2,
     h3,
@@ -406,6 +423,11 @@
         flex-direction: column;
       }
 
+      .site-logo {
+        width: 56px;
+        height: 56px;
+      }
+
       .span-4,
       .span-5,
       .span-7,
@@ -450,9 +472,12 @@
 <body>
   <header>
     <div class="topbar">
-      <div>
-        <h1>Room 113</h1>
-        <p class="subtitle">Classroom website</p>
+      <div class="brand-lockup">
+        <img class="site-logo" src="double-check-learning-logo.png" alt="Double Check Learning logo">
+        <div>
+          <h1>Room 113</h1>
+          <p class="subtitle">Classroom website</p>
+        </div>
       </div>
       <div class="button-row">
         <button class="secondary" id="homeButton">Home</button>
