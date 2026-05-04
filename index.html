@@ -688,7 +688,16 @@
       students: [],
       points: [],
       history: [],
-      freckle: {},
+      freckle: {
+        "aidan rossler": {
+          name: "Aidan Rossler",
+          accuracy: "0",
+          timePracticed: "2",
+          questions: "4",
+          lastPracticed: "Math Adaptive Practice",
+          importedAt: "2026-05-04"
+        }
+      },
       settings: {
         funFridayLimit: 5,
         currentWeekStart: getFriday(today),
@@ -761,6 +770,10 @@
         const nextState = {
           ...starterState,
           ...parsed,
+          freckle: {
+            ...starterState.freckle,
+            ...(parsed.freckle || {})
+          },
           settings: {
             ...starterState.settings,
             ...parsed.settings
