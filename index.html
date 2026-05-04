@@ -678,7 +678,9 @@
       { name: "Matthew Bohms", password: "Bohms" },
       { name: "Aidan Rossler", password: "Rossler" }
     ];
+    const idleLogoutMs = 2 * 60 * 60 * 1000;
     let activeDemoStudent = demoStudents[0];
+    let idleLogoutTimer;
     const today = new Date();
 
     const starterState = {
@@ -744,6 +746,9 @@
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
     document.getElementById("importFreckleButton").addEventListener("click", () => document.getElementById("freckleFile").click());
     document.getElementById("freckleFile").addEventListener("change", importFreckleCsv);
+    ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach(eventName => {
+      document.addEventListener(eventName, resetIdleLogoutTimer, { passive: true });
+    });
 
     render();
 
@@ -801,6 +806,7 @@
 
     function showHome() {
       window.teacherToolsRequested = false;
+      clearIdleLogoutTimer();
       document.body.classList.remove("tracker-open", "student-open");
       teacherLogin.classList.remove("active");
       studentLogin.classList.remove("active");
@@ -808,6 +814,25 @@
       studentDemoPassword.value = "";
       loginMessage.textContent = "";
       studentLoginMessage.textContent = "";
+    }
+
+    function clearIdleLogoutTimer() {
+      if (idleLogoutTimer) {
+        clearTimeout(idleLogoutTimer);
+        idleLogoutTimer = undefined;
+      }
+    }
+
+    window.clearIdleLogoutTimer = clearIdleLogoutTimer;
+
+    function resetIdleLogoutTimer() {
+      if (!document.body.classList.contains("tracker-open") && !document.body.classList.contains("student-open")) {
+        clearIdleLogoutTimer();
+        return;
+      }
+
+      clearIdleLogoutTimer();
+      idleLogoutTimer = setTimeout(logoutCurrentScreen, idleLogoutMs);
     }
 
     function logoutCurrentScreen() {
@@ -827,6 +852,7 @@
       teacherPasscode.value = "";
       loginMessage.textContent = "";
       render();
+      resetIdleLogoutTimer();
     }
 
     function openStudentPage() {
@@ -837,6 +863,7 @@
       studentDemoPassword.value = "";
       studentLoginMessage.textContent = "";
       renderStudentPage();
+      resetIdleLogoutTimer();
     }
 
     function checkTeacherPasscode(event) {
@@ -1469,6 +1496,7 @@
       window.teacherToolsRequested = false;
       await signOut(auth);
       document.body.classList.remove("tracker-open", "student-open");
+      if (window.clearIdleLogoutTimer) window.clearIdleLogoutTimer();
       googleAuthStatus.textContent = "Signed out.";
     }
 
