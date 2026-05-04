@@ -599,35 +599,6 @@
         </form>
       </section>
 
-      <section class="panel span-7">
-        <h2>Add Point</h2>
-        <form id="pointForm">
-          <div class="form-row">
-            <div class="field-4">
-              <label for="pointStudent">Student</label>
-              <select id="pointStudent"></select>
-            </div>
-            <div class="field-4">
-              <label for="pointReason">Reason</label>
-              <select id="pointReason">
-                <option>Not prepared</option>
-                <option>Class disruption</option>
-                <option>Missing work</option>
-                <option>Off task</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="field-3">
-              <label for="pointValue">Points</label>
-              <input id="pointValue" type="number" min="1" max="10" value="1">
-            </div>
-            <div class="field-12">
-              <button type="submit">Add Point</button>
-            </div>
-          </div>
-        </form>
-      </section>
-
       <section class="panel span-12">
         <div class="button-row">
           <h2 style="margin-right:auto;">Students</h2>
@@ -808,12 +779,8 @@
     let state = loadState();
 
     const studentForm = document.getElementById("studentForm");
-    const pointForm = document.getElementById("pointForm");
     const studentName = document.getElementById("studentName");
     const studentHouse = document.getElementById("studentHouse");
-    const pointStudent = document.getElementById("pointStudent");
-    const pointReason = document.getElementById("pointReason");
-    const pointValue = document.getElementById("pointValue");
     const houseStats = document.getElementById("houseStats");
     const studentTable = document.getElementById("studentTable");
     const recentLog = document.getElementById("recentLog");
@@ -841,7 +808,6 @@
     const studentScratchStats = document.getElementById("studentScratchStats");
 
     studentForm.addEventListener("submit", addStudent);
-    pointForm.addEventListener("submit", addPoint);
     document.getElementById("homeButton").addEventListener("click", showHome);
     document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
@@ -1171,27 +1137,6 @@
       render();
     }
 
-    function addPoint(event) {
-      event.preventDefault();
-      const student = state.students.find(item => item.id === pointStudent.value);
-      const value = Number(pointValue.value);
-      if (!student || value < 1) return;
-
-      state.points.push({
-        id: crypto.randomUUID(),
-        studentId: student.id,
-        studentName: student.name,
-        house: student.house,
-        reason: pointReason.value,
-        value,
-        date: new Date().toISOString().slice(0, 10)
-      });
-
-      pointValue.value = 1;
-      saveState();
-      render();
-    }
-
     function addQuickPoint(studentId) {
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
@@ -1425,8 +1370,6 @@
       const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
 
       studentHouse.innerHTML = state.houses.map(house => `<option value="${escapeAttribute(house)}">${escapeHtml(house)}</option>`).join("");
-      pointStudent.innerHTML = state.students.map(student => `<option value="${student.id}">${escapeHtml(student.name)}</option>`).join("");
-      pointForm.querySelector("button").disabled = state.students.length === 0;
       funFridayLimit.value = state.settings.funFridayLimit;
       limitText.textContent = state.settings.funFridayLimit;
       cleanCount.textContent = cleanStudents.length;
