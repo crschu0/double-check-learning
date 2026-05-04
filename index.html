@@ -383,6 +383,10 @@
       color: var(--muted);
     }
 
+    .hidden-fallback {
+      display: none;
+    }
+
     @media (max-width: 820px) {
       .topbar {
         align-items: flex-start;
@@ -459,8 +463,8 @@
 
     <section class="panel teacher-login" id="teacherLogin">
       <h2>Teacher Login</h2>
-      <p class="muted">Enter the teacher passcode to open the house points tracker on this device.</p>
-      <form id="loginForm">
+      <p class="muted">Sign in with an approved Google account to open the house points tracker.</p>
+      <form id="loginForm" class="hidden-fallback">
         <div class="form-row">
           <div class="field-12">
             <label for="teacherPasscode">Passcode</label>
@@ -477,7 +481,7 @@
         <button type="button" class="secondary" id="googleSignOutButton">Sign Out</button>
         <p id="googleAuthStatus" class="auth-status">Google sign-in is not configured yet.</p>
       </div>
-      <p class="notice">The passcode is a backup for this device. Google sign-in with approval is the better path once Firebase is configured.</p>
+      <p class="notice">Only approved school accounts can open the tracker.</p>
     </section>
 
     <section class="panel teacher-login" id="studentLogin">
