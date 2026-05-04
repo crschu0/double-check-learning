@@ -775,11 +775,15 @@
     }
 
     function showTeacherLogin() {
+      window.teacherToolsRequested = true;
       document.body.classList.remove("tracker-open", "student-open");
       studentLogin.classList.remove("active");
       teacherLogin.classList.add("active");
       loginMessage.textContent = "";
       teacherPasscode.focus();
+      if (window.openTeacherToolsIfSignedIn) {
+        window.openTeacherToolsIfSignedIn();
+      }
     }
 
     function showStudentLogin() {
@@ -791,6 +795,7 @@
     }
 
     function showHome() {
+      window.teacherToolsRequested = false;
       document.body.classList.remove("tracker-open", "student-open");
       teacherLogin.classList.remove("active");
       studentLogin.classList.remove("active");
@@ -1409,6 +1414,7 @@
 
     let auth;
     let db;
+    window.teacherToolsRequested = false;
 
     if (hasFirebaseConfig(firebaseConfig)) {
       const app = initializeApp(firebaseConfig);
@@ -1419,6 +1425,12 @@
       googleSignInButton.addEventListener("click", signInWithGoogle);
       googleSignOutButton.addEventListener("click", () => signOut(auth));
       onAuthStateChanged(auth, handleSignedInUser);
+      window.openTeacherToolsIfSignedIn = () => {
+        window.teacherToolsRequested = true;
+        if (auth.currentUser) {
+          handleSignedInUser(auth.currentUser);
+        }
+      };
     } else {
       googleSignInButton.disabled = true;
       googleSignOutButton.disabled = true;
@@ -1429,6 +1441,7 @@
     }
 
     async function signInWithGoogle() {
+      window.teacherToolsRequested = true;
       googleAuthStatus.textContent = "Opening Google sign-in...";
       try {
         await signInWithPopup(auth, new GoogleAuthProvider());
@@ -1450,21 +1463,23 @@
 
       if (teacherEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Teacher access approved.`;
-        openApprovedTracker();
-        await loadAccessRequests();
+        if (window.teacherToolsRequested) {
+          openApprovedTracker();
+          await loadAccessRequests();
+        }
         return;
       }
 
       if (approvedEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        openApprovedTracker();
+        if (window.teacherToolsRequested) openApprovedTracker();
         return;
       }
 
       const approval = await getDoc(doc(db, "approvedUsers", user.uid));
       if (approval.exists() && approval.data().status === "approved") {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        openApprovedTracker();
+        if (window.teacherToolsRequested) openApprovedTracker();
         return;
       }
 
