@@ -486,7 +486,7 @@
 
     <section class="panel teacher-login" id="studentLogin">
       <h2>Student Demo Login</h2>
-      <p class="muted">Prototype login for Matthew Bohms.</p>
+      <p class="muted">Prototype login for student dashboards.</p>
       <form id="studentLoginForm">
         <div class="form-row">
           <div class="field-12">
@@ -635,7 +635,7 @@
 
   <main id="studentApp" class="student-app">
     <section class="hero-panel">
-      <h2>Matthew Bohms</h2>
+      <h2 id="studentDashboardName">Student Dashboard</h2>
       <p class="muted">Student progress dashboard prototype</p>
     </section>
 
@@ -670,8 +670,11 @@
     const storageKey = "room113HouseTracker";
     const passcodeKey = "room113TeacherPasscode";
     const defaultTeacherPasscode = "room113";
-    const demoStudentName = "Matthew Bohms";
-    const demoStudentPassword = "Bohms";
+    const demoStudents = [
+      { name: "Matthew Bohms", password: "Bohms" },
+      { name: "Aidan Rossler", password: "Rossler" }
+    ];
+    let activeDemoStudent = demoStudents[0];
     const today = new Date();
 
     const starterState = {
@@ -712,6 +715,7 @@
     const studentLogin = document.getElementById("studentLogin");
     const studentDemoPassword = document.getElementById("studentDemoPassword");
     const studentLoginMessage = document.getElementById("studentLoginMessage");
+    const studentDashboardName = document.getElementById("studentDashboardName");
     const studentIncentiveStats = document.getElementById("studentIncentiveStats");
     const studentHouseStats = document.getElementById("studentHouseStats");
 
@@ -824,7 +828,9 @@
 
     function checkStudentPassword(event) {
       event.preventDefault();
-      if (studentDemoPassword.value === demoStudentPassword) {
+      const matchedStudent = demoStudents.find(student => student.password === studentDemoPassword.value);
+      if (matchedStudent) {
+        activeDemoStudent = matchedStudent;
         openStudentPage();
         return;
       }
@@ -1167,9 +1173,10 @@
     }
 
     function findDemoStudent() {
-      const target = demoStudentName.toLowerCase();
+      const target = activeDemoStudent.name.toLowerCase();
+      const nameParts = target.split(" ");
       return state.students.find(student => student.name.toLowerCase() === target)
-        || state.students.find(student => student.name.toLowerCase().includes("matthew") && student.name.toLowerCase().includes("bohms"));
+        || state.students.find(student => nameParts.every(part => student.name.toLowerCase().includes(part)));
     }
 
     function renderStudentPage() {
@@ -1177,16 +1184,17 @@
       const weekPoints = currentWeekPoints();
       const weeklyTotals = totalsByHouse(weekPoints);
       const semesterTotals = totalsByHouse(state.points);
+      studentDashboardName.textContent = activeDemoStudent.name;
 
       if (!student) {
         studentIncentiveStats.innerHTML = `
           <div class="stat student-stat">
             <span class="muted">Student record</span>
             <strong>Not found</strong>
-            <span class="muted">Add Matthew Bohms in Teacher Tools to connect live points.</span>
+            <span class="muted">Add ${escapeHtml(activeDemoStudent.name)} in Teacher Tools to connect live points.</span>
           </div>
         `;
-        studentHouseStats.innerHTML = `<p class="empty">House standing will appear after Matthew is added to a house.</p>`;
+        studentHouseStats.innerHTML = `<p class="empty">House standing will appear after this student is added to a house.</p>`;
         return;
       }
 
