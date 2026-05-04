@@ -1185,6 +1185,22 @@
       render();
     }
 
+    function removeLatestPointForStudent(studentId) {
+      const pointIndex = state.points
+        .map((point, index) => ({ point, index }))
+        .reverse()
+        .find(item => item.point.studentId === studentId);
+
+      if (!pointIndex) {
+        alert("There are no points to remove for this student.");
+        return;
+      }
+
+      state.points.splice(pointIndex.index, 1);
+      saveState();
+      render();
+    }
+
     function addHouse() {
       if (!canManageProgram()) return;
       const house = newHouseName.value.trim();
@@ -1438,6 +1454,7 @@
                   <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">+1</button>
+                    <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">-1</button>
                     ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
                   </td>
                 </tr>
