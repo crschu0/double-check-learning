@@ -22,6 +22,10 @@
       box-sizing: border-box;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -454,8 +458,8 @@
         <button class="secondary" id="homeButton">Home</button>
         <button class="secondary" id="logoutButton">Logout</button>
         <button class="secondary" id="teacherButton">Teacher Tools</button>
-        <button class="secondary teacher-control" id="exportButton">Export Backup</button>
-        <button class="secondary teacher-control" id="importButton">Import Backup</button>
+        <button class="secondary teacher-control admin-only" id="exportButton">Export Backup</button>
+        <button class="secondary teacher-control admin-only" id="importButton">Import Backup</button>
         <input id="importFile" type="file" accept="application/json" hidden>
       </div>
     </div>
@@ -553,7 +557,7 @@
         <p><strong>Fun Friday limit:</strong> <span id="limitText">5</span> points</p>
       </section>
 
-      <section class="panel span-5">
+      <section class="panel span-5 admin-only">
         <h2>Add Student</h2>
         <form id="studentForm">
           <div class="form-row">
@@ -602,21 +606,21 @@
       <section class="panel span-12">
         <div class="button-row">
           <h2 style="margin-right:auto;">Students</h2>
-          <button class="secondary" id="startWeekButton">Start New Week</button>
-          <button class="secondary" id="downloadCsvButton">Download CSV</button>
-          <button class="secondary" id="importFreckleButton">Import Freckle CSV</button>
+          <button class="secondary admin-only" id="startWeekButton">Start New Week</button>
+          <button class="secondary admin-only" id="downloadCsvButton">Download CSV</button>
+          <button class="secondary admin-only" id="importFreckleButton">Import Freckle CSV</button>
           <input id="freckleFile" type="file" accept=".csv,text/csv" hidden>
         </div>
         <div id="studentTable"></div>
       </section>
 
-      <section class="panel span-12">
+      <section class="panel span-12 admin-only">
         <h2>Student Progress</h2>
-        <p class="muted">Approved teachers can see every student's incentive, Freckle, and Scratch status here.</p>
+        <p class="muted">Mr. Schuchard can see every student's incentive, Freckle, and Scratch status here.</p>
         <div id="teacherProgressTable"></div>
       </section>
 
-      <section class="panel span-5">
+      <section class="panel span-5 admin-only">
         <h2>Settings</h2>
         <div class="form-row">
           <div class="field-6">
@@ -648,7 +652,7 @@
         <div id="recentLog"></div>
       </section>
 
-      <section class="panel span-12" id="approvalPanel" hidden>
+      <section class="panel span-12 admin-only" id="approvalPanel" hidden>
         <h2>Access Requests</h2>
         <p class="muted">People who sign in with Google but are not approved yet will appear here.</p>
         <div id="accessRequests"></div>
@@ -988,6 +992,7 @@
     }
 
     function savePasscode() {
+      if (!canManageProgram()) return;
       const passcode = newPasscode.value.trim();
       if (!passcode) return;
 
@@ -1009,8 +1014,24 @@
 
     window.setActiveTeacherView = setActiveTeacherView;
 
+    function canManageProgram() {
+      return activeTeacherView.email === "cschuchard@maldenschool.org";
+    }
+
+    window.canManageProgram = canManageProgram;
+
+    function applyTeacherPermissions() {
+      const canManage = canManageProgram();
+      document.querySelectorAll(".admin-only").forEach(element => {
+        element.hidden = !canManage;
+      });
+    }
+
     function renderTeacherIdentity() {
-      activeTeacherViewLabel.textContent = `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). All approved teachers currently see all students and all houses.`;
+      applyTeacherPermissions();
+      activeTeacherViewLabel.textContent = canManageProgram()
+        ? `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). Full access: incentives, Freckle, Scratch, settings, and teacher approvals.`
+        : `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). Limited access: add and remove incentive points only.`;
     }
 
     function getFriday(date) {
@@ -1069,6 +1090,7 @@
 
     function addStudent(event) {
       event.preventDefault();
+      if (!canManageProgram()) return;
       const name = studentName.value.trim();
       const house = studentHouse.value;
       if (!name || !house) return;
@@ -1124,6 +1146,7 @@
     }
 
     function addHouse() {
+      if (!canManageProgram()) return;
       const house = newHouseName.value.trim();
       if (!house || state.houses.includes(house)) return;
       state.houses.push(house);
@@ -1133,6 +1156,7 @@
     }
 
     function saveSettings() {
+      if (!canManageProgram()) return;
       const limit = Number(funFridayLimit.value);
       if (limit >= 1) {
         state.settings.funFridayLimit = limit;
@@ -1142,6 +1166,7 @@
     }
 
     function startNewWeek() {
+      if (!canManageProgram()) return;
       const weekPoints = currentWeekPoints();
       const totals = totalsByHouse(weekPoints);
       const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
@@ -1162,11 +1187,13 @@
     }
 
     function exportBackup() {
+      if (!canManageProgram()) return;
       const file = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
       downloadFile(file, "room-113-house-points-backup.json");
     }
 
     function importBackup(event) {
+      if (!canManageProgram()) return;
       const file = event.target.files[0];
       if (!file) return;
 
@@ -1185,6 +1212,7 @@
     }
 
     function downloadCsv() {
+      if (!canManageProgram()) return;
       const rows = [["Date", "Student", "House", "Reason", "Points"]];
       state.points.forEach(point => {
         rows.push([point.date, point.studentName, point.house, point.reason, point.value]);
@@ -1195,6 +1223,7 @@
     }
 
     function importFreckleCsv(event) {
+      if (!canManageProgram()) return;
       const file = event.target.files[0];
       if (!file) return;
 
@@ -1294,8 +1323,16 @@
     }
 
     function removeStudent(studentId) {
+      if (!canManageProgram()) return;
       if (!confirm("Remove this student from the tracker? Their past points stay in reports.")) return;
       state.students = state.students.filter(student => student.id !== studentId);
+      saveState();
+      render();
+    }
+
+    function removePoint(pointId) {
+      if (!confirm("Remove this point from the tracker?")) return;
+      state.points = state.points.filter(point => point.id !== pointId);
       saveState();
       render();
     }
@@ -1361,7 +1398,7 @@
                   <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">+1</button>
-                    <button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove</button>
+                    ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
                   </td>
                 </tr>
               `;
@@ -1465,6 +1502,7 @@
               <th>Student</th>
               <th>Reason</th>
               <th>Points</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1474,6 +1512,7 @@
                 <td>${escapeHtml(point.studentName)}</td>
                 <td>${escapeHtml(point.reason)}</td>
                 <td>${point.value}</td>
+                <td><button class="quick-button secondary" onclick="removePoint('${point.id}')">Remove Point</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -1807,6 +1846,10 @@
     }
 
     async function loadAccessRequests() {
+      if (!window.canManageProgram || !window.canManageProgram()) {
+        approvalPanel.hidden = true;
+        return;
+      }
       approvalPanel.hidden = false;
       const pendingQuery = query(collection(db, "accessRequests"), where("status", "==", "pending"));
       const snapshot = await getDocs(pendingQuery);
