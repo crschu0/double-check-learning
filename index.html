@@ -357,6 +357,7 @@
       color: var(--ink);
       font-weight: 700;
       text-decoration: none;
+      cursor: pointer;
     }
 
     .dashboard-tab.active {
@@ -608,8 +609,8 @@
       <h2>Teacher View</h2>
       <p id="activeTeacherViewLabel" class="muted">Viewing as approved teacher.</p>
       <div class="dashboard-tabs" aria-label="Teacher dashboard tabs">
-        <a class="dashboard-tab active" href="#trackerApp">Dashboard</a>
-        <a class="dashboard-tab" href="#helpfulTextPanel">Helpful Text</a>
+        <button class="dashboard-tab active" type="button" id="dashboardTab">Dashboard</button>
+        <button class="dashboard-tab admin-only" type="button" id="helpfulTextTab">Helpful Text</button>
       </div>
     </section>
 
@@ -662,7 +663,7 @@
         <div id="teacherProgressTable"></div>
       </section>
 
-      <section class="panel span-12" id="helpfulTextPanel">
+      <section class="panel span-12 admin-only" id="helpfulTextPanel">
         <div class="button-row">
           <h2 style="margin-right:auto;">Helpful Text</h2>
           <button class="secondary" type="button" onclick="copyHelpfulText('highQualityPrintPrompt')">Copy Text</button>
@@ -886,6 +887,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
+    document.getElementById("dashboardTab").addEventListener("click", () => trackerApp.scrollIntoView({ behavior: "smooth" }));
+    document.getElementById("helpfulTextTab").addEventListener("click", () => {
+      document.getElementById("helpfulTextPanel").scrollIntoView({ behavior: "smooth" });
+    });
     document.getElementById("loginForm").addEventListener("submit", checkTeacherPasscode);
     document.getElementById("studentLoginForm").addEventListener("submit", checkStudentPassword);
     document.getElementById("addHouseButton").addEventListener("click", addHouse);
