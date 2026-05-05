@@ -29,6 +29,15 @@ These four pages did not have native 500dpi replacements in the `remastered` fol
 | `1.2.2.png` | `math-assets/final-png/1.2.2-upscaled-500dpi.png` |
 | `1.2 answer cover.png` | `math-assets/final-png/1.2-answer-cover-upscaled-500dpi.png` |
 
+## Crisp Replacements Tested In `Prime Time 1.1 test copy`
+
+Slides 21-26 and 42-48 were replaced with sharpened 500dpi files to improve readability while preserving the original page design.
+
+| Slide Numbers | Replacement Type |
+|---|---|
+| 21-26 | Sharpened student-facing 1.2 pages |
+| 42-48 | Sharpened answer-key pages |
+
 ## Need A Matching 500 DPI Replacement
 
 These current deck images appear to reference older assets, but the exact replacement was not confirmed from the `remastered` list yet:
