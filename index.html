@@ -342,6 +342,28 @@
       display: none;
     }
 
+    .dashboard-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .dashboard-tab {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: #fbfdfe;
+      color: var(--ink);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .dashboard-tab.active {
+      background: var(--ink);
+      color: white;
+    }
+
     body.tracker-open .home-screen {
       display: none;
     }
@@ -393,6 +415,26 @@
       padding: 12px;
       background: #fff7d6;
       color: #594600;
+    }
+
+    .helpful-text-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .helpful-text-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdfe;
+    }
+
+    .helpful-text-card pre {
+      margin: 10px 0 0;
+      white-space: pre-wrap;
+      font: inherit;
+      line-height: 1.45;
+      color: var(--ink);
     }
 
     .error {
@@ -565,6 +607,10 @@
     <section class="panel">
       <h2>Teacher View</h2>
       <p id="activeTeacherViewLabel" class="muted">Viewing as approved teacher.</p>
+      <div class="dashboard-tabs" aria-label="Teacher dashboard tabs">
+        <a class="dashboard-tab active" href="#trackerApp">Dashboard</a>
+        <a class="dashboard-tab" href="#helpfulTextPanel">Helpful Text</a>
+      </div>
     </section>
 
     <div class="grid">
@@ -610,10 +656,37 @@
         <div id="studentTable"></div>
       </section>
 
-      <section class="panel span-12 admin-only">
+      <section class="panel span-12 admin-only" id="helpfulTextPanel">
         <h2>Student Progress</h2>
         <p class="muted">Mr. Schuchard can see every student's incentive, Freckle, and Scratch status here.</p>
         <div id="teacherProgressTable"></div>
+      </section>
+
+      <section class="panel span-12 admin-only">
+        <div class="button-row">
+          <h2 style="margin-right:auto;">Helpful Text</h2>
+          <button class="secondary" type="button" onclick="copyHelpfulText('highQualityPrintPrompt')">Copy Text</button>
+        </div>
+        <div class="helpful-text-list">
+          <article class="helpful-text-card">
+            <h3>Say this to ChatGPT to get high quality print</h3>
+            <pre id="highQualityPrintPrompt">Create this as an image directly in this chat, not as a downloadable file or attachment.
+
+Requirements:
+- 8.5x11 portrait worksheet
+- 500 DPI print quality
+- 4250 x 5500 pixels
+- crisp, sharp, readable text
+- clean vector-like lines
+- no blur, no softness, no compression artifacts
+- flat colors and clear outlines
+- match the original layout/style closely
+
+Before you generate it, confirm that the final image will be 4250 x 5500 pixels and displayed directly in the chat. Do not provide a download link unless I ask for one.
+
+If you cannot display a 4250 x 5500 image directly in the chat, say so clearly instead of giving me a lower-quality download.</pre>
+          </article>
+        </div>
       </section>
 
       <section class="panel span-5 admin-only">
@@ -1346,6 +1419,23 @@
 
     function escapeAttribute(value) {
       return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+
+    async function copyHelpfulText(elementId) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      const text = element.textContent.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Helpful text copied.");
+      } catch (error) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        alert("Text selected. Use Ctrl+C to copy it.");
+      }
     }
 
     function removeStudent(studentId) {
