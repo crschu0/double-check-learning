@@ -1,3 +1,4 @@
 *.png
 source-1.2-remastered/
 !final-png/*.png
+final-png/thumb-*.png

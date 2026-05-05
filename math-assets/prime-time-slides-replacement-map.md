@@ -18,6 +18,17 @@ That means the blur is likely coming from old inserted images, not from Google S
 | `answer homework.png` | `1YKKPigF5hVDrnTxyauhIyarBB8zla2ZW` | `homework_answer_key_500dpi.png` |
 | `answer homework advanced.png` | `1L6rjg0x5BrN9AQCriUGARobMBl79O88A` | `advanced_homework_answer_key_500dpi.png` |
 
+## Tested In `Prime Time 1.1 test copy`
+
+These four pages did not have native 500dpi replacements in the `remastered` folder, so I made faithful upscaled versions from the existing low-res originals. This keeps the original page design instead of redrawing it differently.
+
+| Slide Image Title In Test Copy | Replacement File |
+|---|---|
+| `1.2 cover.png` | `math-assets/final-png/1.2-cover-upscaled-500dpi.png` |
+| `1.2.1.png` | `math-assets/final-png/1.2.1-upscaled-500dpi.png` |
+| `1.2.2.png` | `math-assets/final-png/1.2.2-upscaled-500dpi.png` |
+| `1.2 answer cover.png` | `math-assets/final-png/1.2-answer-cover-upscaled-500dpi.png` |
+
 ## Need A Matching 500 DPI Replacement
 
 These current deck images appear to reference older assets, but the exact replacement was not confirmed from the `remastered` list yet:
