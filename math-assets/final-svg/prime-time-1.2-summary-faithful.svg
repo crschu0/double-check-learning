@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 850 1100">
+  <title>Prime Time 1.2 Summary - Faithful Vector Rebuild</title>
+  <desc>Faithful vector recreation of the original worksheet page for sharp print output.</desc>
+  <defs>
+    <style>
+      .navy{fill:#07123b}.teal{fill:#0b6f7b}.purple{fill:#4a1597}.orange{fill:#f35a1d}.blue{fill:#184fb7}.green{fill:#3f8f2f}.white{fill:#fff}
+      .line{fill:none;stroke-linecap:round;stroke-linejoin:round}.box{fill:#fff;stroke:#0b6f7b;stroke-width:1.5}
+      .body{font-family:Arial, sans-serif;font-size:13px;fill:#07123b}.small{font-family:Arial, sans-serif;font-size:10.5px;fill:#07123b}.label{font-family:Arial, sans-serif;font-size:13px;font-weight:700;fill:#07123b}
+      .head{font-family:Arial, sans-serif;font-weight:900;letter-spacing:.4px}.condensed{font-family:Arial Narrow,Arial,sans-serif;font-weight:900;letter-spacing:.3px}
+    </style>
+  </defs>
+
+  <rect width="850" height="1100" fill="#fff"/>
+  <rect x="0.75" y="0.75" width="848.5" height="1098.5" fill="none" stroke="#222" stroke-width="1.5"/>
+
+  <!-- Header logo -->
+  <g transform="translate(64 18)">
+    <path d="M0 25 L31 55 L78 8" class="line" stroke="#07123b" stroke-width="16"/>
+    <path d="M66 54 L91 79 L139 30" class="line" stroke="#0b7f86" stroke-width="16"/>
+    <text x="178" y="39" class="head navy" font-size="38">DOUBLE CHECK</text>
+    <line x1="180" y1="64" x2="250" y2="64" class="line" stroke="#0b7f86" stroke-width="2"/>
+    <text x="270" y="70" class="head teal" font-size="21" letter-spacing="8">LEARNING</text>
+    <line x1="456" y1="64" x2="530" y2="64" class="line" stroke="#0b7f86" stroke-width="2"/>
+  </g>
+
+  <!-- Number badge and name lines -->
+  <rect x="742" y="0" width="86" height="74" rx="8" class="navy"/>
+  <text x="785" y="53" text-anchor="middle" class="head white" font-size="46">1.2</text>
+  <g transform="translate(560 83)">
+    <text x="0" y="0" class="label" font-size="15">Name:</text>
+    <line x1="58" y1="0" x2="316" y2="0" stroke="#07123b" stroke-width="1.3"/>
+    <text x="0" y="36" class="label" font-size="15">Date:</text>
+    <line x1="58" y1="36" x2="316" y2="36" stroke="#07123b" stroke-width="1.3"/>
+  </g>
+
+  <!-- Lesson title -->
+  <rect x="156" y="116" width="420" height="37" rx="4" class="purple"/>
+  <text x="366" y="142" text-anchor="middle" class="condensed white" font-size="26">PRIME TIME 1.2 - SUMMARY</text>
+  <text x="72" y="217" class="condensed teal" font-size="46">MAKING SENSE OF OUR DATA</text>
+  <g transform="translate(36 246)" stroke="#4a1597" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 8">
+    <line x1="0" y1="0" x2="300" y2="0"/>
+    <line x1="430" y1="0" x2="515" y2="0"/>
+  </g>
+  <g transform="translate(382 226)">
+    <circle cx="14" cy="17" r="13" fill="#ffd72e" stroke="#07123b" stroke-width="2"/>
+    <rect x="8" y="29" width="13" height="9" fill="#4a1597" stroke="#07123b" stroke-width="1.5"/>
+    <path d="M8 14 q6-9 12 0" class="line" stroke="#07123b" stroke-width="1.5"/>
+    <line x1="14" y1="0" x2="14" y2="-9" stroke="#4a1597" stroke-width="2"/>
+    <line x1="-2" y1="8" x2="-10" y2="3" stroke="#4a1597" stroke-width="2"/>
+    <line x1="30" y1="8" x2="38" y2="3" stroke="#4a1597" stroke-width="2"/>
+  </g>
+
+  <!-- Focus box -->
+  <g transform="translate(550 147)">
+    <rect x="0" y="0" width="275" height="126" rx="8" class="box"/>
+    <g transform="translate(34 25)">
+      <circle cx="38" cy="38" r="39" fill="#fff" stroke="#07123b" stroke-width="7"/>
+      <circle cx="38" cy="38" r="25" fill="#fff" stroke="#07123b" stroke-width="7"/>
+      <circle cx="38" cy="38" r="9" class="navy"/>
+      <path d="M38 38 L82 -6" class="line" stroke="#0b7f86" stroke-width="7"/>
+      <path d="M72 -5 L88 -15 L82 6 Z" class="teal"/>
+    </g>
+    <text x="130" y="42" class="condensed teal" font-size="25">OUR FOCUS</text>
+    <text x="130" y="72" class="body" font-size="14">What can we learn about a</text>
+    <text x="130" y="96" class="body" font-size="14">number by looking at its</text>
+    <text x="130" y="120" class="body" font-size="14">factors?</text>
+  </g>
+
+  <!-- Main discovery panel -->
+  <rect x="14" y="295" width="822" height="330" rx="10" class="box"/>
+  <path d="M50 277 H268 L259 312 H42 Z" class="teal"/>
+  <text x="57" y="302" class="condensed white" font-size="26">WHAT WE DISCOVERED</text>
+  <g transform="translate(300 279)">
+    <circle cx="20" cy="19" r="15" fill="#fff" stroke="#07123b" stroke-width="4"/>
+    <line x1="31" y1="31" x2="47" y2="47" stroke="#07123b" stroke-width="5" stroke-linecap="round"/>
+    <line x1="38" y1="38" x2="48" y2="48" stroke="#f35a1d" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g stroke="#0b6f7b" stroke-width="1.1" stroke-dasharray="1 5">
+    <line x1="178" y1="323" x2="178" y2="606"/>
+    <line x1="354" y1="323" x2="354" y2="606"/>
+    <line x1="520" y1="323" x2="520" y2="606"/>
+    <line x1="682" y1="323" x2="682" y2="606"/>
+  </g>
+
+  <!-- Card 1 -->
+  <g transform="translate(30 323)">
+    <circle cx="12" cy="13" r="14" class="teal"/><text x="12" y="20" text-anchor="middle" class="head white" font-size="19">1</text>
+    <text x="36" y="18" class="condensed teal" font-size="17">PRIME NUMBERS</text><text x="53" y="41" class="condensed teal" font-size="17">ARE BEST</text>
+    <g transform="translate(47 80)">
+      <path d="M18 25 h55 v48 h-55 z" fill="#ffd22f" stroke="#07123b" stroke-width="3"/>
+      <rect x="31" y="8" width="29" height="16" rx="2" fill="#ffd22f" stroke="#07123b" stroke-width="3"/>
+      <path d="M18 31 q-29 2 -17 34 q10 27 31 23" fill="none" stroke="#07123b" stroke-width="3"/>
+      <path d="M73 31 q29 2 17 34 q-10 27 -31 23" fill="none" stroke="#07123b" stroke-width="3"/>
+      <path d="M45 38 l8 17 l19 2 l-14 13 l4 19 l-17-9 l-17 9 l4-19 l-14-13 l19-2z" fill="#0b6f7b" stroke="#07123b" stroke-width="2"/>
+      <rect x="33" y="73" width="25" height="18" fill="#ffd22f" stroke="#07123b" stroke-width="3"/>
+      <rect x="21" y="91" width="49" height="7" fill="#ffd22f" stroke="#07123b" stroke-width="3"/>
+      <line x1="-14" y1="45" x2="-28" y2="36" stroke="#0b6f7b" stroke-width="3"/><line x1="-11" y1="62" x2="-27" y2="62" stroke="#0b6f7b" stroke-width="3"/><line x1="105" y1="45" x2="119" y2="36" stroke="#0b6f7b" stroke-width="3"/><line x1="102" y1="62" x2="118" y2="62" stroke="#0b6f7b" stroke-width="3"/>
+    </g>
+    <text x="0" y="210" class="body">Prime numbers have</text><text x="0" y="230" class="body">exactly 2 factors: 1 and</text><text x="0" y="250" class="body">themselves. Your opponent</text><text x="0" y="270" class="body">only gets 1 point, so you</text><text x="0" y="290" class="body">get the full value of the</text><text x="0" y="310" class="body">number!</text>
+    <rect x="0" y="333" width="143" height="55" rx="6" fill="#f8fff8" stroke="#3f8f2f"/>
+    <text x="72" y="351" text-anchor="middle" class="label">Examples:</text><text x="72" y="376" text-anchor="middle" class="head navy" font-size="16">2, 3, 5, 7, 11, 13, ...</text>
+  </g>
+
+  <!-- Card 2 -->
+  <g transform="translate(195 323)">
+    <circle cx="12" cy="13" r="14" class="orange"/><text x="12" y="20" text-anchor="middle" class="head white" font-size="19">2</text>
+    <text x="35" y="18" class="condensed orange" font-size="16">COMPOSITE NUMBERS</text><text x="57" y="41" class="condensed orange" font-size="16">CAN BE RISKY</text>
+    <g transform="translate(54 83)"><path d="M43 0 L85 78 H0 Z" fill="#ffbf24" stroke="#07123b" stroke-width="3"/><path d="M43 0 L85 78 H0 Z" fill="none" stroke="#f35a1d" stroke-width="6"/><line x1="43" y1="24" x2="43" y2="50" stroke="#07123b" stroke-width="8" stroke-linecap="round"/><circle cx="43" cy="65" r="5" class="navy"/></g>
+    <text x="0" y="210" class="body">Composite numbers have</text><text x="0" y="230" class="body">more than 2 factors.</text><text x="0" y="250" class="body">The more factors a</text><text x="0" y="270" class="body">number has, the more</text><text x="0" y="290" class="body">points your opponent</text><text x="0" y="310" class="body">will score.</text>
+    <rect x="0" y="333" width="143" height="55" rx="6" fill="#fff8f4" stroke="#f35a1d"/>
+    <text x="72" y="351" text-anchor="middle" class="label orange">Examples:</text><text x="72" y="376" text-anchor="middle" class="head navy" font-size="16">4, 6, 8, 9, 10, 12, ...</text>
+  </g>
+
+  <!-- Card 3 -->
+  <g transform="translate(370 323)">
+    <circle cx="12" cy="13" r="14" class="blue"/><text x="12" y="20" text-anchor="middle" class="head white" font-size="19">3</text>
+    <text x="35" y="18" class="condensed blue" font-size="16">MORE FACTORS =</text><text x="70" y="41" class="condensed blue" font-size="16">MORE RISK</text>
+    <g transform="translate(55 84)"><rect x="0" y="59" width="17" height="20" class="blue" stroke="#07123b" stroke-width="2"/><rect x="25" y="48" width="17" height="31" class="blue" stroke="#07123b" stroke-width="2"/><rect x="50" y="34" width="17" height="45" class="blue" stroke="#07123b" stroke-width="2"/><rect x="75" y="17" width="17" height="62" class="blue" stroke="#07123b" stroke-width="2"/><path d="M0 44 C35 36 63 19 92 0" class="line" stroke="#07123b" stroke-width="5"/><path d="M76 0 h18 v18" fill="none" stroke="#07123b" stroke-width="5" stroke-linecap="round"/></g>
+    <text x="0" y="210" class="body">Numbers with many</text><text x="0" y="230" class="body">factors give your</text><text x="0" y="250" class="body">opponent more points.</text><text x="0" y="270" class="body">Try to avoid numbers</text><text x="0" y="290" class="body">with lots of factor pairs!</text>
+    <rect x="0" y="333" width="136" height="55" rx="6" fill="#f5f9ff" stroke="#184fb7"/>
+    <text x="68" y="351" text-anchor="middle" class="label blue">Examples (high risk):</text><text x="68" y="376" text-anchor="middle" class="head navy" font-size="16">24, 30</text>
+  </g>
+
+  <!-- Card 4 -->
+  <g transform="translate(535 323)">
+    <circle cx="12" cy="13" r="14" class="purple"/><text x="12" y="20" text-anchor="middle" class="head white" font-size="19">4</text>
+    <text x="35" y="18" class="condensed purple" font-size="16">SPECIAL CASE:</text><text x="58" y="41" class="condensed purple" font-size="16">PERFECT NUMBERS</text>
+    <g transform="translate(30 83)"><line x1="52" y1="0" x2="52" y2="86" stroke="#07123b" stroke-width="4"/><line x1="7" y1="20" x2="97" y2="20" stroke="#07123b" stroke-width="4"/><circle cx="52" cy="20" r="12" class="purple" stroke="#07123b" stroke-width="4"/><circle cx="7" cy="20" r="4" class="purple" stroke="#07123b" stroke-width="3"/><circle cx="97" cy="20" r="4" class="purple" stroke="#07123b" stroke-width="3"/><path d="M7 20 l-18 48 h36z" fill="#fff" stroke="#07123b" stroke-width="3"/><path d="M-11 68 q18 14 36 0" class="purple" stroke="#07123b" stroke-width="3"/><path d="M97 20 l-18 48 h36z" fill="#fff" stroke="#07123b" stroke-width="3"/><path d="M79 68 q18 14 36 0" class="purple" stroke="#07123b" stroke-width="3"/><rect x="39" y="78" width="26" height="8" class="purple" stroke="#07123b" stroke-width="3"/><rect x="27" y="88" width="50" height="8" class="purple" stroke="#07123b" stroke-width="3"/></g>
+    <text x="0" y="210" class="body">Sometimes the sum of all</text><text x="0" y="230" class="body">the proper factors equals</text><text x="0" y="250" class="body">the number itself. These</text><text x="0" y="270" class="body">are called perfect</text><text x="0" y="290" class="body">numbers.</text>
+    <rect x="0" y="333" width="136" height="55" rx="6" fill="#fbf8ff" stroke="#4a1597"/>
+    <text x="68" y="351" text-anchor="middle" class="label purple">Examples:</text><text x="68" y="376" text-anchor="middle" class="head navy" font-size="16">6, 28</text>
+  </g>
+
+  <!-- Card 5 -->
+  <g transform="translate(700 323)">
+    <circle cx="12" cy="13" r="14" class="teal"/><text x="12" y="20" text-anchor="middle" class="head white" font-size="19">5</text>
+    <text x="38" y="18" class="condensed teal" font-size="16">STRATEGY:</text><text x="38" y="41" class="condensed teal" font-size="16">CHOOSE WISELY</text>
+    <g transform="translate(48 80)"><path d="M42 0 q35 25 18 74 h-55 q2-26 24-43 q-7 0-13-9 q13-2 26-22z" class="teal" stroke="#07123b" stroke-width="4"/><circle cx="32" cy="27" r="3" class="navy"/><rect x="7" y="75" width="54" height="10" class="navy" stroke="#07123b" stroke-width="3"/><rect x="2" y="86" width="64" height="10" class="teal" stroke="#07123b" stroke-width="3"/><line x1="82" y1="19" x2="92" y2="8" stroke="#0b6f7b" stroke-width="3"/><line x1="86" y1="40" x2="101" y2="40" stroke="#0b6f7b" stroke-width="3"/></g>
+    <text x="0" y="210" class="body">A strong first move gives</text><text x="0" y="230" class="body">you the most points and</text><text x="0" y="250" class="body">limits your opponent's</text><text x="0" y="270" class="body">score.</text>
+    <rect x="0" y="333" width="136" height="55" rx="6" fill="#f5feff" stroke="#0b6f7b"/>
+    <text x="68" y="350" text-anchor="middle" class="label">Best Rule:</text><text x="68" y="369" text-anchor="middle" class="label">Choose a prime</text><text x="68" y="386" text-anchor="middle" class="label">number!</text>
+  </g>
+
+  <!-- Class chart -->
+  <g transform="translate(14 649)">
+    <rect x="0" y="0" width="457" height="205" rx="9" fill="#fff" stroke="#4a1597" stroke-width="1.5"/>
+    <path d="M110 -12 h244 l-7 36 h-230 z" class="purple"/>
+    <text x="232" y="13" text-anchor="middle" class="condensed white" font-size="24">CLASS CHART: NUMBERS 1-30</text>
+    <g transform="translate(14 35)" font-family="Arial, sans-serif" font-size="19" font-weight="700">
+      <rect x="0" y="0" width="443" height="126" fill="#fafafa" stroke="#c9c9c9"/>
+      <g stroke="#c9c9c9" stroke-width="1">
+        <line x1="44.3" y1="0" x2="44.3" y2="126"/><line x1="88.6" y1="0" x2="88.6" y2="126"/><line x1="132.9" y1="0" x2="132.9" y2="126"/><line x1="177.2" y1="0" x2="177.2" y2="126"/><line x1="221.5" y1="0" x2="221.5" y2="126"/><line x1="265.8" y1="0" x2="265.8" y2="126"/><line x1="310.1" y1="0" x2="310.1" y2="126"/><line x1="354.4" y1="0" x2="354.4" y2="126"/><line x1="398.7" y1="0" x2="398.7" y2="126"/>
+        <line x1="0" y1="42" x2="443" y2="42"/><line x1="0" y1="84" x2="443" y2="84"/>
+      </g>
+      <g fill="none" stroke-width="2.4"><path d="M66 8 l14 26 h-28z" stroke="#f35a1d"/><path d="M110 8 l14 26 h-28z" stroke="#f35a1d"/><path d="M198 8 l14 26 h-28z" stroke="#f35a1d"/><path d="M286 8 l14 26 h-28z" stroke="#f35a1d"/><path d="M22 50 l14 26 h-28z" stroke="#f35a1d"/><path d="M110 50 l14 26 h-28z" stroke="#f35a1d"/><path d="M286 50 l14 26 h-28z" stroke="#f35a1d"/><path d="M374 50 l14 26 h-28z" stroke="#f35a1d"/><path d="M110 92 l14 26 h-28z" stroke="#f35a1d"/><path d="M374 92 l14 26 h-28z" stroke="#f35a1d"/><circle cx="154" cy="21" r="14" stroke="#3f8f2f"/><circle cx="242" cy="21" r="14" stroke="#3f8f2f"/><circle cx="330" cy="21" r="14" stroke="#3f8f2f"/><circle cx="374" cy="21" r="14" stroke="#3f8f2f"/><circle cx="419" cy="21" r="14" stroke="#3f8f2f"/><circle cx="66" cy="63" r="14" stroke="#3f8f2f"/><circle cx="154" cy="63" r="14" stroke="#3f8f2f"/><circle cx="198" cy="63" r="14" stroke="#3f8f2f"/><circle cx="242" cy="63" r="14" stroke="#3f8f2f"/><circle cx="330" cy="63" r="14" stroke="#3f8f2f"/><circle cx="419" cy="63" r="14" stroke="#3f8f2f"/><circle cx="22" cy="105" r="14" stroke="#3f8f2f"/><circle cx="66" cy="105" r="14" stroke="#3f8f2f"/><circle cx="154" cy="105" r="14" stroke="#3f8f2f"/><circle cx="198" cy="105" r="14" stroke="#3f8f2f"/><circle cx="242" cy="105" r="14" stroke="#3f8f2f"/><circle cx="286" cy="105" r="14" stroke="#3f8f2f"/><circle cx="330" cy="105" r="14" stroke="#3f8f2f"/><circle cx="419" cy="105" r="14" stroke="#3f8f2f"/></g>
+      <g class="navy" text-anchor="middle">
+        <text x="22" y="27">1</text><text x="66" y="27">2</text><text x="110" y="27">3</text><text x="154" y="27">4</text><text x="198" y="27">5</text><text x="242" y="27">6</text><text x="286" y="27">7</text><text x="330" y="27">8</text><text x="374" y="27">9</text><text x="419" y="27">10</text>
+        <text x="22" y="69">11</text><text x="66" y="69">12</text><text x="110" y="69">13</text><text x="154" y="69">14</text><text x="198" y="69">15</text><text x="242" y="69">16</text><text x="286" y="69">17</text><text x="330" y="69">18</text><text x="374" y="69">19</text><text x="419" y="69">20</text>
+        <text x="22" y="111">21</text><text x="66" y="111">22</text><text x="110" y="111">23</text><text x="154" y="111">24</text><text x="198" y="111">25</text><text x="242" y="111">26</text><text x="286" y="111">27</text><text x="330" y="111">28</text><text x="374" y="111">29</text><text x="419" y="111">30</text>
+      </g>
+    </g>
+    <g transform="translate(18 178)" class="small">
+      <path d="M0 -3 l9 18 h-18z" fill="none" stroke="#f35a1d" stroke-width="2"/><text x="18" y="10">= Prime Number (2 factors)</text>
+      <circle cx="190" cy="6" r="9" fill="none" stroke="#3f8f2f" stroke-width="2"/><text x="205" y="10">= Composite Number (more than 2 factors)</text>
+      <rect x="84" y="29" width="15" height="15" fill="none" stroke="#07123b" stroke-width="2"/><text x="106" y="41">= 1 is neither prime nor composite.</text>
+    </g>
+  </g>
+
+  <!-- Big ideas -->
+  <g transform="translate(488 649)">
+    <rect x="0" y="0" width="348" height="205" rx="9" fill="#fff" stroke="#f35a1d" stroke-width="1.5"/>
+    <path d="M74 -12 h214 l-8 36 h-198 z" class="orange"/>
+    <text x="181" y="13" text-anchor="middle" class="condensed white" font-size="24">BIG IDEAS TO REMEMBER</text>
+    <g transform="translate(35 54)" class="body">
+      <circle cx="0" cy="0" r="13" class="orange"/><path d="M-6 0 l4 5 l9-10" fill="none" stroke="#fff" stroke-width="4"/><text x="28" y="5">Prime numbers are the best first moves.</text>
+      <circle cx="0" cy="39" r="13" class="green"/><path d="M-6 39 l4 5 l9-10" fill="none" stroke="#fff" stroke-width="4"/><text x="28" y="36">Composite numbers give your opponent</text><text x="28" y="55">more points.</text>
+      <circle cx="0" cy="88" r="13" class="blue"/><path d="M-6 88 l4 5 l9-10" fill="none" stroke="#fff" stroke-width="4"/><text x="28" y="93">The more factors a number has, the riskier it is.</text>
+      <circle cx="0" cy="127" r="13" class="purple"/><path d="M-6 127 l4 5 l9-10" fill="none" stroke="#fff" stroke-width="4"/><text x="28" y="132">Perfect numbers tie the game.</text>
+      <circle cx="0" cy="166" r="13" class="teal"/><path d="M-6 166 l4 5 l9-10" fill="none" stroke="#fff" stroke-width="4"/><text x="28" y="163">Choose carefully and always double check</text><text x="28" y="182">your move!</text>
+    </g>
+  </g>
+
+  <!-- Bottom cards -->
+  <g transform="translate(14 884)">
+    <rect x="0" y="0" width="470" height="124" rx="9" class="box"/>
+    <path d="M40 -12 h210 l-7 36 h-197 z" class="teal"/>
+    <text x="145" y="12" text-anchor="middle" class="condensed white" font-size="24">WORDS TO KNOW</text>
+    <g class="small"><line x1="160" y1="30" x2="160" y2="112" stroke="#0b6f7b" stroke-width="1" stroke-dasharray="1 5"/><line x1="315" y1="30" x2="315" y2="112" stroke="#0b6f7b" stroke-width="1" stroke-dasharray="1 5"/><text x="18" y="38" class="label teal">FACTOR</text><text x="18" y="62">A number that divides</text><text x="18" y="78">another number evenly.</text><text x="18" y="104" class="teal">Factors of 12:</text><text x="18" y="120" class="teal">1, 2, 3, 4, 6, 12</text><text x="182" y="38" class="label teal">PRIME NUMBER</text><text x="182" y="62">A number with exactly</text><text x="182" y="78">two factors: 1 and</text><text x="182" y="94">itself.</text><path d="M278 75 l10 18 h-20z" fill="#ffbf24" stroke="#07123b" stroke-width="2"/><text x="182" y="118" class="teal">Examples: 2, 3, 5,</text><text x="182" y="134" class="teal">7, 11</text><text x="335" y="38" class="label teal">COMPOSITE NUMBER</text><text x="335" y="62">A number with more</text><text x="335" y="78">than two factors.</text><circle cx="345" cy="94" r="9" fill="none" stroke="#3f8f2f" stroke-width="2"/><text x="335" y="116" class="teal">Examples: 2, 6, 8,</text><text x="335" y="132" class="teal">9, 10</text></g>
+  </g>
+  <g transform="translate(498 884)">
+    <rect x="0" y="0" width="338" height="124" rx="9" class="box"/>
+    <path d="M74 -12 h190 l-7 36 h-176 z" class="navy"/>
+    <text x="169" y="12" text-anchor="middle" class="condensed white" font-size="24">REFLECT</text>
+    <text x="24" y="42" class="small">What strategy worked best for you?</text>
+    <line x1="24" y1="66" x2="314" y2="66" stroke="#bfcbd0" stroke-width="1.5"/><line x1="24" y1="84" x2="314" y2="84" stroke="#bfcbd0" stroke-width="1.5"/>
+    <text x="24" y="103" class="small">What will you do differently next time?</text>
+    <line x1="24" y1="120" x2="314" y2="120" stroke="#bfcbd0" stroke-width="1.5"/>
+    <g transform="translate(292 27)"><circle cx="0" cy="11" r="9" class="teal" stroke="#07123b" stroke-width="2"/><circle cx="15" cy="6" r="12" class="teal" stroke="#07123b" stroke-width="2"/><circle cx="31" cy="13" r="10" class="teal" stroke="#07123b" stroke-width="2"/><circle cx="-16" cy="28" r="4" class="teal" stroke="#07123b" stroke-width="2"/></g>
+  </g>
+
+  <!-- Footer -->
+  <rect x="0" y="1021" width="850" height="79" class="navy"/>
+  <g transform="translate(260 1042)">
+    <path d="M0 21 L18 39 L55 1" class="line" stroke="#fff" stroke-width="10"/>
+    <path d="M41 39 L57 55 L93 18" class="line" stroke="#0b7f86" stroke-width="10"/>
+    <text x="125" y="37" font-family="Arial, sans-serif" font-size="24" font-weight="900" fill="#fff">Always <tspan fill="#0bb0aa">Double Check</tspan> your move.</text>
+    <path d="M430 26 l12 -12 M442 39 l16 -2 M426 48 l8 12" class="line" stroke="#ffcf24" stroke-width="4"/>
+  </g>
+</svg>

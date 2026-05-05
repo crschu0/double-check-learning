@@ -6,6 +6,10 @@ Created a clean vector master for the summary page:
 
 - `final-svg/prime-time-1.2-summary.svg`
 
+The first version was a cleaner redesign and was too different from the original. Created a second, more faithful rebuild:
+
+- `final-svg/prime-time-1.2-summary-faithful.svg`
+
 Source files used for visual reference:
 
 - `summary-page-500dpi.png`
@@ -32,7 +36,7 @@ Keep:
 
 ## Next Steps
 
-1. Review the SVG master for accuracy.
+1. Review `prime-time-1.2-summary-faithful.svg` for accuracy.
 2. Export to a 4250 x 5500 PNG for Google Slides.
 3. Replace the summary page image in the appropriate Slides deck.
 4. Move old duplicate images into `archive-old-images` instead of deleting immediately.
