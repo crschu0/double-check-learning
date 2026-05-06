@@ -58,6 +58,7 @@
       align-items: center;
       gap: 14px;
       min-width: 0;
+      cursor: pointer;
     }
 
     .site-logo {
@@ -85,6 +86,12 @@
     .subtitle {
       margin: 0;
       color: #e7f3f7;
+    }
+
+    .brand-lockup:focus-visible {
+      outline: 3px solid white;
+      outline-offset: 6px;
+      border-radius: 8px;
     }
 
     main {
@@ -515,7 +522,7 @@
 <body>
   <header>
     <div class="topbar">
-      <div class="brand-lockup">
+      <div class="brand-lockup" id="brandHomeLink" role="button" tabindex="0" aria-label="Go to home screen">
         <img class="site-logo" src="double-check-learning-logo.png" alt="Double Check Learning logo">
         <div>
           <h1>Room 113</h1>
@@ -883,11 +890,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     studentForm.addEventListener("submit", addStudent);
     document.getElementById("homeButton").addEventListener("click", showHome);
+    document.getElementById("brandHomeLink").addEventListener("click", showHome);
+    document.getElementById("brandHomeLink").addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showHome();
+      }
+    });
     document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
-    document.getElementById("dashboardTab").addEventListener("click", () => trackerApp.scrollIntoView({ behavior: "smooth" }));
+    document.getElementById("dashboardTab").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
     document.getElementById("helpfulTextTab").addEventListener("click", () => {
       document.getElementById("helpfulTextPanel").scrollIntoView({ behavior: "smooth" });
     });
@@ -1033,6 +1047,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       studentDemoPassword.value = "";
       loginMessage.textContent = "";
       studentLoginMessage.textContent = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function clearIdleLogoutTimer() {
@@ -1073,6 +1088,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       renderTeacherIdentity();
       render();
       resetIdleLogoutTimer();
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
     }
 
     window.openTeacherTracker = openTracker;
@@ -1591,17 +1607,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function allProgressRecords() {
       const names = new Map();
       state.students.forEach(student => names.set(student.name.toLowerCase(), { name: student.name, student }));
-      Object.values(state.freckle || {}).forEach(freckle => {
-        if (!names.has(freckle.name.toLowerCase())) {
-          names.set(freckle.name.toLowerCase(), { name: freckle.name, student: findTrackerStudentByName(freckle.name) });
-        }
-      });
-      Object.keys(state.scratch || {}).forEach(name => {
-        if (!names.has(name)) {
-          const label = titleCaseName(name);
-          names.set(name, { name: label, student: findTrackerStudentByName(label) });
-        }
-      });
       return Array.from(names.values()).sort((a, b) => a.name.localeCompare(b.name));
     }
 
@@ -1610,10 +1615,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const nameParts = target.split(" ");
       return state.students.find(student => student.name.toLowerCase() === target)
         || state.students.find(student => nameParts.every(part => student.name.toLowerCase().includes(part)));
-    }
-
-    function titleCaseName(name) {
-      return name.split(" ").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
     }
 
     function getScratchRecord(studentName) {
@@ -1690,12 +1691,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           <div class="stat student-stat">
             <span class="muted">Student record</span>
             <strong>Not found</strong>
-            <span class="muted">Add ${escapeHtml(activeDemoStudent.name)} in Teacher Tools to connect live points.</span>
+            <span class="muted">${escapeHtml(activeDemoStudent.name)} is not currently in the incentive tracker.</span>
           </div>
         `;
-        studentHouseStats.innerHTML = `<p class="empty">House standing will appear after this student is added to a house.</p>`;
-        renderFreckleStats(activeDemoStudent.name);
-        renderScratchStats(activeDemoStudent.name);
+        studentHouseStats.innerHTML = `<p class="empty">No house or incentive data is shown for students who are not in the tracker.</p>`;
+        studentFreckleStats.innerHTML = `<p class="empty">No Freckle data is shown for students who are not in the tracker.</p>`;
+        studentScratchStats.innerHTML = `<p class="empty">No Scratch data is shown for students who are not in the tracker.</p>`;
         return;
       }
 
