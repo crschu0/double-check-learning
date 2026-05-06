@@ -445,6 +445,14 @@
       color: var(--ink);
     }
 
+    .dream-frame {
+      width: 100%;
+      min-height: 620px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101719;
+    }
+
     .error {
       color: var(--danger);
       font-weight: 700;
@@ -533,6 +541,7 @@
         <button class="secondary" id="homeButton">Home</button>
         <button class="secondary" id="logoutButton">Logout</button>
         <button class="secondary" id="teacherButton">Teacher Tools</button>
+        <button class="secondary teacher-control admin-only" id="dreamsButton">Dreams</button>
         <button class="secondary teacher-control admin-only" id="exportButton">Export Backup</button>
         <button class="secondary teacher-control admin-only" id="importButton">Import Backup</button>
         <input id="importFile" type="file" accept="application/json" hidden>
@@ -618,6 +627,7 @@
       <div class="dashboard-tabs" aria-label="Teacher dashboard tabs">
         <button class="dashboard-tab active" type="button" id="dashboardTab">Dashboard</button>
         <button class="dashboard-tab admin-only" type="button" id="helpfulTextTab">Helpful Text</button>
+        <button class="dashboard-tab admin-only" type="button" id="dreamsTab">Dreams</button>
       </div>
     </section>
 
@@ -695,6 +705,12 @@ Before you generate it, confirm that the final image will be 4250 x 5500 pixels 
 If you cannot display a 4250 x 5500 image directly in the chat, say so clearly instead of giving me a lower-quality download.</pre>
           </article>
         </div>
+      </section>
+
+      <section class="panel span-12 admin-only" id="dreamsPanel">
+        <h2>Dreams</h2>
+        <p class="muted">The Apple at the Crossing</p>
+        <iframe class="dream-frame" title="The Apple at the Crossing animated dream film" src="dreams.html"></iframe>
       </section>
 
       <section class="panel span-5 admin-only">
@@ -899,11 +915,17 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     });
     document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
+    document.getElementById("dreamsButton").addEventListener("click", () => {
+      document.getElementById("dreamsPanel").scrollIntoView({ behavior: "smooth" });
+    });
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
     document.getElementById("dashboardTab").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
     document.getElementById("helpfulTextTab").addEventListener("click", () => {
       document.getElementById("helpfulTextPanel").scrollIntoView({ behavior: "smooth" });
+    });
+    document.getElementById("dreamsTab").addEventListener("click", () => {
+      document.getElementById("dreamsPanel").scrollIntoView({ behavior: "smooth" });
     });
     document.getElementById("loginForm").addEventListener("submit", checkTeacherPasscode);
     document.getElementById("studentLoginForm").addEventListener("submit", checkStudentPassword);

@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Apple at the Crossing</title>
+  <style>
+    :root {
+      --sky: #9ec7d8;
+      --haze: #f4d8a8;
+      --field: #7c9868;
+      --field-dark: #526d48;
+      --road: #4f5857;
+      --road-line: #d8d2a6;
+      --rail: #2f3334;
+      --tie: #6c4935;
+      --truck: #d97834;
+      --truck-dark: #8f4320;
+      --cab: #ecd8b9;
+      --apple: #8f1118;
+      --ink: #172327;
+      --caption: #fbf5e7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: #101719;
+      color: var(--caption);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    main {
+      width: min(1180px, 100%);
+    }
+
+    .screen {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 360px;
+      background:
+        radial-gradient(circle at 77% 15%, rgba(255,255,225,.72) 0 6%, transparent 13%),
+        linear-gradient(180deg, var(--sky) 0 49%, var(--field) 49% 100%);
+      border: 1px solid rgba(255, 255, 255, .18);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, .42);
+      isolation: isolate;
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.05), transparent 18% 82%, rgba(0,0,0,.16)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px);
+      mix-blend-mode: soft-light;
+      z-index: 50;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      animation: sceneFade 70s linear infinite;
+    }
+
+    .scene-1 { animation-delay: 0s; }
+    .scene-2 { animation-delay: -56s; }
+    .scene-3 { animation-delay: -42s; }
+    .scene-4 { animation-delay: -28s; }
+    .scene-5 { animation-delay: -14s; }
+
+    @keyframes sceneFade {
+      0%, 19.2% { opacity: 1; }
+      20%, 100% { opacity: 0; }
+    }
+
+    .sun {
+      position: absolute;
+      top: 7%;
+      right: 17%;
+      width: 78px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #fff4bc;
+      box-shadow: 0 0 35px 14px rgba(255, 234, 150, .35);
+    }
+
+    .cloud {
+      position: absolute;
+      top: 13%;
+      left: -25%;
+      width: 26%;
+      height: 7%;
+      border-radius: 999px;
+      background: rgba(255,255,255,.5);
+      filter: blur(.5px);
+      animation: cloudDrift 70s linear infinite;
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: "";
+      position: absolute;
+      bottom: 15%;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    .cloud::before {
+      left: 18%;
+      width: 24%;
+      height: 160%;
+    }
+
+    .cloud::after {
+      left: 46%;
+      width: 32%;
+      height: 190%;
+    }
+
+    @keyframes cloudDrift {
+      to { transform: translateX(560%); }
+    }
+
+    .driveway {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 52%;
+      height: 43%;
+      background: linear-gradient(26deg, #4f5857 0 48%, transparent 49%);
+      clip-path: polygon(0 28%, 50% 8%, 100% 100%, 0 100%);
+    }
+
+    .yard {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 56%;
+      height: 43%;
+      background:
+        linear-gradient(145deg, transparent 0 56%, #55714f 56% 100%);
+    }
+
+    .track {
+      position: absolute;
+      left: -8%;
+      width: 116%;
+      height: 8%;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 26px, var(--tie) 26px 35px, transparent 35px 64px),
+        linear-gradient(0deg, transparent 0 28%, var(--rail) 28% 35%, transparent 35% 61%, var(--rail) 61% 68%, transparent 68%);
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.15));
+    }
+
+    .track.one { top: 46%; }
+    .track.two { top: 55%; }
+
+    .train {
+      position: absolute;
+      left: -95%;
+      width: 86%;
+      height: 8%;
+      display: flex;
+      gap: 1.5%;
+      animation: trainPass 70s linear infinite;
+      z-index: 6;
+    }
+
+    .train.one {
+      top: 43.7%;
+      animation-delay: 1.8s;
+    }
+
+    .train.two {
+      top: 52.8%;
+      animation-delay: 4.2s;
+    }
+
+    .car {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      border-radius: 3px;
+      background: #394e5e;
+      border-top: 5px solid #bf5d38;
+      box-shadow: inset 0 -9px 0 rgba(0,0,0,.16);
+      position: relative;
+    }
+
+    .car::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 28%;
+      height: 22%;
+      background: repeating-linear-gradient(90deg, rgba(240,244,230,.75) 0 18px, transparent 18px 28px);
+    }
+
+    @keyframes trainPass {
+      0%, 3% { transform: translateX(0); }
+      16%, 100% { transform: translateX(250%); }
+    }
+
+    .road {
+      position: absolute;
+      background: var(--road);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
+    }
+
+    .road.left-turn {
+      left: 30%;
+      bottom: -8%;
+      width: 17%;
+      height: 65%;
+      transform: rotate(-24deg);
+    }
+
+    .road.parallel {
+      left: 35%;
+      top: 67%;
+      width: 55%;
+      height: 12%;
+      transform: rotate(-2deg);
+    }
+
+    .road.cross {
+      right: 7%;
+      top: 42%;
+      width: 14%;
+      height: 65%;
+      transform: rotate(-20deg);
+    }
+
+    .road.country {
+      left: -6%;
+      top: 65%;
+      width: 52%;
+      height: 15%;
+      transform: rotate(-14deg);
+    }
+
+    .road.dead {
+      left: 52%;
+      top: 66%;
+      width: 16%;
+      height: 16%;
+      clip-path: polygon(0 0, 100% 18%, 83% 100%, 0 85%);
+      background: #59615f;
+    }
+
+    .stripe {
+      position: absolute;
+      inset: 47% 0 auto;
+      height: 4px;
+      background: repeating-linear-gradient(90deg, transparent 0 22px, var(--road-line) 22px 46px, transparent 46px 70px);
+      opacity: .75;
+    }
+
+    .truck {
+      position: absolute;
+      width: 13%;
+      min-width: 96px;
+      aspect-ratio: 2.15 / 1;
+      z-index: 15;
+      transform-origin: 50% 72%;
+    }
+
+    .pickup {
+      left: 11%;
+      bottom: 20%;
+      animation: pickupPath 70s linear infinite;
+    }
+
+    .apple-truck {
+      left: 7%;
+      bottom: 12%;
+      transform: scale(.88);
+      opacity: 0;
+      animation: appleTruckPath 70s linear infinite;
+      z-index: 12;
+    }
+
+    .truck .bed,
+    .truck .cab {
+      position: absolute;
+      bottom: 30%;
+      height: 42%;
+      border-radius: 5px 5px 2px 2px;
+      background: var(--truck);
+      border: 2px solid var(--truck-dark);
+    }
+
+    .truck .bed {
+      left: 6%;
+      width: 48%;
+    }
+
+    .truck .cab {
+      right: 8%;
+      width: 38%;
+      background: #df8a48;
+      clip-path: polygon(0 32%, 20% 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .truck .window {
+      position: absolute;
+      right: 16%;
+      top: 23%;
+      width: 21%;
+      height: 25%;
+      background: #caedf2;
+      border-radius: 2px;
+      clip-path: polygon(0 38%, 26% 0, 100% 0, 100% 100%, 0 100%);
+      border: 2px solid rgba(27, 44, 48, .5);
+    }
+
+    .truck .wheel {
+      position: absolute;
+      bottom: 13%;
+      width: 18%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #161d20;
+      border: 4px solid #3c4545;
+    }
+
+    .truck .wheel.left { left: 17%; }
+    .truck .wheel.right { right: 16%; }
+
+    .person {
+      position: absolute;
+      bottom: 48%;
+      width: 8%;
+      aspect-ratio: .5 / 1;
+      z-index: 18;
+      opacity: 0;
+    }
+
+    .joanne {
+      left: 52%;
+      top: 52%;
+      animation: joanneWalk 70s linear infinite;
+    }
+
+    .old-man {
+      left: 72%;
+      top: 52%;
+      opacity: 0;
+      animation: oldManAppear 70s linear infinite;
+    }
+
+    .person::before {
+      content: "";
+      position: absolute;
+      left: 30%;
+      top: 0;
+      width: 40%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #c9926b;
+    }
+
+    .person::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      top: 24%;
+      width: 64%;
+      height: 58%;
+      border-radius: 999px 999px 5px 5px;
+      background: #31566d;
+    }
+
+    .old-man::before { background: #b68964; }
+    .old-man::after { background: #6d614f; }
+
+    @keyframes pickupPath {
+      0% { transform: translate(0, 0) rotate(-10deg); opacity: 1; }
+      14% { transform: translate(0, 0) rotate(-10deg); }
+      24% { transform: translate(236%, -18%) rotate(-4deg); }
+      34% { transform: translate(342%, -24%) rotate(-4deg); }
+      39% { transform: translate(374%, -24%) rotate(-4deg); }
+      45% { transform: translate(278%, -18%) rotate(176deg); }
+      49% { transform: translate(330%, -22%) rotate(-4deg); }
+      56% { transform: translate(330%, -22%) rotate(-4deg); }
+      68% { transform: translate(528%, -130%) rotate(-21deg); }
+      83% { transform: translate(644%, -168%) rotate(-21deg); opacity: 1; }
+      90%, 100% { transform: translate(644%, -168%) rotate(-21deg); opacity: 0; }
+    }
+
+    @keyframes appleTruckPath {
+      0%, 33% { opacity: 0; transform: translate(0, 0) scale(.88) rotate(-4deg); }
+      34% { opacity: 1; transform: translate(295%, -16%) scale(.88) rotate(-4deg); }
+      39% { opacity: 1; transform: translate(332%, -18%) scale(.88) rotate(-4deg); }
+      45% { opacity: 1; transform: translate(332%, -18%) scale(.88) rotate(-4deg); }
+      66% { opacity: 1; transform: translate(332%, -18%) scale(.88) rotate(-4deg); }
+      70%, 100% { opacity: 0; transform: translate(332%, -18%) scale(.88) rotate(-4deg); }
+    }
+
+    @keyframes joanneWalk {
+      0%, 44% { opacity: 0; transform: translate(0, 0); }
+      46% { opacity: 1; transform: translate(0, 0); }
+      51% { opacity: 1; transform: translate(128%, -7%); }
+      56% { opacity: 1; transform: translate(128%, -7%); }
+      61% { opacity: 1; transform: translate(0, 0); }
+      63%, 100% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    @keyframes oldManAppear {
+      0%, 45% { opacity: 0; }
+      48%, 59% { opacity: 1; }
+      62%, 100% { opacity: 0; }
+    }
+
+    .apple {
+      position: absolute;
+      width: 18px;
+      aspect-ratio: 1;
+      border-radius: 52% 48% 58% 42%;
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255,210,190,.55) 0 14%, transparent 15%),
+        var(--apple);
+      box-shadow: inset -3px -4px 0 rgba(32,0,0,.16);
+      opacity: 0;
+      animation: appleSpill 70s linear infinite;
+      z-index: 20;
+    }
+
+    .apple::before {
+      content: "";
+      position: absolute;
+      left: 47%;
+      top: -20%;
+      width: 2px;
+      height: 8px;
+      background: #543b22;
+      transform: rotate(18deg);
+    }
+
+    .apple.a1 { left: 58%; top: 72%; animation-delay: .1s; }
+    .apple.a2 { left: 61%; top: 75%; animation-delay: .22s; }
+    .apple.a3 { left: 64%; top: 70%; animation-delay: .08s; }
+    .apple.a4 { left: 67%; top: 76%; animation-delay: .18s; }
+    .apple.a5 { left: 70%; top: 72%; animation-delay: .3s; }
+    .apple.a6 { left: 73%; top: 77%; animation-delay: .14s; }
+    .apple.a7 { left: 76%; top: 73%; animation-delay: .27s; }
+
+    @keyframes appleSpill {
+      0%, 37% { opacity: 0; transform: translate(-90px, -50px) scale(.5); }
+      40% { opacity: 1; transform: translate(0, 0) scale(1); }
+      65% { opacity: 1; transform: translate(0, 0) scale(1); }
+      70%, 100% { opacity: 0; transform: translate(0, 0) scale(1); }
+    }
+
+    .gift-apple {
+      position: absolute;
+      right: 26%;
+      bottom: 31%;
+      width: clamp(34px, 5vw, 62px);
+      opacity: 0;
+      transform: scale(.2) rotate(-16deg);
+      animation: giftApple 70s linear infinite;
+      z-index: 25;
+    }
+
+    .gift-apple .apple {
+      position: static;
+      width: 100%;
+      opacity: 1;
+      animation: none;
+      background:
+        radial-gradient(circle at 35% 22%, rgba(255,218,204,.65) 0 12%, transparent 13%),
+        linear-gradient(135deg, #bd1f2a, #5e070e 78%);
+    }
+
+    @keyframes giftApple {
+      0%, 77% { opacity: 0; transform: translate(50px, -16px) scale(.25) rotate(-16deg); }
+      80%, 89% { opacity: 1; transform: translate(0, 0) scale(1) rotate(-16deg); }
+      93%, 100% { opacity: 0; transform: translate(0, 0) scale(1) rotate(-16deg); }
+    }
+
+    .caption {
+      position: absolute;
+      left: 50%;
+      bottom: 5.8%;
+      z-index: 60;
+      width: min(880px, calc(100% - 48px));
+      min-height: 84px;
+      padding: 16px 22px;
+      transform: translateX(-50%);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--caption);
+      background: rgba(14, 18, 19, .78);
+      border-top: 1px solid rgba(255,255,255,.2);
+      border-bottom: 1px solid rgba(255,255,255,.14);
+      font-size: clamp(17px, 2.4vw, 30px);
+      line-height: 1.25;
+      text-shadow: 0 1px 0 #000;
+      opacity: 0;
+      animation: captionFlow 70s linear infinite;
+    }
+
+    .c1 { animation-delay: 0s; }
+    .c2 { animation-delay: -58s; }
+    .c3 { animation-delay: -48s; }
+    .c4 { animation-delay: -35s; }
+    .c5 { animation-delay: -19s; }
+    .c6 { animation-delay: -10s; }
+
+    @keyframes captionFlow {
+      0%, 2.5% { opacity: 0; }
+      3%, 12.5% { opacity: 1; }
+      14%, 100% { opacity: 0; }
+    }
+
+    .title {
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      background: #111819;
+      color: #f7ead1;
+      text-align: center;
+      padding: 32px;
+      animation: titleCard 70s linear infinite;
+    }
+
+    .title h1 {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 7vw, 86px);
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .title p {
+      margin: 0;
+      font-size: clamp(17px, 2.4vw, 28px);
+      color: #cfb78f;
+    }
+
+    @keyframes titleCard {
+      0%, 5% { opacity: 1; }
+      7%, 88% { opacity: 0; }
+      91%, 100% { opacity: 1; }
+    }
+
+    .fade-black {
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      pointer-events: none;
+      background: #050707;
+      opacity: 0;
+      animation: dreamFade 70s linear infinite;
+    }
+
+    @keyframes dreamFade {
+      0%, 86% { opacity: 0; }
+      94%, 100% { opacity: 1; }
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 45;
+      background: radial-gradient(circle at 50% 47%, transparent 0 58%, rgba(4,7,8,.42) 100%);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: #1b2729;
+      color: #f5eddc;
+      min-width: 44px;
+      min-height: 40px;
+      padding: 8px 13px;
+      font: 700 17px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #263638;
+    }
+
+    .time {
+      min-width: 86px;
+      color: #dacbad;
+      font: 14px/1.3 system-ui, sans-serif;
+      text-align: center;
+    }
+
+    .paused *,
+    .paused *::before,
+    .paused *::after {
+      animation-play-state: paused !important;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 8px;
+      }
+
+      .screen {
+        min-height: 520px;
+        aspect-ratio: 9 / 16;
+      }
+
+      .sun {
+        right: 10%;
+        width: 54px;
+      }
+
+      .track {
+        width: 170%;
+        left: -35%;
+      }
+
+      .truck {
+        width: 24%;
+        min-width: 82px;
+      }
+
+      .pickup {
+        left: 5%;
+        bottom: 25%;
+      }
+
+      .apple-truck {
+        left: 1%;
+        bottom: 19%;
+      }
+
+      .road.parallel {
+        left: 18%;
+        top: 70%;
+        width: 78%;
+      }
+
+      .road.cross {
+        right: 2%;
+        top: 42%;
+        width: 22%;
+      }
+
+      .road.country {
+        width: 70%;
+      }
+
+      .caption {
+        bottom: 4%;
+        min-height: 96px;
+        padding: 14px 16px;
+        width: calc(100% - 24px);
+      }
+
+      @keyframes pickupPath {
+        0% { transform: translate(0, 0) rotate(-10deg); opacity: 1; }
+        14% { transform: translate(0, 0) rotate(-10deg); }
+        24% { transform: translate(115%, -12%) rotate(-4deg); }
+        34% { transform: translate(178%, -17%) rotate(-4deg); }
+        39% { transform: translate(195%, -17%) rotate(-4deg); }
+        45% { transform: translate(128%, -12%) rotate(176deg); }
+        49% { transform: translate(170%, -17%) rotate(-4deg); }
+        56% { transform: translate(170%, -17%) rotate(-4deg); }
+        68% { transform: translate(260%, -106%) rotate(-21deg); }
+        83% { transform: translate(318%, -130%) rotate(-21deg); opacity: 1; }
+        90%, 100% { transform: translate(318%, -130%) rotate(-21deg); opacity: 0; }
+      }
+
+      @keyframes appleTruckPath {
+        0%, 33% { opacity: 0; transform: translate(0, 0) scale(.88) rotate(-4deg); }
+        34% { opacity: 1; transform: translate(148%, -12%) scale(.88) rotate(-4deg); }
+        39% { opacity: 1; transform: translate(178%, -13%) scale(.88) rotate(-4deg); }
+        45% { opacity: 1; transform: translate(178%, -13%) scale(.88) rotate(-4deg); }
+        66% { opacity: 1; transform: translate(178%, -13%) scale(.88) rotate(-4deg); }
+        70%, 100% { opacity: 0; transform: translate(178%, -13%) scale(.88) rotate(-4deg); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="screen" id="film" aria-label="Animated film of the dream">
+      <div class="sun"></div>
+      <div class="cloud"></div>
+
+      <div class="scene scene-1">
+        <div class="driveway"></div>
+        <div class="yard"></div>
+      </div>
+
+      <div class="scene scene-2">
+        <div class="track one"></div>
+        <div class="track two"></div>
+        <div class="train one">
+          <div class="car"></div><div class="car"></div><div class="car"></div><div class="car"></div>
+        </div>
+        <div class="train two">
+          <div class="car"></div><div class="car"></div><div class="car"></div><div class="car"></div>
+        </div>
+      </div>
+
+      <div class="scene scene-3">
+        <div class="road parallel"><span class="stripe"></span></div>
+        <div class="road cross"><span class="stripe"></span></div>
+        <div class="road country"><span class="stripe"></span></div>
+        <div class="road dead"></div>
+      </div>
+
+      <div class="scene scene-4">
+        <div class="road parallel"><span class="stripe"></span></div>
+        <div class="truck apple-truck" aria-hidden="true">
+          <span class="bed"></span><span class="cab"></span><span class="window"></span>
+          <span class="wheel left"></span><span class="wheel right"></span>
+        </div>
+        <div class="person joanne"></div>
+        <div class="person old-man"></div>
+        <span class="apple a1"></span><span class="apple a2"></span><span class="apple a3"></span>
+        <span class="apple a4"></span><span class="apple a5"></span><span class="apple a6"></span><span class="apple a7"></span>
+      </div>
+
+      <div class="scene scene-5">
+        <div class="road country"><span class="stripe"></span></div>
+        <div class="gift-apple"><span class="apple"></span></div>
+      </div>
+
+      <div class="track one"></div>
+      <div class="track two"></div>
+      <div class="road left-turn"><span class="stripe"></span></div>
+      <div class="road parallel"><span class="stripe"></span></div>
+
+      <div class="truck pickup" aria-hidden="true">
+        <span class="bed"></span><span class="cab"></span><span class="window"></span>
+        <span class="wheel left"></span><span class="wheel right"></span>
+      </div>
+
+      <div class="caption c1">Mid morning. Joanne drives us out of the driveway in a pickup truck.</div>
+      <div class="caption c2">"There's a train coming... actually there's two."</div>
+      <div class="caption c3">One train goes by. Then the other follows on the parallel track.</div>
+      <div class="caption c4">"You can turn left or right here."</div>
+      <div class="caption c5">"You could have said something sooner."</div>
+      <div class="caption c6">"Oooh, that old man must have liked you."</div>
+
+      <div class="title">
+        <div>
+          <h1>The Apple at the Crossing</h1>
+          <p>A dream remembered in motion</p>
+        </div>
+      </div>
+      <div class="vignette"></div>
+      <div class="fade-black"></div>
+    </section>
+    <div class="controls" aria-label="Film controls">
+      <button id="playPause" type="button" aria-label="Pause or play">||</button>
+      <button id="restart" type="button" aria-label="Restart">↺</button>
+      <span class="time" id="timeLabel">0:00 / 1:10</span>
+    </div>
+  </main>
+
+  <script>
+    const film = document.getElementById("film");
+    const playPause = document.getElementById("playPause");
+    const restart = document.getElementById("restart");
+    const timeLabel = document.getElementById("timeLabel");
+    const duration = 70;
+    const startedAt = performance.now();
+    let paused = false;
+    let pauseStarted = 0;
+    let pausedTotal = 0;
+
+    function format(seconds) {
+      const whole = Math.max(0, Math.floor(seconds));
+      return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+    }
+
+    function tick(now) {
+      const elapsed = paused ? pauseStarted - startedAt - pausedTotal : now - startedAt - pausedTotal;
+      const seconds = (elapsed / 1000) % duration;
+      timeLabel.textContent = `${format(seconds)} / 1:10`;
+      requestAnimationFrame(tick);
+    }
+
+    playPause.addEventListener("click", () => {
+      paused = !paused;
+      film.classList.toggle("paused", paused);
+      playPause.textContent = paused ? "▶" : "||";
+      if (paused) {
+        pauseStarted = performance.now();
+      } else {
+        pausedTotal += performance.now() - pauseStarted;
+      }
+    });
+
+    restart.addEventListener("click", () => {
+      film.getAnimations({ subtree: true }).forEach((animation) => {
+        animation.cancel();
+        animation.play();
+      });
+      pausedTotal = performance.now() - startedAt;
+      if (paused) {
+        paused = false;
+        film.classList.remove("paused");
+        playPause.textContent = "||";
+      }
+    });
+
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
