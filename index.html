@@ -935,10 +935,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             ...parsed.settings
           }
         };
-        if (nextState.settings.weekStartsOn !== "Friday") {
-          nextState.settings.currentWeekStart = getFriday(today);
-          nextState.settings.weekStartsOn = "Friday";
-        }
+        normalizeWeekSettings(nextState);
         return nextState;
       } catch {
         return starterState;
@@ -973,12 +970,26 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           ...((progress && progress.scratch) || {})
         } : {}
       };
+      normalizeWeekSettings(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
       renderTeacherIdentity();
       render();
       if (document.body.classList.contains("student-open")) {
         renderStudentPage();
       }
+    }
+
+    function normalizeWeekSettings(nextState) {
+      const currentFriday = getFriday(new Date());
+      nextState.settings = {
+        ...starterState.settings,
+        ...(nextState.settings || {}),
+        weekStartsOn: "Friday"
+      };
+      if (!nextState.settings.currentWeekStart || nextState.settings.currentWeekStart > currentFriday) {
+        nextState.settings.currentWeekStart = currentFriday;
+      }
+      return nextState;
     }
 
     window.getRoom113StateForFirebase = () => splitStateForFirebase(state);
@@ -1275,6 +1286,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const totals = totalsByHouse(weekPoints);
       const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
       const nextWeekStart = getNextFriday(state.settings.currentWeekStart);
+      const currentFriday = getFriday(new Date());
+
+      if (nextWeekStart > currentFriday) {
+        alert("The next incentive week starts on Friday. This keeps points from disappearing early.");
+        return;
+      }
 
       state.history.unshift({
         id: crypto.randomUUID(),
