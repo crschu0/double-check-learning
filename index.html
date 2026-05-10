@@ -2274,9 +2274,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
     import {
       getAuth,
+      getRedirectResult,
       GoogleAuthProvider,
       onAuthStateChanged,
       signInWithPopup,
+      signInWithRedirect,
       signOut
     } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
     import {
@@ -2319,11 +2321,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const accessRequests = document.getElementById("accessRequests");
     const incentivesDocId = "incentives";
     const progressDocId = "progress";
+    const teacherToolsRedirectKey = "room113TeacherToolsRequested";
 
     let auth;
     let db;
     let saveTimer;
-    window.teacherToolsRequested = false;
+    window.teacherToolsRequested = sessionStorage.getItem(teacherToolsRedirectKey) === "true";
 
     if (hasFirebaseConfig(firebaseConfig)) {
       const app = initializeApp(firebaseConfig);
@@ -2334,8 +2337,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       googleSignInButton.addEventListener("click", signInWithGoogle);
       googleSignOutButton.addEventListener("click", signOutTeacherAccount);
       onAuthStateChanged(auth, handleSignedInUser);
+      getRedirectResult(auth).catch(error => {
+        googleAuthStatus.textContent = `Google sign-in did not finish: ${error.message}`;
+      });
       window.openTeacherToolsIfSignedIn = () => {
-        window.teacherToolsRequested = true;
+        markTeacherToolsRequested();
         if (auth.currentUser) {
           handleSignedInUser(auth.currentUser);
         }
@@ -2352,22 +2358,33 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     async function signInWithGoogle() {
-      window.teacherToolsRequested = true;
+      markTeacherToolsRequested();
       googleAuthStatus.textContent = "Opening Google sign-in...";
       try {
         await signInWithPopup(auth, new GoogleAuthProvider());
       } catch (error) {
+        if (error.code === "auth/popup-blocked" || error.code === "auth/operation-not-supported-in-this-environment") {
+          googleAuthStatus.textContent = "Popup was blocked. Redirecting to Google sign-in...";
+          await signInWithRedirect(auth, new GoogleAuthProvider());
+          return;
+        }
         googleAuthStatus.textContent = `Google sign-in did not finish: ${error.message}`;
       }
     }
 
     async function signOutTeacherAccount() {
       window.teacherToolsRequested = false;
+      sessionStorage.removeItem(teacherToolsRedirectKey);
       if (saveTimer) clearTimeout(saveTimer);
       await signOut(auth);
       document.body.classList.remove("tracker-open", "student-open");
       if (window.clearIdleLogoutTimer) window.clearIdleLogoutTimer();
       googleAuthStatus.textContent = "Signed out.";
+    }
+
+    function markTeacherToolsRequested() {
+      window.teacherToolsRequested = true;
+      sessionStorage.setItem(teacherToolsRedirectKey, "true");
     }
 
     async function handleSignedInUser(user) {
@@ -2384,6 +2401,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       if (teacherEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Teacher access approved.`;
         if (window.teacherToolsRequested) {
+          sessionStorage.removeItem(teacherToolsRedirectKey);
           openApprovedTracker();
           await loadAccessRequests();
         }
@@ -2392,14 +2410,20 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
       if (approvedEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (window.teacherToolsRequested) openApprovedTracker();
+        if (window.teacherToolsRequested) {
+          sessionStorage.removeItem(teacherToolsRedirectKey);
+          openApprovedTracker();
+        }
         return;
       }
 
       const approval = await getDoc(doc(db, "approvedUsers", user.uid));
       if (approval.exists() && approval.data().status === "approved") {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (window.teacherToolsRequested) openApprovedTracker();
+        if (window.teacherToolsRequested) {
+          sessionStorage.removeItem(teacherToolsRedirectKey);
+          openApprovedTracker();
+        }
         return;
       }
 
