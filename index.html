@@ -312,6 +312,52 @@
       margin-bottom: 14px;
     }
 
+    .insight-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .insight-card {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .insight-card h3 {
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .insight-card p {
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .insight-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .insight-card li {
+      margin: 5px 0;
+    }
+
+    .insight-card.warning {
+      border-left-color: #d69200;
+    }
+
+    .insight-card.danger {
+      border-left-color: var(--danger);
+    }
+
+    .insight-card.ok {
+      border-left-color: var(--ok);
+    }
+
     .empty {
       margin-bottom: 0;
       color: var(--muted);
@@ -457,14 +503,6 @@
       color: var(--ink);
     }
 
-    .dream-frame {
-      width: 100%;
-      min-height: 620px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #101719;
-    }
-
     .error {
       color: var(--danger);
       font-weight: 700;
@@ -553,7 +591,6 @@
         <button class="secondary" id="homeButton">Home</button>
         <button class="secondary" id="logoutButton">Logout</button>
         <button class="secondary" id="teacherButton">Teacher Tools</button>
-        <button class="secondary teacher-control admin-only" id="dreamsButton">Dreams</button>
         <button class="secondary teacher-control admin-only" id="exportButton">Export Backup</button>
         <button class="secondary teacher-control admin-only" id="importButton">Import Backup</button>
         <input id="importFile" type="file" accept="application/json" hidden>
@@ -639,7 +676,6 @@
       <div class="dashboard-tabs" aria-label="Teacher dashboard tabs">
         <button class="dashboard-tab active" type="button" id="dashboardTab">Dashboard</button>
         <button class="dashboard-tab admin-only" type="button" id="helpfulTextTab">Helpful Text</button>
-        <button class="dashboard-tab admin-only" type="button" id="dreamsTab">Dreams</button>
       </div>
     </section>
 
@@ -685,8 +721,8 @@
       </section>
 
       <section class="panel span-12 admin-only">
-        <h2>Student Progress</h2>
-        <p class="muted">Mr. Schuchard can see every student's incentive, Freckle, and Scratch status here.</p>
+        <h2>Freckle Teacher Insights</h2>
+        <p class="muted">Roster-filtered patterns from the latest Freckle report data. House points and Scratch stay separate.</p>
         <div id="teacherProgressTable"></div>
       </section>
 
@@ -715,12 +751,6 @@ Before you generate it, confirm that the final image will be 4250 x 5500 pixels 
 If you cannot display a 4250 x 5500 image directly in the chat, say so clearly instead of giving me a lower-quality download.</pre>
           </article>
         </div>
-      </section>
-
-      <section class="panel span-12 admin-only" id="dreamsPanel">
-        <h2>Dreams</h2>
-        <p class="muted">The Apple at the Crossing</p>
-        <iframe class="dream-frame" title="The Apple at the Crossing animated dream film" src="dreams.html"></iframe>
       </section>
 
       <section class="panel span-5 admin-only">
@@ -866,7 +896,196 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             { domain: "Operations & Algebraic Thinking", questions: "4" }
           ],
           importedAt: "2026-05-10"
-        }
+        },
+        "joel salazar": {
+          name: "Joel Salazar",
+          hasData: true,
+          accuracy: "67",
+          timePracticed: "13 min",
+          questions: "3",
+          correctTotal: "2 / 3",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Number System",
+          startingGrade: "7.9",
+          lowestGrade: "7.9",
+          highestGrade: "8",
+          latestGrade: "8",
+          adaptiveLevelsPassed: "1",
+          importedAt: "2026-05-10"
+        },
+        "mary strack": {
+          name: "Mary Strack",
+          hasData: true,
+          accuracy: "72",
+          timePracticed: "20 min",
+          questions: "50",
+          correctTotal: "36 / 50",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Geometry",
+          startingGrade: "4.3",
+          lowestGrade: "4.3",
+          highestGrade: "5.8",
+          latestGrade: "5.8",
+          adaptiveLevelsPassed: "5",
+          importedAt: "2026-05-10"
+        },
+        "oliver noll-ganther": {
+          name: "Oliver Noll-Ganther",
+          hasData: true,
+          accuracy: "71",
+          timePracticed: "5 min",
+          questions: "7",
+          correctTotal: "5 / 7",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Base 10",
+          startingGrade: "5.4",
+          lowestGrade: "5.4",
+          highestGrade: "5.9",
+          latestGrade: "5.9",
+          adaptiveLevelsPassed: "4",
+          importedAt: "2026-05-10"
+        },
+        "john roark": {
+          name: "John Roark",
+          hasData: true,
+          accuracy: "70",
+          timePracticed: "6 min",
+          questions: "10",
+          correctTotal: "7 / 10",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Statistics & Probability",
+          startingGrade: "7.3",
+          lowestGrade: "7.3",
+          highestGrade: "7.7",
+          latestGrade: "7.7",
+          adaptiveLevelsPassed: "5",
+          importedAt: "2026-05-10"
+        },
+        "patience sondgeroth": {
+          name: "Patience Sondgeroth",
+          hasData: true,
+          accuracy: "0",
+          timePracticed: "15 min",
+          questions: "1",
+          correctTotal: "0 / 1",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Expressions & Equations",
+          startingGrade: "6",
+          lowestGrade: "6",
+          highestGrade: "6",
+          latestGrade: "6",
+          adaptiveLevelsPassed: "0",
+          importedAt: "2026-05-10"
+        },
+        "dexter bankes": {
+          name: "Dexter Bankes",
+          hasData: true,
+          accuracy: "76",
+          timePracticed: "15 min",
+          questions: "34",
+          correctTotal: "26 / 34",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Statistics & Probability",
+          startingGrade: "6.8",
+          lowestGrade: "6.4",
+          highestGrade: "7",
+          latestGrade: "7",
+          adaptiveLevelsPassed: "5",
+          importedAt: "2026-05-10"
+        },
+        "isabella barraza": {
+          name: "Isabella Barraza",
+          hasData: true,
+          accuracy: "80",
+          timePracticed: "11 min",
+          questions: "10",
+          correctTotal: "8 / 10",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Geometry",
+          startingGrade: "4.7",
+          lowestGrade: "4.7",
+          highestGrade: "6",
+          latestGrade: "6",
+          adaptiveLevelsPassed: "5",
+          importedAt: "2026-05-10"
+        },
+        "gracelyn morgan": {
+          name: "Gracelyn Morgan",
+          hasData: true,
+          accuracy: "75",
+          timePracticed: "17 min",
+          questions: "4",
+          correctTotal: "3 / 4",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Geometry",
+          startingGrade: "3.5",
+          lowestGrade: "3.5",
+          highestGrade: "4.3",
+          latestGrade: "4.3",
+          adaptiveLevelsPassed: "0",
+          importedAt: "2026-05-10"
+        },
+        "daniel reynolds": {
+          name: "Daniel Reynolds",
+          hasData: true,
+          accuracy: "83",
+          timePracticed: "9 min",
+          questions: "35",
+          correctTotal: "29 / 35",
+          lastPracticed: "Math Adaptive Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Operations & Algebraic Thinking, Geometry",
+          startingGrade: "1.6",
+          lowestGrade: "1.3",
+          highestGrade: "3",
+          latestGrade: "3",
+          adaptiveLevelsPassed: "10",
+          importedAt: "2026-05-10"
+        },
+        "spartan foster": {
+          name: "Spartan Foster",
+          hasData: true,
+          accuracy: "89",
+          timePracticed: "39 min",
+          questions: "116",
+          correctTotal: "103 / 116",
+          lastPracticed: "All Math Practice",
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "All Math Practice",
+          adaptiveLevelsPassed: "0",
+          importedAt: "2026-05-10"
+        },
+        "maxim morse": { name: "Maxim Morse", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "jase perez": { name: "Jase Perez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "emily anderson": { name: "Emily Anderson", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "nikolai pierson": { name: "Nikolai Pierson", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "madilyn hildebrand": { name: "Madilyn Hildebrand", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "corvin futrell": { name: "Corvin Futrell", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "sadie mitchell": { name: "Sadie Mitchell", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "quinnlyn peach": { name: "Quinnlyn Peach", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "phinnley hansen": { name: "Phinnley Hansen", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "ethan o'shana": { name: "Ethan O'Shana", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "marcy baker": { name: "Marcy Baker", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "aurora hernandez": { name: "Aurora Hernandez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "carlo chavez": { name: "Carlo Chavez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "brenda hampton": { name: "Brenda Hampton", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "brynleigh bickett": { name: "Brynleigh Bickett", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "julio sandoval": { name: "Julio Sandoval", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "maria vargas-romero": { name: "Maria Vargas-Romero", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "nova yepsen": { name: "Nova Yepsen", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "layla stinar": { name: "Layla Stinar", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "seth duttlinger": { name: "Seth Duttlinger", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "sofia barona": { name: "Sofia Barona", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "lillian drake": { name: "Lillian Drake", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
+        "ella linker": { name: "Ella Linker", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" }
       },
       scratch: {
         "matthew bohms": {
@@ -934,17 +1153,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     });
     document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
-    document.getElementById("dreamsButton").addEventListener("click", () => {
-      document.getElementById("dreamsPanel").scrollIntoView({ behavior: "smooth" });
-    });
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
     document.getElementById("dashboardTab").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
     document.getElementById("helpfulTextTab").addEventListener("click", () => {
       document.getElementById("helpfulTextPanel").scrollIntoView({ behavior: "smooth" });
-    });
-    document.getElementById("dreamsTab").addEventListener("click", () => {
-      document.getElementById("dreamsPanel").scrollIntoView({ behavior: "smooth" });
     });
     document.getElementById("loginForm").addEventListener("submit", checkTeacherPasscode);
     document.getElementById("studentLoginForm").addEventListener("submit", checkStudentPassword);
@@ -1529,30 +1742,35 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function renderTeacherProgress() {
       const records = allProgressRecords();
       if (!records.length) {
-        teacherProgressTable.innerHTML = `<p class="empty">Add students to the tracker to build the teacher progress view.</p>`;
+        teacherProgressTable.innerHTML = `<p class="empty">Add students to the tracker to build Freckle insights.</p>`;
         return;
       }
 
-      const freckleRecords = records
-        .map(record => state.freckle[normalizeNameKey(record.name)])
-        .filter(Boolean);
-      const activeReports = freckleRecords.filter(record => record.hasData !== false);
-      const noDataReports = freckleRecords.filter(record => record.hasData === false);
-      const totalCorrect = activeReports.reduce((sum, record) => sum + Number(record.correctTotal ? record.correctTotal.split("/")[0].trim() : 0), 0);
-      const totalQuestions = activeReports.reduce((sum, record) => sum + Number(record.correctTotal ? record.correctTotal.split("/")[1].trim() : record.questions || 0), 0);
+      const insightRecords = records.map(record => buildFreckleInsight(record));
+      const activeReports = insightRecords.filter(record => record.hasActivity);
+      const noActivityReports = insightRecords.filter(record => !record.hasActivity);
+      const totalCorrect = activeReports.reduce((sum, record) => sum + record.correct, 0);
+      const totalQuestions = activeReports.reduce((sum, record) => sum + record.questions, 0);
       const averageAccuracy = totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : "-";
+      const categories = {
+        noActivity: insightRecords.filter(record => record.category === "No Activity"),
+        needsCheckIn: insightRecords.filter(record => record.category === "Needs Check-In"),
+        productivePractice: insightRecords.filter(record => record.category === "Productive Practice"),
+        growthSpotlight: insightRecords.filter(record => record.category === "Growth Spotlight"),
+        highFlyer: insightRecords.filter(record => record.category === "High Flyer")
+      };
 
       teacherProgressTable.innerHTML = `
         <div class="progress-summary">
           <div class="stat">
-            <span class="muted">Imported reports</span>
-            <strong>${freckleRecords.length}</strong>
-            <span class="muted">${activeReports.length} with activity</span>
+            <span class="muted">Tracker students</span>
+            <strong>${records.length}</strong>
+            <span class="muted">${activeReports.length} with Freckle activity</span>
           </div>
           <div class="stat">
-            <span class="muted">No-data reports</span>
-            <strong>${noDataReports.length}</strong>
-            <span class="muted">students need a check-in</span>
+            <span class="muted">No activity</span>
+            <strong>${noActivityReports.length}</strong>
+            <span class="muted">students need a start</span>
           </div>
           <div class="stat">
             <span class="muted">Class accuracy</span>
@@ -1560,58 +1778,133 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             <span class="muted">${totalCorrect || 0} / ${totalQuestions || 0} questions</span>
           </div>
         </div>
+        <div class="insight-board">
+          ${renderInsightCard("Needs Check-In", categories.needsCheckIn, "Students whose report suggests confusion, low output, or low accuracy.", "danger")}
+          ${renderInsightCard("No Activity", categories.noActivity, "Students on the tracker with no usable Freckle activity in the latest report.", "warning")}
+          ${renderInsightCard("Growth Spotlight", categories.growthSpotlight, "Students showing meaningful level movement or several levels passed.", "ok")}
+          ${renderInsightCard("High Flyer", categories.highFlyer, "Students with strong accuracy and enough work to trust the signal.", "ok")}
+          ${renderInsightCard("Productive Practice", categories.productivePractice, "Students doing steady work without a major flag.", "")}
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Student</th>
-                <th>House</th>
-                <th>Week Points</th>
                 <th>Freckle Report</th>
                 <th>Status</th>
                 <th>Focus</th>
                 <th>Latest</th>
                 <th>Accuracy</th>
                 <th>Practice</th>
-                <th>Scratch</th>
+                <th>Teacher Move</th>
               </tr>
             </thead>
             <tbody>
-              ${records.map(record => {
-                const freckle = state.freckle[normalizeNameKey(record.name)];
-                const scratch = getScratchRecord(record.name);
-                return `
+              ${insightRecords.map(record => `
                   <tr>
                     <td><strong>${escapeHtml(record.name)}</strong></td>
-                    <td>${escapeHtml(record.student.house)}</td>
-                    <td class="points-cell">${studentWeeklyTotal(record.student.id)}</td>
-                    <td>${freckle ? escapeHtml(freckle.reportDates || freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
-                    <td>${freckle ? freckleStatusTag(freckle) : `<span class="tag warning">Missing</span>`}</td>
-                    <td>${freckle && freckle.focusDomain ? escapeHtml(freckle.focusDomain) : "-"}</td>
-                    <td>${freckle && freckle.latestGrade ? escapeHtml(freckle.latestGrade) : "-"}</td>
-                    <td>${freckle ? formatAccuracy(freckle) : "-"}</td>
-                    <td>${freckle ? escapeHtml(freckle.correctTotal || freckle.questions || "Imported") : "-"}</td>
-                    <td>${escapeHtml(scratch.current)}</td>
+                    <td>${record.freckle ? escapeHtml(record.freckle.reportDates || record.freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
+                    <td>${freckleInsightTag(record)}</td>
+                    <td>${record.freckle && record.freckle.focusDomain ? escapeHtml(record.freckle.focusDomain) : "-"}</td>
+                    <td>${record.freckle && record.freckle.latestGrade ? escapeHtml(record.freckle.latestGrade) : "-"}</td>
+                    <td>${record.freckle ? formatAccuracy(record.freckle) : "-"}</td>
+                    <td>${record.freckle ? escapeHtml(record.freckle.correctTotal || record.freckle.questions || "Imported") : "-"}</td>
+                    <td>${escapeHtml(record.teacherMove)}</td>
                   </tr>
-                `;
-              }).join("")}
+                `).join("")}
             </tbody>
           </table>
         </div>
       `;
     }
 
+    function buildFreckleInsight(record) {
+      const freckle = state.freckle[normalizeNameKey(record.name)];
+      const questions = freckle ? getFreckleQuestionCount(freckle) : 0;
+      const correct = freckle ? getFreckleCorrectCount(freckle) : 0;
+      const accuracy = freckle ? Number(freckle.accuracy) : 0;
+      const minutes = freckle ? parseNumber(freckle.timePracticed) : 0;
+      const levelsPassed = freckle ? parseNumber(freckle.adaptiveLevelsPassed) : 0;
+      const growth = freckle ? parseNumber(freckle.latestGrade) - parseNumber(freckle.startingGrade) : 0;
+      const hasActivity = Boolean(freckle && freckle.hasData !== false && (questions > 0 || accuracy > 0 || minutes > 0));
+      const domain = freckle && freckle.focusDomain ? freckle.focusDomain : "Freckle";
+      let category = "No Activity";
+      let teacherMove = "Have student complete one short Freckle session.";
+
+      if (hasActivity) {
+        if (accuracy <= 60 || (minutes >= 10 && questions <= 2)) {
+          category = "Needs Check-In";
+          teacherMove = `Check ${domain} before the student continues.`;
+        } else if (levelsPassed >= 3 || growth >= 0.5) {
+          category = "Growth Spotlight";
+          teacherMove = "Celebrate the growth and assign the next stretch set.";
+        } else if (accuracy >= 85 && (questions >= 20 || minutes >= 20)) {
+          category = "High Flyer";
+          teacherMove = "Give a challenge set or peer-coach role.";
+        } else {
+          category = "Productive Practice";
+          teacherMove = questions < 5 ? `Ask for five more ${domain} questions.` : `Keep practicing ${domain}.`;
+        }
+      }
+
+      return {
+        ...record,
+        freckle,
+        questions,
+        correct,
+        accuracy,
+        hasActivity,
+        category,
+        teacherMove
+      };
+    }
+
+    function renderInsightCard(title, records, description, tone) {
+      const className = tone ? `insight-card ${tone}` : "insight-card";
+      const items = records.slice(0, 6).map(record => `
+        <li><strong>${escapeHtml(record.name)}</strong>: ${escapeHtml(record.teacherMove)}</li>
+      `).join("");
+      const overflow = records.length > 6 ? `<li><strong>+${records.length - 6} more</strong>: see the table below.</li>` : "";
+
+      return `
+        <article class="${className}">
+          <h3>${escapeHtml(title)} (${records.length})</h3>
+          <p>${escapeHtml(description)}</p>
+          ${records.length ? `<ul>${items}${overflow}</ul>` : `<p class="empty">No students here right now.</p>`}
+        </article>
+      `;
+    }
+
+    function freckleInsightTag(record) {
+      if (record.category === "No Activity") return `<span class="tag warning">No Activity</span>`;
+      if (record.category === "Needs Check-In") return `<span class="tag danger">Needs Check-In</span>`;
+      if (record.category === "Growth Spotlight") return `<span class="tag ok">Growth</span>`;
+      if (record.category === "High Flyer") return `<span class="tag ok">High Flyer</span>`;
+      return `<span class="tag">Productive</span>`;
+    }
+
+    function getFreckleCorrectCount(freckle) {
+      const parts = String(freckle.correctTotal || "").split("/");
+      if (parts.length >= 2) return parseNumber(parts[0]);
+      if (freckle.correctQuestions !== undefined) return parseNumber(freckle.correctQuestions);
+      return freckle.accuracy && freckle.questions ? Math.round((parseNumber(freckle.accuracy) / 100) * parseNumber(freckle.questions)) : 0;
+    }
+
+    function getFreckleQuestionCount(freckle) {
+      const parts = String(freckle.correctTotal || "").split("/");
+      if (parts.length >= 2) return parseNumber(parts[1]);
+      return parseNumber(freckle.questions);
+    }
+
+    function parseNumber(value) {
+      const match = String(value || "").match(/-?\d+(\.\d+)?/);
+      return match ? Number(match[0]) : 0;
+    }
+
     function allProgressRecords() {
       return state.students
         .map(student => ({ name: student.name, student }))
         .sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    function freckleStatusTag(freckle) {
-      if (freckle.hasData === false) return `<span class="tag danger">No data</span>`;
-      if (Number(freckle.accuracy) >= 80) return `<span class="tag ok">Strong</span>`;
-      if (Number(freckle.accuracy) > 0) return `<span class="tag warning">Watch</span>`;
-      return `<span class="tag">Imported</span>`;
     }
 
     function formatAccuracy(freckle) {
@@ -1763,8 +2056,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       if (!freckle) {
         studentFreckleStats.innerHTML = `
           <p><strong>Current goal:</strong> Complete 3 Freckle math sessions this week.</p>
-          <p><strong>Progress:</strong> Import a Freckle progress CSV to show current progress.</p>
-          <p class="muted">Teacher Tools can import the weekly Freckle progress sheet.</p>
+          <p><strong>Progress:</strong> Latest Freckle report data will appear here after the weekly Drive check.</p>
+          <p class="muted">Teacher Tools uses the report PDFs in Google Drive as the source of truth.</p>
         `;
         return;
       }
