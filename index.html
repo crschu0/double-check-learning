@@ -270,6 +270,32 @@
       text-transform: uppercase;
     }
 
+    .sortable-heading {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-weight: 800;
+      text-transform: inherit;
+      cursor: pointer;
+    }
+
+    .sortable-heading:hover,
+    .sortable-heading:focus {
+      background: transparent;
+      color: var(--brand-dark);
+    }
+
+    .sort-indicator {
+      color: var(--muted);
+      font-size: 0.78rem;
+      min-width: 1.1em;
+    }
+
     .points-cell {
       width: 110px;
       font-weight: 700;
@@ -848,6 +874,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
     let firebaseStateReady = false;
+    const tableSortState = {
+      students: { key: "name", direction: "asc" },
+      freckle: { key: "category", direction: "asc" },
+      points: { key: "date", direction: "desc" }
+    };
     const today = new Date();
 
     const starterState = {
@@ -1637,6 +1668,51 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return escapeHtml(value).replaceAll("`", "&#096;");
     }
 
+    function sortableHeading(tableName, key, label) {
+      const sort = tableSortState[tableName];
+      const indicator = sort && sort.key === key ? (sort.direction === "asc" ? "up" : "down") : "";
+      const symbol = indicator === "up" ? "^" : indicator === "down" ? "v" : "";
+      return `
+        <button class="sortable-heading" type="button" onclick="setTableSort('${tableName}', '${key}')" aria-label="Sort ${escapeAttribute(label)}">
+          <span>${escapeHtml(label)}</span>
+          <span class="sort-indicator" aria-hidden="true">${symbol}</span>
+        </button>
+      `;
+    }
+
+    function setTableSort(tableName, key) {
+      const current = tableSortState[tableName];
+      if (!current) return;
+      current.direction = current.key === key && current.direction === "asc" ? "desc" : "asc";
+      current.key = key;
+
+      if (tableName === "students") {
+        renderStudents();
+      } else if (tableName === "freckle") {
+        renderTeacherProgress();
+      } else if (tableName === "points") {
+        renderLog();
+      }
+    }
+
+    function sortRows(rows, tableName, valueGetter) {
+      const sort = tableSortState[tableName];
+      if (!sort) return rows;
+      const direction = sort.direction === "desc" ? -1 : 1;
+      return [...rows].sort((a, b) => compareSortValues(valueGetter(a, sort.key), valueGetter(b, sort.key)) * direction);
+    }
+
+    function compareSortValues(a, b) {
+      const first = a === undefined || a === null || a === "" ? "-" : a;
+      const second = b === undefined || b === null || b === "" ? "-" : b;
+      const firstNumber = typeof first === "number" ? first : Number(first);
+      const secondNumber = typeof second === "number" ? second : Number(second);
+      const bothNumeric = Number.isFinite(firstNumber) && Number.isFinite(secondNumber);
+
+      if (bothNumeric) return firstNumber - secondNumber;
+      return String(first).localeCompare(String(second), undefined, { numeric: true, sensitivity: "base" });
+    }
+
     async function copyHelpfulText(elementId) {
       const element = document.getElementById(elementId);
       if (!element) return;
@@ -1702,23 +1778,38 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         return;
       }
 
+      const studentRows = sortRows(state.students.map(student => {
+        const weekly = studentWeeklyTotal(student.id);
+        const semester = studentSemesterTotal(student.id);
+        const canPlay = weekly < state.settings.funFridayLimit;
+        const status = weekly === 0 ? "Clean week" : canPlay ? "Eligible" : "Fun Friday hold";
+        return { student, weekly, semester, canPlay, status };
+      }), "students", (row, key) => {
+        const values = {
+          name: row.student.name,
+          house: row.student.house,
+          weekly: row.weekly,
+          semester: row.semester,
+          status: row.status
+        };
+        return values[key];
+      });
+
       studentTable.innerHTML = `
         <table>
           <thead>
             <tr>
-              <th>Student</th>
-              <th>House</th>
-              <th>This Week</th>
-              <th>Semester</th>
-              <th>Status</th>
+              <th>${sortableHeading("students", "name", "Student")}</th>
+              <th>${sortableHeading("students", "house", "House")}</th>
+              <th>${sortableHeading("students", "weekly", "This Week")}</th>
+              <th>${sortableHeading("students", "semester", "Semester")}</th>
+              <th>${sortableHeading("students", "status", "Status")}</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            ${state.students.map(student => {
-              const weekly = studentWeeklyTotal(student.id);
-              const semester = studentSemesterTotal(student.id);
-              const canPlay = weekly < state.settings.funFridayLimit;
+            ${studentRows.map(row => {
+              const { student, weekly, semester, canPlay } = row;
               return `
                 <tr>
                   <td><strong>${escapeHtml(student.name)}</strong></td>
@@ -1759,6 +1850,19 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         growthSpotlight: insightRecords.filter(record => record.category === "Growth Spotlight"),
         highFlyer: insightRecords.filter(record => record.category === "High Flyer")
       };
+      const sortedInsightRecords = sortRows(insightRecords, "freckle", (record, key) => {
+        const values = {
+          name: record.name,
+          report: record.freckle ? record.freckle.reportDates || record.freckle.importedAt || "Imported" : "No Freckle data",
+          category: record.category,
+          focus: record.freckle && record.freckle.focusDomain ? record.freckle.focusDomain : "-",
+          latest: record.freckle && record.freckle.latestGrade ? parseNumber(record.freckle.latestGrade) : -1,
+          accuracy: record.freckle ? record.accuracy : -1,
+          practice: record.questions,
+          move: record.teacherMove
+        };
+        return values[key];
+      });
 
       teacherProgressTable.innerHTML = `
         <div class="progress-summary">
@@ -1789,18 +1893,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           <table>
             <thead>
               <tr>
-                <th>Student</th>
-                <th>Freckle Report</th>
-                <th>Status</th>
-                <th>Focus</th>
-                <th>Latest</th>
-                <th>Accuracy</th>
-                <th>Practice</th>
-                <th>Teacher Move</th>
+                <th>${sortableHeading("freckle", "name", "Student")}</th>
+                <th>${sortableHeading("freckle", "report", "Freckle Report")}</th>
+                <th>${sortableHeading("freckle", "category", "Status")}</th>
+                <th>${sortableHeading("freckle", "focus", "Focus")}</th>
+                <th>${sortableHeading("freckle", "latest", "Latest")}</th>
+                <th>${sortableHeading("freckle", "accuracy", "Accuracy")}</th>
+                <th>${sortableHeading("freckle", "practice", "Practice")}</th>
+                <th>${sortableHeading("freckle", "move", "Teacher Move")}</th>
               </tr>
             </thead>
             <tbody>
-              ${insightRecords.map(record => `
+              ${sortedInsightRecords.map(record => `
                   <tr>
                     <td><strong>${escapeHtml(record.name)}</strong></td>
                     <td>${record.freckle ? escapeHtml(record.freckle.reportDates || record.freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
@@ -1929,7 +2033,16 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderLog() {
-      const recent = state.points.slice(-8).reverse();
+      const recent = sortRows([...state.points], "points", (point, key) => {
+        const values = {
+          date: point.date,
+          student: point.studentName,
+          reason: point.reason,
+          points: point.value
+        };
+        return values[key];
+      }).slice(0, 12);
+
       if (!recent.length) {
         recentLog.innerHTML = `<p class="empty">No points have been added yet.</p>`;
         return;
@@ -1939,10 +2052,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Student</th>
-              <th>Reason</th>
-              <th>Points</th>
+              <th>${sortableHeading("points", "date", "Date")}</th>
+              <th>${sortableHeading("points", "student", "Student")}</th>
+              <th>${sortableHeading("points", "reason", "Reason")}</th>
+              <th>${sortableHeading("points", "points", "Points")}</th>
               <th>Actions</th>
             </tr>
           </thead>
