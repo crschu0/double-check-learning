@@ -680,17 +680,12 @@
           <h2 style="margin-right:auto;">Students</h2>
           <button class="secondary admin-only" id="startWeekButton">Start New Week</button>
           <button class="secondary admin-only" id="downloadCsvButton">Download CSV</button>
-          <button class="secondary admin-only freckle-import-trigger" type="button">Import Freckle Progress CSV</button>
-          <input id="freckleFile" type="file" accept=".csv,text/csv" hidden>
         </div>
         <div id="studentTable"></div>
       </section>
 
       <section class="panel span-12 admin-only">
-        <div class="button-row">
-          <h2 style="margin-right:auto;">Student Progress</h2>
-          <button class="secondary freckle-import-trigger" type="button">Import Freckle Progress CSV</button>
-        </div>
+        <h2>Student Progress</h2>
         <p class="muted">Mr. Schuchard can see every student's incentive, Freckle, and Scratch status here.</p>
         <div id="teacherProgressTable"></div>
       </section>
@@ -961,10 +956,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
-    document.querySelectorAll(".freckle-import-trigger").forEach(button => {
-      button.addEventListener("click", () => document.getElementById("freckleFile").click());
-    });
-    document.getElementById("freckleFile").addEventListener("change", importFreckleCsv);
     teacherViewAs.innerHTML = teacherViewProfiles.map(profile => `
       <option value="${escapeAttribute(profile.email)}">${escapeHtml(profile.name)} (${escapeHtml(profile.email)})</option>
     `).join("");
@@ -1407,166 +1398,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       downloadFile(new Blob([csv], { type: "text/csv" }), "room-113-points.csv");
     }
 
-    function importFreckleCsv(event) {
-      if (!canManageProgram()) return;
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const rows = parseCsv(reader.result);
-        if (rows.length < 2) {
-          alert("That Freckle CSV did not include student rows.");
-          return;
-        }
-
-        const headers = rows[0].map(header => header.trim());
-        const isWeeklyProgress = headers.includes("Student Name") && headers.includes("Has Data");
-        let importedCount = 0;
-
-        rows.slice(1).forEach(row => {
-          const record = Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]));
-          const freckle = isWeeklyProgress
-            ? freckleFromWeeklyProgress(record)
-            : freckleFromActivityRecord(record, file.name);
-          if (!freckle) return;
-
-          state.freckle[normalizeNameKey(freckle.name)] = freckle;
-          importedCount++;
-        });
-
-        saveState();
-        if (document.body.classList.contains("student-open")) {
-          renderStudentPage();
-        }
-        render();
-        alert(`Freckle progress imported for ${importedCount} students.`);
-      };
-      reader.readAsText(file);
-      event.target.value = "";
-    }
-
-    function freckleFromActivityRecord(record, filename) {
-      if (!record.Name) return null;
-      return {
-        name: record.Name,
-        hasData: true,
-        accuracy: record.Accuracy || "-",
-        timePracticed: record["Time Practiced"] || "0",
-        questions: record.Questions || "0",
-        lastPracticed: record["Last Practiced"] || "Math Adaptive Practice",
-        reportDates: getFreckleReportDates(filename),
-        importedAt: new Date().toISOString().slice(0, 10)
-      };
-    }
-
-    function freckleFromWeeklyProgress(record) {
-      const name = record["Student Name"] || record.Name;
-      if (!name) return null;
-      const hasData = (record["Has Data"] || "").toLowerCase() === "yes";
-      const weekStart = record["Week Start"] || "";
-      const weekEnd = record["Week End"] || "";
-      const parsedCorrectTotal = parseCorrectTotal(record["Correct / Total"]);
-      const totalQuestions = record["Total Questions"] || parsedCorrectTotal.total;
-      const correctQuestions = record["Correct Questions"] || parsedCorrectTotal.correct;
-      const reportDates = record["Report Dates"] || (weekStart && weekEnd ? `${formatDateForDisplay(weekStart)} - ${formatDateForDisplay(weekEnd)}` : "Imported report");
-
-      return {
-        name,
-        hasData,
-        accuracy: hasData ? normalizeAccuracy(record.Accuracy) : "No data",
-        timePracticed: hasData ? normalizePracticeTime(record["Time Spent"]) : "No data",
-        questions: hasData ? (totalQuestions || "0") : "No data",
-        correctTotal: hasData && correctQuestions && totalQuestions ? `${correctQuestions} / ${totalQuestions}` : "",
-        lastPracticed: hasData ? "Math Adaptive Practice" : "No Freckle practice this report",
-        reportDates,
-        focusDomain: hasData ? record["Focus Domain"] : "",
-        startingGrade: record["Starting Grade"] || "",
-        lowestGrade: record["Lowest Grade"] || "",
-        highestGrade: record["Highest Grade"] || "",
-        latestGrade: record["Latest Grade"] || "",
-        adaptiveLevelsPassed: record["Adaptive Levels Passed"] || "0",
-        domainPractice: parseDomainPractice(record["Domain Practice"]),
-        sourceFile: record["Source File"] || "",
-        importedAt: record["Imported On"] || new Date().toISOString().slice(0, 10)
-      };
-    }
-
-    function parseCorrectTotal(value) {
-      const match = String(value || "").match(/(\d+)\s*\/\s*(\d+)/);
-      return match ? { correct: match[1], total: match[2] } : { correct: "", total: "" };
-    }
-
-    function normalizeAccuracy(value) {
-      const text = String(value || "").trim();
-      if (!text) return "-";
-      return text.replace("%", "");
-    }
-
     function normalizeNameKey(name) {
       return String(name || "").trim().toLowerCase();
-    }
-
-    function normalizePracticeTime(value) {
-      const text = String(value || "").trim();
-      if (!text || text.toLowerCase() === "no data") return "No data";
-      return /\bmin\b/i.test(text) ? text : `${text} min`;
-    }
-
-    function formatDateForDisplay(value) {
-      const date = new Date(`${value}T00:00:00`);
-      if (Number.isNaN(date.getTime())) return value;
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    }
-
-    function parseDomainPractice(value) {
-      if (!value || value === "No data") return [];
-      return value.split(";")
-        .map(item => item.trim())
-        .filter(Boolean)
-        .map(item => {
-          const [domain, questions] = item.split(":").map(part => part.trim());
-          return { domain, questions: questions || "0" };
-        });
-    }
-
-    function parseCsv(text) {
-      const rows = [];
-      let row = [];
-      let value = "";
-      let inQuotes = false;
-
-      for (let index = 0; index < text.length; index++) {
-        const char = text[index];
-        const nextChar = text[index + 1];
-
-        if (char === '"' && inQuotes && nextChar === '"') {
-          value += '"';
-          index++;
-        } else if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === "," && !inQuotes) {
-          row.push(value);
-          value = "";
-        } else if ((char === "\n" || char === "\r") && !inQuotes) {
-          if (char === "\r" && nextChar === "\n") index++;
-          row.push(value);
-          if (row.some(cell => cell.trim() !== "")) rows.push(row);
-          row = [];
-          value = "";
-        } else {
-          value += char;
-        }
-      }
-
-      row.push(value);
-      if (row.some(cell => cell.trim() !== "")) rows.push(row);
-      return rows;
-    }
-
-    function getFreckleReportDates(filename) {
-      const match = filename.match(/Freckle Activity (.+?)(?: [^\\/.]+)?\.csv$/i);
-      return match ? match[1] : "Imported report";
     }
 
     function downloadFile(blob, filename) {
@@ -1696,7 +1529,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function renderTeacherProgress() {
       const records = allProgressRecords();
       if (!records.length) {
-        teacherProgressTable.innerHTML = `<p class="empty">Add students or import Freckle data to build the teacher progress view.</p>`;
+        teacherProgressTable.innerHTML = `<p class="empty">Add students to the tracker to build the teacher progress view.</p>`;
         return;
       }
 
@@ -1750,8 +1583,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                 return `
                   <tr>
                     <td><strong>${escapeHtml(record.name)}</strong></td>
-                    <td>${record.student ? escapeHtml(record.student.house) : `<span class="muted">Not in tracker</span>`}</td>
-                    <td class="points-cell">${record.student ? studentWeeklyTotal(record.student.id) : "-"}</td>
+                    <td>${escapeHtml(record.student.house)}</td>
+                    <td class="points-cell">${studentWeeklyTotal(record.student.id)}</td>
                     <td>${freckle ? escapeHtml(freckle.reportDates || freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
                     <td>${freckle ? freckleStatusTag(freckle) : `<span class="tag warning">Missing</span>`}</td>
                     <td>${freckle && freckle.focusDomain ? escapeHtml(freckle.focusDomain) : "-"}</td>
@@ -1769,19 +1602,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function allProgressRecords() {
-      const names = new Map();
-      state.students.forEach(student => names.set(normalizeNameKey(student.name), { name: student.name, student }));
-      Object.values(state.freckle || {}).forEach(record => {
-        if (!record.name) return;
-        const key = normalizeNameKey(record.name);
-        const student = findTrackerStudentByName(record.name);
-        if (!names.has(key)) names.set(key, { name: record.name, student });
-      });
-      Object.keys(state.scratch || {}).forEach(key => {
-        if (names.has(key)) return;
-        names.set(key, { name: state.scratch[key].name || titleCaseName(key), student: findTrackerStudentByName(key) });
-      });
-      return Array.from(names.values()).sort((a, b) => a.name.localeCompare(b.name));
+      return state.students
+        .map(student => ({ name: student.name, student }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     function freckleStatusTag(freckle) {
@@ -1795,10 +1618,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       if (!freckle || !freckle.accuracy || freckle.accuracy === "-") return "-";
       if (freckle.accuracy === "No data") return "No data";
       return `${escapeHtml(freckle.accuracy)}%`;
-    }
-
-    function titleCaseName(key) {
-      return key.split(" ").map(part => part ? `${part[0].toUpperCase()}${part.slice(1)}` : part).join(" ");
     }
 
     function findTrackerStudentByName(name) {
