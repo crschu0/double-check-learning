@@ -300,6 +300,18 @@
       color: #7a5b00;
     }
 
+    .tag.danger {
+      background: #f8dddd;
+      color: var(--danger);
+    }
+
+    .progress-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
     .empty {
       margin-bottom: 0;
       color: var(--muted);
@@ -668,14 +680,17 @@
           <h2 style="margin-right:auto;">Students</h2>
           <button class="secondary admin-only" id="startWeekButton">Start New Week</button>
           <button class="secondary admin-only" id="downloadCsvButton">Download CSV</button>
-          <button class="secondary admin-only" id="importFreckleButton">Import Freckle CSV</button>
+          <button class="secondary admin-only freckle-import-trigger" type="button">Import Freckle Progress CSV</button>
           <input id="freckleFile" type="file" accept=".csv,text/csv" hidden>
         </div>
         <div id="studentTable"></div>
       </section>
 
       <section class="panel span-12 admin-only">
-        <h2>Student Progress</h2>
+        <div class="button-row">
+          <h2 style="margin-right:auto;">Student Progress</h2>
+          <button class="secondary freckle-import-trigger" type="button">Import Freckle Progress CSV</button>
+        </div>
         <p class="muted">Mr. Schuchard can see every student's incentive, Freckle, and Scratch status here.</p>
         <div id="teacherProgressTable"></div>
       </section>
@@ -818,35 +833,44 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       freckle: {
         "aidan rossler": {
           name: "Aidan Rossler",
-          accuracy: "0",
-          timePracticed: "2",
-          questions: "4",
+          hasData: true,
+          accuracy: "60",
+          timePracticed: "3 min",
+          questions: "5",
+          correctTotal: "3 / 5",
           lastPracticed: "Math Adaptive Practice",
-          reportDates: "Apr 27, 2026 - May 3, 2026",
-          importedAt: "2026-05-04"
+          reportDates: "May 4, 2026 - May 10, 2026",
+          focusDomain: "Expressions & Equations",
+          startingGrade: "6.1",
+          lowestGrade: "6.1",
+          highestGrade: "6.1",
+          latestGrade: "6.1",
+          adaptiveLevelsPassed: "0",
+          domainPractice: [
+            { domain: "Expressions & Equations", questions: "3" },
+            { domain: "Statistics & Probability", questions: "2" }
+          ],
+          importedAt: "2026-05-10"
         },
         "jace hampton": {
           name: "Jace Hampton",
-          accuracy: "67",
-          timePracticed: "17",
-          questions: "27",
-          correctTotal: "18 / 27",
+          hasData: true,
+          accuracy: "75",
+          timePracticed: "5 min",
+          questions: "4",
+          correctTotal: "3 / 4",
           lastPracticed: "Math Adaptive Practice",
-          reportDates: "April 27, 2026 - May 3, 2026",
+          reportDates: "May 4, 2026 - May 10, 2026",
           focusDomain: "Operations & Algebraic Thinking",
           startingGrade: "4.6",
-          lowestGrade: "3.9",
-          highestGrade: "5",
+          lowestGrade: "4.6",
+          highestGrade: "4.8",
           latestGrade: "4.8",
           adaptiveLevelsPassed: "1",
           domainPractice: [
-            { domain: "Operations & Algebraic Thinking", questions: "31" },
-            { domain: "Expressions & Equations", questions: "3" },
-            { domain: "Statistics & Probability", questions: "6" },
-            { domain: "Geometry", questions: "22" },
-            { domain: "Number System", questions: "15" }
+            { domain: "Operations & Algebraic Thinking", questions: "4" }
           ],
-          importedAt: "2026-05-04"
+          importedAt: "2026-05-10"
         }
       },
       scratch: {
@@ -937,7 +961,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
-    document.getElementById("importFreckleButton").addEventListener("click", () => document.getElementById("freckleFile").click());
+    document.querySelectorAll(".freckle-import-trigger").forEach(button => {
+      button.addEventListener("click", () => document.getElementById("freckleFile").click());
+    });
     document.getElementById("freckleFile").addEventListener("change", importFreckleCsv);
     teacherViewAs.innerHTML = teacherViewProfiles.map(profile => `
       <option value="${escapeAttribute(profile.email)}">${escapeHtml(profile.name)} (${escapeHtml(profile.email)})</option>
@@ -1395,29 +1421,113 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         }
 
         const headers = rows[0].map(header => header.trim());
+        const isWeeklyProgress = headers.includes("Student Name") && headers.includes("Has Data");
+        let importedCount = 0;
+
         rows.slice(1).forEach(row => {
           const record = Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]));
-          if (!record.Name) return;
+          const freckle = isWeeklyProgress
+            ? freckleFromWeeklyProgress(record)
+            : freckleFromActivityRecord(record, file.name);
+          if (!freckle) return;
 
-          state.freckle[record.Name.toLowerCase()] = {
-            name: record.Name,
-            accuracy: record.Accuracy || "-",
-            timePracticed: record["Time Practiced"] || "0",
-            questions: record.Questions || "0",
-            lastPracticed: record["Last Practiced"] || "-",
-            reportDates: getFreckleReportDates(file.name),
-            importedAt: new Date().toISOString().slice(0, 10)
-          };
+          state.freckle[normalizeNameKey(freckle.name)] = freckle;
+          importedCount++;
         });
 
         saveState();
         if (document.body.classList.contains("student-open")) {
           renderStudentPage();
         }
-        alert("Freckle CSV imported.");
+        render();
+        alert(`Freckle progress imported for ${importedCount} students.`);
       };
       reader.readAsText(file);
       event.target.value = "";
+    }
+
+    function freckleFromActivityRecord(record, filename) {
+      if (!record.Name) return null;
+      return {
+        name: record.Name,
+        hasData: true,
+        accuracy: record.Accuracy || "-",
+        timePracticed: record["Time Practiced"] || "0",
+        questions: record.Questions || "0",
+        lastPracticed: record["Last Practiced"] || "Math Adaptive Practice",
+        reportDates: getFreckleReportDates(filename),
+        importedAt: new Date().toISOString().slice(0, 10)
+      };
+    }
+
+    function freckleFromWeeklyProgress(record) {
+      const name = record["Student Name"] || record.Name;
+      if (!name) return null;
+      const hasData = (record["Has Data"] || "").toLowerCase() === "yes";
+      const weekStart = record["Week Start"] || "";
+      const weekEnd = record["Week End"] || "";
+      const parsedCorrectTotal = parseCorrectTotal(record["Correct / Total"]);
+      const totalQuestions = record["Total Questions"] || parsedCorrectTotal.total;
+      const correctQuestions = record["Correct Questions"] || parsedCorrectTotal.correct;
+      const reportDates = record["Report Dates"] || (weekStart && weekEnd ? `${formatDateForDisplay(weekStart)} - ${formatDateForDisplay(weekEnd)}` : "Imported report");
+
+      return {
+        name,
+        hasData,
+        accuracy: hasData ? normalizeAccuracy(record.Accuracy) : "No data",
+        timePracticed: hasData ? normalizePracticeTime(record["Time Spent"]) : "No data",
+        questions: hasData ? (totalQuestions || "0") : "No data",
+        correctTotal: hasData && correctQuestions && totalQuestions ? `${correctQuestions} / ${totalQuestions}` : "",
+        lastPracticed: hasData ? "Math Adaptive Practice" : "No Freckle practice this report",
+        reportDates,
+        focusDomain: hasData ? record["Focus Domain"] : "",
+        startingGrade: record["Starting Grade"] || "",
+        lowestGrade: record["Lowest Grade"] || "",
+        highestGrade: record["Highest Grade"] || "",
+        latestGrade: record["Latest Grade"] || "",
+        adaptiveLevelsPassed: record["Adaptive Levels Passed"] || "0",
+        domainPractice: parseDomainPractice(record["Domain Practice"]),
+        sourceFile: record["Source File"] || "",
+        importedAt: record["Imported On"] || new Date().toISOString().slice(0, 10)
+      };
+    }
+
+    function parseCorrectTotal(value) {
+      const match = String(value || "").match(/(\d+)\s*\/\s*(\d+)/);
+      return match ? { correct: match[1], total: match[2] } : { correct: "", total: "" };
+    }
+
+    function normalizeAccuracy(value) {
+      const text = String(value || "").trim();
+      if (!text) return "-";
+      return text.replace("%", "");
+    }
+
+    function normalizeNameKey(name) {
+      return String(name || "").trim().toLowerCase();
+    }
+
+    function normalizePracticeTime(value) {
+      const text = String(value || "").trim();
+      if (!text || text.toLowerCase() === "no data") return "No data";
+      return /\bmin\b/i.test(text) ? text : `${text} min`;
+    }
+
+    function formatDateForDisplay(value) {
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function parseDomainPractice(value) {
+      if (!value || value === "No data") return [];
+      return value.split(";")
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(item => {
+          const [domain, questions] = item.split(":").map(part => part.trim());
+          return { domain, questions: questions || "0" };
+        });
     }
 
     function parseCsv(text) {
@@ -1590,7 +1700,33 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         return;
       }
 
+      const freckleRecords = records
+        .map(record => state.freckle[normalizeNameKey(record.name)])
+        .filter(Boolean);
+      const activeReports = freckleRecords.filter(record => record.hasData !== false);
+      const noDataReports = freckleRecords.filter(record => record.hasData === false);
+      const totalCorrect = activeReports.reduce((sum, record) => sum + Number(record.correctTotal ? record.correctTotal.split("/")[0].trim() : 0), 0);
+      const totalQuestions = activeReports.reduce((sum, record) => sum + Number(record.correctTotal ? record.correctTotal.split("/")[1].trim() : record.questions || 0), 0);
+      const averageAccuracy = totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : "-";
+
       teacherProgressTable.innerHTML = `
+        <div class="progress-summary">
+          <div class="stat">
+            <span class="muted">Imported reports</span>
+            <strong>${freckleRecords.length}</strong>
+            <span class="muted">${activeReports.length} with activity</span>
+          </div>
+          <div class="stat">
+            <span class="muted">No-data reports</span>
+            <strong>${noDataReports.length}</strong>
+            <span class="muted">students need a check-in</span>
+          </div>
+          <div class="stat">
+            <span class="muted">Class accuracy</span>
+            <strong>${averageAccuracy}${averageAccuracy === "-" ? "" : "%"}</strong>
+            <span class="muted">${totalCorrect || 0} / ${totalQuestions || 0} questions</span>
+          </div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1599,6 +1735,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                 <th>House</th>
                 <th>Week Points</th>
                 <th>Freckle Report</th>
+                <th>Status</th>
+                <th>Focus</th>
+                <th>Latest</th>
                 <th>Accuracy</th>
                 <th>Practice</th>
                 <th>Scratch</th>
@@ -1606,7 +1745,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             </thead>
             <tbody>
               ${records.map(record => {
-                const freckle = state.freckle[record.name.toLowerCase()];
+                const freckle = state.freckle[normalizeNameKey(record.name)];
                 const scratch = getScratchRecord(record.name);
                 return `
                   <tr>
@@ -1614,7 +1753,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                     <td>${record.student ? escapeHtml(record.student.house) : `<span class="muted">Not in tracker</span>`}</td>
                     <td class="points-cell">${record.student ? studentWeeklyTotal(record.student.id) : "-"}</td>
                     <td>${freckle ? escapeHtml(freckle.reportDates || freckle.importedAt || "Imported") : `<span class="muted">No Freckle data</span>`}</td>
-                    <td>${freckle ? `${escapeHtml(freckle.accuracy)}${freckle.accuracy === "-" ? "" : "%"}` : "-"}</td>
+                    <td>${freckle ? freckleStatusTag(freckle) : `<span class="tag warning">Missing</span>`}</td>
+                    <td>${freckle && freckle.focusDomain ? escapeHtml(freckle.focusDomain) : "-"}</td>
+                    <td>${freckle && freckle.latestGrade ? escapeHtml(freckle.latestGrade) : "-"}</td>
+                    <td>${freckle ? formatAccuracy(freckle) : "-"}</td>
                     <td>${freckle ? escapeHtml(freckle.correctTotal || freckle.questions || "Imported") : "-"}</td>
                     <td>${escapeHtml(scratch.current)}</td>
                   </tr>
@@ -1628,8 +1770,35 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function allProgressRecords() {
       const names = new Map();
-      state.students.forEach(student => names.set(student.name.toLowerCase(), { name: student.name, student }));
+      state.students.forEach(student => names.set(normalizeNameKey(student.name), { name: student.name, student }));
+      Object.values(state.freckle || {}).forEach(record => {
+        if (!record.name) return;
+        const key = normalizeNameKey(record.name);
+        const student = findTrackerStudentByName(record.name);
+        if (!names.has(key)) names.set(key, { name: record.name, student });
+      });
+      Object.keys(state.scratch || {}).forEach(key => {
+        if (names.has(key)) return;
+        names.set(key, { name: state.scratch[key].name || titleCaseName(key), student: findTrackerStudentByName(key) });
+      });
       return Array.from(names.values()).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function freckleStatusTag(freckle) {
+      if (freckle.hasData === false) return `<span class="tag danger">No data</span>`;
+      if (Number(freckle.accuracy) >= 80) return `<span class="tag ok">Strong</span>`;
+      if (Number(freckle.accuracy) > 0) return `<span class="tag warning">Watch</span>`;
+      return `<span class="tag">Imported</span>`;
+    }
+
+    function formatAccuracy(freckle) {
+      if (!freckle || !freckle.accuracy || freckle.accuracy === "-") return "-";
+      if (freckle.accuracy === "No data") return "No data";
+      return `${escapeHtml(freckle.accuracy)}%`;
+    }
+
+    function titleCaseName(key) {
+      return key.split(" ").map(part => part ? `${part[0].toUpperCase()}${part.slice(1)}` : part).join(" ");
     }
 
     function findTrackerStudentByName(name) {
@@ -1770,13 +1939,32 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderFreckleStats(studentName) {
-      const freckle = state.freckle[studentName.toLowerCase()];
+      const freckle = state.freckle[normalizeNameKey(studentName)];
 
       if (!freckle) {
         studentFreckleStats.innerHTML = `
           <p><strong>Current goal:</strong> Complete 3 Freckle math sessions this week.</p>
-          <p><strong>Progress:</strong> Import a Freckle activity CSV to show current progress.</p>
-          <p class="muted">Teacher Tools can import the Freckle activity report.</p>
+          <p><strong>Progress:</strong> Import a Freckle progress CSV to show current progress.</p>
+          <p class="muted">Teacher Tools can import the weekly Freckle progress sheet.</p>
+        `;
+        return;
+      }
+
+      if (freckle.hasData === false) {
+        studentFreckleStats.innerHTML = `
+          <div class="student-grid">
+            <div class="stat student-stat">
+              <span class="muted">Freckle status</span>
+              <strong>No data</strong>
+              <span class="muted">${escapeHtml(freckle.reportDates || "This report")}</span>
+            </div>
+            <div class="stat student-stat">
+              <span class="muted">Next move</span>
+              <strong>Start</strong>
+              <span class="muted">Complete one math session this week</span>
+            </div>
+          </div>
+          <p class="muted">Freckle report imported ${escapeHtml(freckle.importedAt)}.</p>
         `;
         return;
       }
@@ -1785,13 +1973,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         <div class="student-grid">
           <div class="stat student-stat">
             <span class="muted">Accuracy</span>
-            <strong>${escapeHtml(freckle.accuracy)}${freckle.accuracy === "-" ? "" : "%"}</strong>
+            <strong>${formatAccuracy(freckle)}</strong>
             <span class="muted">from imported Freckle report</span>
           </div>
           <div class="stat student-stat">
             <span class="muted">Time practiced</span>
             <strong>${escapeHtml(freckle.timePracticed)}</strong>
-            <span class="muted">minutes this report</span>
+            <span class="muted">this report</span>
           </div>
           <div class="stat student-stat">
             <span class="muted">Questions</span>
