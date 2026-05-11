@@ -2326,7 +2326,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     let auth;
     let db;
     let saveTimer;
-    window.teacherToolsRequested = sessionStorage.getItem(teacherToolsRedirectKey) === "true";
+    window.teacherToolsRequested = isTeacherToolsRequested();
 
     if (hasFirebaseConfig(firebaseConfig)) {
       const app = initializeApp(firebaseConfig);
@@ -2374,7 +2374,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     async function signOutTeacherAccount() {
       window.teacherToolsRequested = false;
-      sessionStorage.removeItem(teacherToolsRedirectKey);
+      clearTeacherToolsRequested();
       if (saveTimer) clearTimeout(saveTimer);
       await signOut(auth);
       document.body.classList.remove("tracker-open", "student-open");
@@ -2385,6 +2385,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function markTeacherToolsRequested() {
       window.teacherToolsRequested = true;
       sessionStorage.setItem(teacherToolsRedirectKey, "true");
+      localStorage.setItem(teacherToolsRedirectKey, "true");
+    }
+
+    function clearTeacherToolsRequested() {
+      window.teacherToolsRequested = false;
+      sessionStorage.removeItem(teacherToolsRedirectKey);
+      localStorage.removeItem(teacherToolsRedirectKey);
+    }
+
+    function isTeacherToolsRequested() {
+      return sessionStorage.getItem(teacherToolsRedirectKey) === "true"
+        || localStorage.getItem(teacherToolsRedirectKey) === "true";
     }
 
     async function handleSignedInUser(user) {
@@ -2400,8 +2412,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
       if (teacherEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Teacher access approved.`;
-        if (window.teacherToolsRequested) {
-          sessionStorage.removeItem(teacherToolsRedirectKey);
+        if (isTeacherToolsRequested()) {
+          clearTeacherToolsRequested();
           openApprovedTracker();
           await loadAccessRequests();
         }
@@ -2410,8 +2422,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
       if (approvedEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (window.teacherToolsRequested) {
-          sessionStorage.removeItem(teacherToolsRedirectKey);
+        if (isTeacherToolsRequested()) {
+          clearTeacherToolsRequested();
           openApprovedTracker();
         }
         return;
@@ -2420,8 +2432,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const approval = await getDoc(doc(db, "approvedUsers", user.uid));
       if (approval.exists() && approval.data().status === "approved") {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (window.teacherToolsRequested) {
-          sessionStorage.removeItem(teacherToolsRedirectKey);
+        if (isTeacherToolsRequested()) {
+          clearTeacherToolsRequested();
           openApprovedTracker();
         }
         return;
