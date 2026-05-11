@@ -32,7 +32,30 @@
       line-height: 1.5;
       color: var(--ink);
       background: var(--page);
+      background-attachment: fixed;
     }
+
+    body[data-theme="teal"] { --brand: #2f7d95; --brand-dark: #245e70; --accent: #f5c451; }
+    body[data-theme="purple"] { --brand: #6947b8; --brand-dark: #4d318c; --accent: #4fd1c5; }
+    body[data-theme="emerald"] { --brand: #2f7f5f; --brand-dark: #236449; --accent: #f2c94c; }
+    body[data-theme="blue"] { --brand: #2f65a7; --brand-dark: #234d7d; --accent: #f59e42; }
+    body[data-theme="crimson"] { --brand: #9b2f45; --brand-dark: #722333; --accent: #f6c85f; }
+    body[data-theme="gold"] { --brand: #7a5a12; --brand-dark: #5c430d; --accent: #2f7d95; }
+    body[data-theme="midnight"] { --brand: #24324a; --brand-dark: #172133; --accent: #7dd3fc; }
+    body[data-theme="rose"] { --brand: #b33f72; --brand-dark: #842d53; --accent: #6ee7b7; }
+    body[data-theme="copper"] { --brand: #8a4b2a; --brand-dark: #65351d; --accent: #5eead4; }
+    body[data-theme="slate"] { --brand: #4b6276; --brand-dark: #374858; --accent: #eab308; }
+
+    body[data-bg="subway"] { background-image: linear-gradient(135deg, rgba(47, 125, 149, 0.18), rgba(245, 196, 81, 0.12)), repeating-linear-gradient(90deg, transparent 0 42px, rgba(47, 125, 149, 0.12) 42px 44px); }
+    body[data-bg="grid"] { background-image: linear-gradient(rgba(47, 125, 149, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 125, 149, 0.12) 1px, transparent 1px); background-size: 34px 34px; }
+    body[data-bg="stars"] { background-image: radial-gradient(circle at 18% 22%, rgba(255,255,255,0.85) 0 1px, transparent 2px), radial-gradient(circle at 78% 28%, rgba(47,125,149,0.35) 0 2px, transparent 3px), linear-gradient(135deg, #eef5f8, #f8fbfc); }
+    body[data-bg="notebook"] { background-image: linear-gradient(#ffffff 31px, rgba(47, 125, 149, 0.13) 32px), linear-gradient(90deg, rgba(182,75,75,0.22) 84px, transparent 86px); background-size: 100% 32px, 100% 100%; }
+    body[data-bg="waves"] { background-image: radial-gradient(ellipse at top left, rgba(47,125,149,0.18), transparent 42%), radial-gradient(ellipse at bottom right, rgba(245,196,81,0.16), transparent 46%); }
+    body[data-bg="blueprint"] { background-color: #eef6fb; background-image: linear-gradient(rgba(47,101,167,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(47,101,167,0.14) 1px, transparent 1px); background-size: 22px 22px; }
+    body[data-bg="sunrise"] { background-image: linear-gradient(135deg, rgba(246,200,95,0.28), rgba(179,63,114,0.12), rgba(47,125,149,0.12)); }
+    body[data-bg="forest"] { background-image: linear-gradient(135deg, rgba(47,127,95,0.18), rgba(255,255,255,0.72)), repeating-linear-gradient(45deg, transparent 0 30px, rgba(47,127,95,0.08) 30px 32px); }
+    body[data-bg="paper"] { background-image: radial-gradient(circle at 24% 18%, rgba(0,0,0,0.035) 0 1px, transparent 2px), linear-gradient(135deg, #fbfaf6, #f1f5f7); }
+    body[data-bg="aurora"] { background-image: linear-gradient(120deg, rgba(79,209,197,0.24), rgba(105,71,184,0.13), rgba(245,196,81,0.14)); }
 
     header {
       background: var(--brand);
@@ -413,6 +436,44 @@
       padding: 24px;
     }
 
+    .profile-hero {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--line);
+      border-left: 8px solid var(--brand);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .avatar-badge {
+      display: grid;
+      place-items: center;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      color: white;
+      background: var(--brand);
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,0.35);
+      font-size: 1.85rem;
+      font-weight: 900;
+    }
+
+    .profile-hero h2 {
+      margin-bottom: 2px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1;
+    }
+
+    .customizer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
     .home-actions {
       display: flex;
       flex-wrap: wrap;
@@ -699,9 +760,16 @@
   </main>
 
   <main id="trackerApp" class="tracker-app">
+    <section class="profile-hero">
+      <div class="avatar-badge" id="teacherAvatarBadge">DC</div>
+      <div>
+        <h2 id="teacherDashboardName">Teacher Dashboard</h2>
+        <p id="activeTeacherViewLabel" class="muted">Viewing as approved teacher.</p>
+      </div>
+    </section>
+
     <section class="panel">
-      <h2>Teacher View</h2>
-      <p id="activeTeacherViewLabel" class="muted">Viewing as approved teacher.</p>
+      <h2>Dashboard Controls</h2>
       <div class="dashboard-tabs" aria-label="Teacher dashboard tabs">
         <button class="dashboard-tab active" type="button" id="dashboardTab">Dashboard</button>
         <button class="dashboard-tab admin-only" type="button" id="helpfulTextTab">Helpful Text</button>
@@ -709,6 +777,24 @@
     </section>
 
     <div class="grid">
+      <section class="panel span-12">
+        <h2>Customize Dashboard</h2>
+        <div class="customizer-grid">
+          <div>
+            <label for="teacherThemeSelect">Color theme</label>
+            <select id="teacherThemeSelect"></select>
+          </div>
+          <div>
+            <label for="teacherBackgroundSelect">Background style</label>
+            <select id="teacherBackgroundSelect"></select>
+          </div>
+          <div>
+            <label for="teacherAvatarSelect">Avatar</label>
+            <select id="teacherAvatarSelect"></select>
+          </div>
+        </div>
+      </section>
+
       <section class="panel span-8">
         <h2>House Standings</h2>
         <div class="stat-grid" id="houseStats"></div>
@@ -830,9 +916,30 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
   </main>
 
   <main id="studentApp" class="student-app">
-    <section class="hero-panel">
-      <h2 id="studentDashboardName">Student Dashboard</h2>
-      <p class="muted">Student progress dashboard prototype</p>
+    <section class="profile-hero">
+      <div class="avatar-badge" id="studentAvatarBadge">ST</div>
+      <div>
+        <h2 id="studentDashboardName">Student Dashboard</h2>
+        <p class="muted">Student progress dashboard prototype</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Customize Dashboard</h2>
+      <div class="customizer-grid">
+        <div>
+          <label for="studentThemeSelect">Color theme</label>
+          <select id="studentThemeSelect"></select>
+        </div>
+        <div>
+          <label for="studentBackgroundSelect">Background style</label>
+          <select id="studentBackgroundSelect"></select>
+        </div>
+        <div>
+          <label for="studentAvatarSelect">Avatar</label>
+          <select id="studentAvatarSelect"></select>
+        </div>
+      </div>
     </section>
 
     <section class="panel">
@@ -874,6 +981,42 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { name: "Aidan Rossler", password: "Rossler" },
       { name: "Jace Hampton", password: "Hampton" }
     ];
+    const themeOptions = [
+      { id: "teal", label: "Teal Transit" },
+      { id: "purple", label: "Royal Purple" },
+      { id: "emerald", label: "Emerald" },
+      { id: "blue", label: "Blue Steel" },
+      { id: "crimson", label: "Crimson" },
+      { id: "gold", label: "Gold" },
+      { id: "midnight", label: "Midnight" },
+      { id: "rose", label: "Rose" },
+      { id: "copper", label: "Copper" },
+      { id: "slate", label: "Slate" }
+    ];
+    const backgroundOptions = [
+      { id: "subway", label: "Subway Lines" },
+      { id: "grid", label: "Neon Grid" },
+      { id: "stars", label: "Star Field" },
+      { id: "notebook", label: "Notebook" },
+      { id: "waves", label: "Soft Waves" },
+      { id: "blueprint", label: "Blueprint" },
+      { id: "sunrise", label: "Sunrise" },
+      { id: "forest", label: "Forest Lines" },
+      { id: "paper", label: "Clean Paper" },
+      { id: "aurora", label: "Aurora" }
+    ];
+    const avatarOptions = [
+      { id: "initials", label: "Initials", text: "" },
+      { id: "check", label: "Check", text: "OK" },
+      { id: "star", label: "Star", text: "*" },
+      { id: "bolt", label: "Bolt", text: "!" },
+      { id: "compass", label: "Compass", text: "N" },
+      { id: "graph", label: "Graph", text: "Y" },
+      { id: "book", label: "Book", text: "B" },
+      { id: "shield", label: "Shield", text: "S" },
+      { id: "spark", label: "Spark", text: "+" },
+      { id: "route", label: "Route", text: "R" }
+    ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
     let activeDemoStudent = demoStudents[0];
     let activeTeacherView = teacherViewProfiles[4];
@@ -891,6 +1034,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       students: [],
       points: [],
       history: [],
+      preferences: {
+        users: {}
+      },
       freckle: {
         "aidan rossler": {
           name: "Aidan Rossler",
@@ -1168,11 +1314,20 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const teacherPasscode = document.getElementById("teacherPasscode");
     const teacherViewAs = document.getElementById("teacherViewAs");
     const activeTeacherViewLabel = document.getElementById("activeTeacherViewLabel");
+    const teacherDashboardName = document.getElementById("teacherDashboardName");
+    const teacherAvatarBadge = document.getElementById("teacherAvatarBadge");
+    const teacherThemeSelect = document.getElementById("teacherThemeSelect");
+    const teacherBackgroundSelect = document.getElementById("teacherBackgroundSelect");
+    const teacherAvatarSelect = document.getElementById("teacherAvatarSelect");
     const loginMessage = document.getElementById("loginMessage");
     const studentLogin = document.getElementById("studentLogin");
     const studentDemoPassword = document.getElementById("studentDemoPassword");
     const studentLoginMessage = document.getElementById("studentLoginMessage");
     const studentDashboardName = document.getElementById("studentDashboardName");
+    const studentAvatarBadge = document.getElementById("studentAvatarBadge");
+    const studentThemeSelect = document.getElementById("studentThemeSelect");
+    const studentBackgroundSelect = document.getElementById("studentBackgroundSelect");
+    const studentAvatarSelect = document.getElementById("studentAvatarSelect");
     const studentIncentiveStats = document.getElementById("studentIncentiveStats");
     const studentHouseStats = document.getElementById("studentHouseStats");
     const studentFreckleStats = document.getElementById("studentFreckleStats");
@@ -1209,6 +1364,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
+    [teacherThemeSelect, teacherBackgroundSelect, teacherAvatarSelect].forEach(select => {
+      select.addEventListener("change", () => saveDashboardPreference("teacher"));
+    });
+    [studentThemeSelect, studentBackgroundSelect, studentAvatarSelect].forEach(select => {
+      select.addEventListener("change", () => saveDashboardPreference("student"));
+    });
+    populateCustomizerControls();
     teacherViewAs.innerHTML = teacherViewProfiles.map(profile => `
       <option value="${escapeAttribute(profile.email)}">${escapeHtml(profile.name)} (${escapeHtml(profile.email)})</option>
     `).join("");
@@ -1235,6 +1397,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           scratch: {
             ...starterState.scratch,
             ...(parsed.scratch || {})
+          },
+          preferences: {
+            users: {
+              ...((starterState.preferences && starterState.preferences.users) || {}),
+              ...((parsed.preferences && parsed.preferences.users) || {})
+            }
           },
           settings: {
             ...starterState.settings,
@@ -1274,7 +1442,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         scratch: canManageProgram() ? {
           ...starterState.scratch,
           ...((progress && progress.scratch) || {})
-        } : {}
+        } : {},
+        preferences: {
+          users: {
+            ...((state.preferences && state.preferences.users) || {}),
+            ...((incentives && incentives.preferences && incentives.preferences.users) || {})
+          }
+        }
       };
       normalizeWeekSettings(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
@@ -1296,6 +1470,75 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         nextState.settings.currentWeekStart = currentFriday;
       }
       return nextState;
+    }
+
+    function populateCustomizerControls() {
+      const themeHtml = themeOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
+      const backgroundHtml = backgroundOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
+      const avatarHtml = avatarOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
+      [teacherThemeSelect, studentThemeSelect].forEach(select => { select.innerHTML = themeHtml; });
+      [teacherBackgroundSelect, studentBackgroundSelect].forEach(select => { select.innerHTML = backgroundHtml; });
+      [teacherAvatarSelect, studentAvatarSelect].forEach(select => { select.innerHTML = avatarHtml; });
+    }
+
+    function getPreferenceKey(scope) {
+      if (scope === "teacher") return `teacher:${normalizeNameKey(activeTeacherView.email || activeTeacherView.name)}`;
+      return `student:${normalizeNameKey(activeDemoStudent.name)}`;
+    }
+
+    function getDashboardPreference(scope) {
+      const users = (state.preferences && state.preferences.users) || {};
+      return {
+        theme: "teal",
+        background: scope === "teacher" ? "subway" : "grid",
+        avatar: "initials",
+        ...(users[getPreferenceKey(scope)] || {})
+      };
+    }
+
+    function saveDashboardPreference(scope) {
+      const preference = {
+        theme: scope === "teacher" ? teacherThemeSelect.value : studentThemeSelect.value,
+        background: scope === "teacher" ? teacherBackgroundSelect.value : studentBackgroundSelect.value,
+        avatar: scope === "teacher" ? teacherAvatarSelect.value : studentAvatarSelect.value
+      };
+      state.preferences = state.preferences || { users: {} };
+      state.preferences.users = state.preferences.users || {};
+      state.preferences.users[getPreferenceKey(scope)] = preference;
+      saveState();
+      applyDashboardPreference(scope);
+    }
+
+    function applyDashboardPreference(scope) {
+      const preference = getDashboardPreference(scope);
+      document.body.dataset.theme = preference.theme;
+      document.body.dataset.bg = preference.background;
+
+      if (scope === "teacher") {
+        teacherThemeSelect.value = preference.theme;
+        teacherBackgroundSelect.value = preference.background;
+        teacherAvatarSelect.value = preference.avatar;
+        teacherDashboardName.textContent = `${activeTeacherView.name}'s Dashboard`;
+        teacherAvatarBadge.textContent = getAvatarText(preference.avatar, activeTeacherView.name);
+      } else {
+        studentThemeSelect.value = preference.theme;
+        studentBackgroundSelect.value = preference.background;
+        studentAvatarSelect.value = preference.avatar;
+        studentDashboardName.textContent = `${activeDemoStudent.name}'s Dashboard`;
+        studentAvatarBadge.textContent = getAvatarText(preference.avatar, activeDemoStudent.name);
+      }
+    }
+
+    function getAvatarText(avatarId, name) {
+      if (avatarId === "initials") return getInitials(name);
+      const option = avatarOptions.find(item => item.id === avatarId);
+      return option && option.text ? option.text : getInitials(name);
+    }
+
+    function getInitials(name) {
+      const parts = String(name || "DC").trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return "DC";
+      return parts.slice(0, 2).map(part => part[0].toUpperCase()).join("");
     }
 
     window.getRoom113StateForFirebase = () => splitStateForFirebase(state);
@@ -1333,6 +1576,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       window.teacherToolsRequested = false;
       clearIdleLogoutTimer();
       document.body.classList.remove("tracker-open", "student-open");
+      document.body.dataset.theme = "teal";
+      document.body.dataset.bg = "subway";
       teacherLogin.classList.remove("active");
       studentLogin.classList.remove("active");
       teacherPasscode.value = "";
@@ -1378,6 +1623,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       teacherPasscode.value = "";
       loginMessage.textContent = "";
       renderTeacherIdentity();
+      applyDashboardPreference("teacher");
       render();
       resetIdleLogoutTimer();
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
@@ -1393,6 +1639,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       studentDemoPassword.value = "";
       studentLoginMessage.textContent = "";
       renderStudentPage();
+      applyDashboardPreference("student");
       resetIdleLogoutTimer();
     }
 
@@ -1460,6 +1707,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       activeTeacherViewLabel.textContent = canManageProgram()
         ? `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). Full access: incentives, Freckle, Scratch, settings, and teacher approvals.`
         : `Viewing as ${activeTeacherView.name} (${activeTeacherView.email}). Limited access: add and remove incentive points only.`;
+      applyDashboardPreference("teacher");
     }
 
     function getFriday(date) {
@@ -2109,7 +2357,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const weekPoints = currentWeekPoints();
       const weeklyTotals = totalsByHouse(weekPoints);
       const semesterTotals = totalsByHouse(state.points);
-      studentDashboardName.textContent = activeDemoStudent.name;
+      applyDashboardPreference("student");
 
       if (!student) {
         studentIncentiveStats.innerHTML = `
