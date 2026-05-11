@@ -630,6 +630,7 @@
       <p>Use this page for class updates, helpful links, and classroom routines.</p>
       <div class="home-actions">
         <button id="openTeacherLogin">Teacher Tools</button>
+        <button class="secondary" id="openTeacherGoogleLogin">Teacher Google Login</button>
         <button class="secondary" id="openStudentLogin">Student Demo</button>
       </div>
     </section>
@@ -1189,6 +1190,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("logoutButton").addEventListener("click", logoutCurrentScreen);
     document.getElementById("teacherButton").addEventListener("click", showTeacherLogin);
     document.getElementById("openTeacherLogin").addEventListener("click", showTeacherLogin);
+    document.getElementById("openTeacherGoogleLogin").addEventListener("click", () => {
+      showTeacherLogin();
+      document.getElementById("googleRedirectButton").click();
+    });
     document.getElementById("openStudentLogin").addEventListener("click", showStudentLogin);
     document.getElementById("dashboardTab").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
     document.getElementById("helpfulTextTab").addEventListener("click", () => {
