@@ -817,8 +817,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       </section>
 
       <section class="panel span-12 admin-only" id="approvalPanel" hidden>
-        <h2>Access Requests</h2>
-        <p class="muted">People who sign in with Google but are not approved yet will appear here.</p>
+        <h2>Access Management</h2>
+        <p class="muted">Review teacher Google access, pending requests, and demo student dashboard passwords.</p>
         <div id="accessRequests"></div>
       </section>
 
@@ -2290,6 +2290,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
     import {
       collection,
+      deleteDoc,
       doc,
       getDoc,
       getDocs,
@@ -2563,15 +2564,53 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       }
       approvalPanel.hidden = false;
       const pendingQuery = query(collection(db, "accessRequests"), where("status", "==", "pending"));
-      const snapshot = await getDocs(pendingQuery);
+      const [pendingSnapshot, approvedSnapshot] = await Promise.all([
+        getDocs(pendingQuery),
+        getDocs(collection(db, "approvedUsers"))
+      ]);
+      const builtInTeachers = [
+        { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org", role: "Admin" },
+        ...teacherViewProfiles
+          .filter(profile => profile.email !== "cschuchard@maldenschool.org")
+          .map(profile => ({ ...profile, role: "Teacher" }))
+      ];
+      const approvedUsers = [];
+      approvedSnapshot.forEach(userDoc => {
+        approvedUsers.push({ id: userDoc.id, ...userDoc.data() });
+      });
 
-      if (snapshot.empty) {
-        accessRequests.innerHTML = `<p class="empty">No pending access requests.</p>`;
+      accessRequests.innerHTML = `
+        <div class="helpful-text-list">
+          <article class="helpful-text-card">
+            <h3>Built-In Teacher Access</h3>
+            <p class="muted">These emails are built into the dashboard code and Firestore rules.</p>
+            ${renderBuiltInTeacherList(builtInTeachers)}
+          </article>
+          <article class="helpful-text-card">
+            <h3>Firebase Approved Users</h3>
+            <p class="muted">These users were approved through the dashboard and can be revoked here.</p>
+            <div id="approvedUserList">${renderApprovedUserList(approvedUsers)}</div>
+          </article>
+          <article class="helpful-text-card">
+            <h3>Pending Google Requests</h3>
+            <p class="muted">People who sign in with Google but are not approved yet appear here.</p>
+            <div id="pendingAccessList"></div>
+          </article>
+          <article class="helpful-text-card">
+            <h3>Student Demo Dashboard Access</h3>
+            <p class="muted">These are simple demo passwords, not Google accounts.</p>
+            ${renderDemoStudentAccessList()}
+          </article>
+        </div>
+      `;
+
+      const pendingAccessList = document.getElementById("pendingAccessList");
+      if (pendingSnapshot.empty) {
+        pendingAccessList.innerHTML = `<p class="empty">No pending access requests.</p>`;
         return;
       }
 
-      accessRequests.innerHTML = "";
-      snapshot.forEach(requestDoc => {
+      pendingSnapshot.forEach(requestDoc => {
         const request = requestDoc.data();
         const row = document.createElement("div");
         row.className = "history-item";
@@ -2594,8 +2633,82 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         row.appendChild(approveButton);
         row.appendChild(document.createTextNode(" "));
         row.appendChild(denyButton);
-        accessRequests.appendChild(row);
+        pendingAccessList.appendChild(row);
       });
+    }
+
+    function renderBuiltInTeacherList(teachers) {
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Access</th>
+              <th>Removal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${teachers.map(teacher => `
+              <tr>
+                <td><strong>${authEscapeHtml(teacher.name)}</strong></td>
+                <td>${authEscapeHtml(teacher.email)}</td>
+                <td>${authEscapeHtml(teacher.role)}</td>
+                <td><span class="muted">Requires code/rules change</span></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderApprovedUserList(users) {
+      if (!users.length) return `<p class="empty">No extra Firebase-approved users.</p>`;
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(user => `
+              <tr>
+                <td><strong>${authEscapeHtml(user.displayName || "Unknown user")}</strong></td>
+                <td>${authEscapeHtml(user.email || "No email")}</td>
+                <td>${authEscapeHtml(user.status || "approved")}</td>
+                <td><button class="quick-button secondary" type="button" onclick="revokeApprovedUser('${authEscapeHtml(user.id)}')">Revoke</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderDemoStudentAccessList() {
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Password</th>
+              <th>Removal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${demoStudents.map(student => `
+              <tr>
+                <td><strong>${authEscapeHtml(student.name)}</strong></td>
+                <td>${authEscapeHtml(student.password)}</td>
+                <td><span class="muted">Requires code change</span></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
     }
 
     function authEscapeHtml(value) {
@@ -2621,6 +2734,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       });
       await loadAccessRequests();
     }
+
+    async function revokeApprovedUser(uid) {
+      if (!confirm("Revoke this user's dashboard access?")) return;
+      await deleteDoc(doc(db, "approvedUsers", uid));
+      await updateDoc(doc(db, "accessRequests", uid), {
+        status: "revoked",
+        revokedAt: serverTimestamp()
+      }).catch(() => {});
+      await loadAccessRequests();
+    }
+
+    window.revokeApprovedUser = revokeApprovedUser;
 
     async function denyUser(uid) {
       await updateDoc(doc(db, "accessRequests", uid), {
