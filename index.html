@@ -46,6 +46,41 @@
     body[data-theme="copper"] { --brand: #8a4b2a; --brand-dark: #65351d; --accent: #5eead4; }
     body[data-theme="slate"] { --brand: #4b6276; --brand-dark: #374858; --accent: #eab308; }
 
+    body[data-mode="dark"] {
+      --ink: #edf6f8;
+      --muted: #b7c7d0;
+      --line: rgba(255,255,255,0.16);
+      --page: #101820;
+      --panel: rgba(20, 30, 39, 0.94);
+      --danger: #ff8a8a;
+      --ok: #75d59b;
+      color-scheme: dark;
+    }
+
+    body[data-mode="dark"] header,
+    body[data-mode="dark"] .profile-hero,
+    body[data-mode="dark"] .hero-panel,
+    body[data-mode="dark"] .panel,
+    body[data-mode="dark"] .stat,
+    body[data-mode="dark"] .history-item,
+    body[data-mode="dark"] .helpful-text-card,
+    body[data-mode="dark"] .insight-card {
+      background-color: var(--panel);
+      color: var(--ink);
+    }
+
+    body[data-mode="dark"] th {
+      background: rgba(255,255,255,0.08);
+      color: var(--ink);
+    }
+
+    body[data-mode="dark"] input,
+    body[data-mode="dark"] select {
+      background: #111c25;
+      border-color: rgba(255,255,255,0.24);
+      color: var(--ink);
+    }
+
     body[data-bg="subway"] { background-image: linear-gradient(135deg, rgba(47, 125, 149, 0.18), rgba(245, 196, 81, 0.12)), repeating-linear-gradient(90deg, transparent 0 42px, rgba(47, 125, 149, 0.12) 42px 44px); }
     body[data-bg="grid"] { background-image: linear-gradient(rgba(47, 125, 149, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 125, 149, 0.12) 1px, transparent 1px); background-size: 34px 34px; }
     body[data-bg="stars"] { background-image: radial-gradient(circle at 18% 22%, rgba(255,255,255,0.85) 0 1px, transparent 2px), radial-gradient(circle at 78% 28%, rgba(47,125,149,0.35) 0 2px, transparent 3px), linear-gradient(135deg, #eef5f8, #f8fbfc); }
@@ -462,6 +497,21 @@
       font-weight: 900;
     }
 
+    .avatar-badge svg {
+      width: 46px;
+      height: 46px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .avatar-badge .avatar-fill {
+      fill: currentColor;
+      stroke: none;
+    }
+
     .profile-hero h2 {
       margin-bottom: 2px;
       font-size: clamp(2rem, 4vw, 3.4rem);
@@ -781,6 +831,10 @@
         <h2>Customize Dashboard</h2>
         <div class="customizer-grid">
           <div>
+            <label for="teacherModeSelect">View</label>
+            <select id="teacherModeSelect"></select>
+          </div>
+          <div>
             <label for="teacherThemeSelect">Color theme</label>
             <select id="teacherThemeSelect"></select>
           </div>
@@ -928,6 +982,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       <h2>Customize Dashboard</h2>
       <div class="customizer-grid">
         <div>
+          <label for="studentModeSelect">View</label>
+          <select id="studentModeSelect"></select>
+        </div>
+        <div>
           <label for="studentThemeSelect">Color theme</label>
           <select id="studentThemeSelect"></select>
         </div>
@@ -981,6 +1039,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { name: "Aidan Rossler", password: "Rossler" },
       { name: "Jace Hampton", password: "Hampton" }
     ];
+    const modeOptions = [
+      { id: "light", label: "Light" },
+      { id: "dark", label: "Dark" }
+    ];
     const themeOptions = [
       { id: "teal", label: "Teal Transit" },
       { id: "purple", label: "Royal Purple" },
@@ -1006,16 +1068,16 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { id: "aurora", label: "Aurora" }
     ];
     const avatarOptions = [
-      { id: "initials", label: "Initials", text: "" },
-      { id: "check", label: "Check", text: "OK" },
-      { id: "star", label: "Star", text: "*" },
-      { id: "bolt", label: "Bolt", text: "!" },
-      { id: "compass", label: "Compass", text: "N" },
-      { id: "graph", label: "Graph", text: "Y" },
-      { id: "book", label: "Book", text: "B" },
-      { id: "shield", label: "Shield", text: "S" },
-      { id: "spark", label: "Spark", text: "+" },
-      { id: "route", label: "Route", text: "R" }
+      { id: "initials", label: "Initials" },
+      { id: "check", label: "Check" },
+      { id: "star", label: "Star" },
+      { id: "bolt", label: "Bolt" },
+      { id: "compass", label: "Compass" },
+      { id: "graph", label: "Graph" },
+      { id: "book", label: "Book" },
+      { id: "shield", label: "Shield" },
+      { id: "spark", label: "Spark" },
+      { id: "route", label: "Route" }
     ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
     let activeDemoStudent = demoStudents[0];
@@ -1316,6 +1378,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const activeTeacherViewLabel = document.getElementById("activeTeacherViewLabel");
     const teacherDashboardName = document.getElementById("teacherDashboardName");
     const teacherAvatarBadge = document.getElementById("teacherAvatarBadge");
+    const teacherModeSelect = document.getElementById("teacherModeSelect");
     const teacherThemeSelect = document.getElementById("teacherThemeSelect");
     const teacherBackgroundSelect = document.getElementById("teacherBackgroundSelect");
     const teacherAvatarSelect = document.getElementById("teacherAvatarSelect");
@@ -1325,6 +1388,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const studentLoginMessage = document.getElementById("studentLoginMessage");
     const studentDashboardName = document.getElementById("studentDashboardName");
     const studentAvatarBadge = document.getElementById("studentAvatarBadge");
+    const studentModeSelect = document.getElementById("studentModeSelect");
     const studentThemeSelect = document.getElementById("studentThemeSelect");
     const studentBackgroundSelect = document.getElementById("studentBackgroundSelect");
     const studentAvatarSelect = document.getElementById("studentAvatarSelect");
@@ -1364,10 +1428,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
-    [teacherThemeSelect, teacherBackgroundSelect, teacherAvatarSelect].forEach(select => {
+    [teacherModeSelect, teacherThemeSelect, teacherBackgroundSelect, teacherAvatarSelect].forEach(select => {
       select.addEventListener("change", () => saveDashboardPreference("teacher"));
     });
-    [studentThemeSelect, studentBackgroundSelect, studentAvatarSelect].forEach(select => {
+    [studentModeSelect, studentThemeSelect, studentBackgroundSelect, studentAvatarSelect].forEach(select => {
       select.addEventListener("change", () => saveDashboardPreference("student"));
     });
     populateCustomizerControls();
@@ -1473,9 +1537,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function populateCustomizerControls() {
+      const modeHtml = modeOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
       const themeHtml = themeOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
       const backgroundHtml = backgroundOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
       const avatarHtml = avatarOptions.map(option => `<option value="${escapeAttribute(option.id)}">${escapeHtml(option.label)}</option>`).join("");
+      [teacherModeSelect, studentModeSelect].forEach(select => { select.innerHTML = modeHtml; });
       [teacherThemeSelect, studentThemeSelect].forEach(select => { select.innerHTML = themeHtml; });
       [teacherBackgroundSelect, studentBackgroundSelect].forEach(select => { select.innerHTML = backgroundHtml; });
       [teacherAvatarSelect, studentAvatarSelect].forEach(select => { select.innerHTML = avatarHtml; });
@@ -1489,6 +1555,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function getDashboardPreference(scope) {
       const users = (state.preferences && state.preferences.users) || {};
       return {
+        mode: "light",
         theme: "teal",
         background: scope === "teacher" ? "subway" : "grid",
         avatar: "initials",
@@ -1498,6 +1565,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function saveDashboardPreference(scope) {
       const preference = {
+        mode: scope === "teacher" ? teacherModeSelect.value : studentModeSelect.value,
         theme: scope === "teacher" ? teacherThemeSelect.value : studentThemeSelect.value,
         background: scope === "teacher" ? teacherBackgroundSelect.value : studentBackgroundSelect.value,
         avatar: scope === "teacher" ? teacherAvatarSelect.value : studentAvatarSelect.value
@@ -1511,28 +1579,48 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function applyDashboardPreference(scope) {
       const preference = getDashboardPreference(scope);
+      document.body.dataset.mode = preference.mode;
       document.body.dataset.theme = preference.theme;
       document.body.dataset.bg = preference.background;
 
       if (scope === "teacher") {
+        teacherModeSelect.value = preference.mode;
         teacherThemeSelect.value = preference.theme;
         teacherBackgroundSelect.value = preference.background;
         teacherAvatarSelect.value = preference.avatar;
         teacherDashboardName.textContent = `${activeTeacherView.name}'s Dashboard`;
-        teacherAvatarBadge.textContent = getAvatarText(preference.avatar, activeTeacherView.name);
+        renderAvatarBadge(teacherAvatarBadge, preference.avatar, activeTeacherView.name);
       } else {
+        studentModeSelect.value = preference.mode;
         studentThemeSelect.value = preference.theme;
         studentBackgroundSelect.value = preference.background;
         studentAvatarSelect.value = preference.avatar;
         studentDashboardName.textContent = `${activeDemoStudent.name}'s Dashboard`;
-        studentAvatarBadge.textContent = getAvatarText(preference.avatar, activeDemoStudent.name);
+        renderAvatarBadge(studentAvatarBadge, preference.avatar, activeDemoStudent.name);
       }
     }
 
-    function getAvatarText(avatarId, name) {
-      if (avatarId === "initials") return getInitials(name);
-      const option = avatarOptions.find(item => item.id === avatarId);
-      return option && option.text ? option.text : getInitials(name);
+    function renderAvatarBadge(element, avatarId, name) {
+      if (avatarId === "initials") {
+        element.textContent = getInitials(name);
+        return;
+      }
+      element.innerHTML = getAvatarIcon(avatarId);
+    }
+
+    function getAvatarIcon(avatarId) {
+      const icons = {
+        check: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 25l9 9 21-22"/></svg>`,
+        star: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6l5.3 11 12.1 1.7-8.7 8.5 2 12-10.7-5.7-10.7 5.7 2-12-8.7-8.5L18.7 17z"/></svg>`,
+        bolt: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M27 4L10 27h12l-1 17 17-24H26z"/></svg>`,
+        compass: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="18"/><path d="M30 12l-4 14-8 10 4-14z"/></svg>`,
+        graph: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 38h32M12 34l8-10 7 6 10-16"/><path d="M12 12v22"/></svg>`,
+        book: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 9h13a7 7 0 0 1 7 7v23a7 7 0 0 0-7-7H10z"/><path d="M38 9h-8a7 7 0 0 0-7 7v23a7 7 0 0 1 7-7h8z"/></svg>`,
+        shield: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5l16 6v11c0 10-6.6 17-16 21C14.6 39 8 32 8 22V11z"/></svg>`,
+        spark: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4v14M24 30v14M4 24h14M30 24h14M11 11l10 10M27 27l10 10M37 11L27 21M21 27L11 37"/></svg>`,
+        route: `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="12" cy="12" r="5"/><circle cx="36" cy="36" r="5"/><path d="M17 12h11a8 8 0 0 1 0 16h-8a8 8 0 0 0 0 16h11"/></svg>`
+      };
+      return icons[avatarId] || icons.check;
     }
 
     function getInitials(name) {
@@ -1576,6 +1664,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       window.teacherToolsRequested = false;
       clearIdleLogoutTimer();
       document.body.classList.remove("tracker-open", "student-open");
+      document.body.dataset.mode = "light";
       document.body.dataset.theme = "teal";
       document.body.dataset.bg = "subway";
       teacherLogin.classList.remove("active");
