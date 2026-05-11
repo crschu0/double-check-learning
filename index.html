@@ -2678,6 +2678,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const incentivesDocId = "incentives";
     const progressDocId = "progress";
     const studentProgressDocId = "studentProgress";
+    const publicDashboardDocId = "dashboard";
     const teacherToolsRedirectKey = "room113TeacherToolsRequested";
 
     let auth;
@@ -2889,11 +2890,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     async function loadStudentDashboardData(student) {
       try {
-        const incentivesSnap = await getDoc(doc(db, "trackerData", incentivesDocId));
-        const studentProgressSnap = await getDoc(doc(db, "publicProgress", studentProgressDocId));
-        const progressData = studentProgressSnap.exists() ? studentProgressSnap.data() : {};
+        const dashboardSnap = await getDoc(doc(db, "publicDashboard", publicDashboardDocId));
+        const dashboardData = dashboardSnap.exists() ? dashboardSnap.data() : {};
+        const incentivesData = dashboardData.incentives || {};
+        const progressData = dashboardData.progress || {};
         if (window.mergeRoom113FirebaseState) {
-          window.mergeRoom113FirebaseState(incentivesSnap.exists() ? incentivesSnap.data() : {}, progressData);
+          window.mergeRoom113FirebaseState(incentivesData, progressData);
         }
         if (window.markRoom113FirebaseReady) window.markRoom113FirebaseReady();
         if (window.openDemoStudentDashboard) window.openDemoStudentDashboard(student);
@@ -2922,8 +2924,27 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             scratch: splitState.progress.scratch || {},
             updatedAt: serverTimestamp()
           }, { merge: true });
+          await setDoc(doc(db, "publicDashboard", publicDashboardDocId), {
+            incentives: buildStudentSafeIncentives(splitState.incentives),
+            progress: {
+              freckle: splitState.progress.freckle || {},
+              scratch: splitState.progress.scratch || {}
+            },
+            updatedAt: serverTimestamp()
+          }, { merge: true });
         }
       }, 400);
+    }
+
+    function buildStudentSafeIncentives(incentives) {
+      return {
+        houses: incentives.houses || [],
+        students: incentives.students || [],
+        points: incentives.points || [],
+        history: [],
+        preferences: incentives.preferences || { users: {} },
+        settings: incentives.settings || {}
+      };
     }
 
     async function loadAccessRequests() {
