@@ -56,5 +56,10 @@ service cloud.firestore {
     match /privateProgress/progress {
       allow read, write: if isAdmin();
     }
+
+    match /publicProgress/studentProgress {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

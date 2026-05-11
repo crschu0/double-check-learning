@@ -1732,6 +1732,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       resetIdleLogoutTimer();
     }
 
+    window.openDemoStudentDashboard = student => {
+      activeDemoStudent = student;
+      openStudentPage();
+    };
+
     function checkTeacherPasscode(event) {
       event.preventDefault();
       if (teacherPasscode.value === getTeacherPasscode()) {
@@ -1743,12 +1748,16 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       loginMessage.textContent = "That passcode did not work.";
     }
 
-    function checkStudentPassword(event) {
+    async function checkStudentPassword(event) {
       event.preventDefault();
       const matchedStudent = demoStudents.find(student => student.password === studentDemoPassword.value);
       if (matchedStudent) {
-        activeDemoStudent = matchedStudent;
-        openStudentPage();
+        studentLoginMessage.textContent = "Loading dashboard...";
+        if (window.loadStudentDashboardData) {
+          await window.loadStudentDashboardData(matchedStudent);
+        } else {
+          window.openDemoStudentDashboard(matchedStudent);
+        }
         return;
       }
 
@@ -2668,6 +2677,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const accessRequests = document.getElementById("accessRequests");
     const incentivesDocId = "incentives";
     const progressDocId = "progress";
+    const studentProgressDocId = "studentProgress";
     const teacherToolsRedirectKey = "room113TeacherToolsRequested";
 
     let auth;
@@ -2702,6 +2712,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       };
       window.signOutTeacherAccount = signOutTeacherAccount;
       window.saveRoom113Data = saveRoom113Data;
+      window.loadStudentDashboardData = loadStudentDashboardData;
     } else {
       googleSignInButton.disabled = true;
       googleRedirectButton.disabled = true;
@@ -2876,6 +2887,22 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       if (window.markRoom113FirebaseReady) window.markRoom113FirebaseReady();
     }
 
+    async function loadStudentDashboardData(student) {
+      try {
+        const incentivesSnap = await getDoc(doc(db, "trackerData", incentivesDocId));
+        const studentProgressSnap = await getDoc(doc(db, "publicProgress", studentProgressDocId));
+        const progressData = studentProgressSnap.exists() ? studentProgressSnap.data() : {};
+        if (window.mergeRoom113FirebaseState) {
+          window.mergeRoom113FirebaseState(incentivesSnap.exists() ? incentivesSnap.data() : {}, progressData);
+        }
+        if (window.markRoom113FirebaseReady) window.markRoom113FirebaseReady();
+        if (window.openDemoStudentDashboard) window.openDemoStudentDashboard(student);
+      } catch (error) {
+        if (window.openDemoStudentDashboard) window.openDemoStudentDashboard(student);
+        studentLoginMessage.textContent = `Dashboard opened with local data only: ${error.message}`;
+      }
+    }
+
     function saveRoom113Data(nextState) {
       if (!auth || !auth.currentUser || !window.getRoom113StateForFirebase) return;
       if (saveTimer) clearTimeout(saveTimer);
@@ -2888,6 +2915,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         if (window.canManageProgram && window.canManageProgram()) {
           await setDoc(doc(db, "privateProgress", progressDocId), {
             ...splitState.progress,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          await setDoc(doc(db, "publicProgress", studentProgressDocId), {
+            freckle: splitState.progress.freckle || {},
+            scratch: splitState.progress.scratch || {},
             updatedAt: serverTimestamp()
           }, { merge: true });
         }
