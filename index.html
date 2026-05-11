@@ -656,8 +656,10 @@
       <p id="loginMessage" class="error"></p>
       <div class="auth-box">
         <button type="button" id="googleSignInButton">Sign in with Google</button>
+        <button type="button" class="secondary" id="googleRedirectButton">Google Redirect Login</button>
         <button type="button" class="secondary" id="googleSignOutButton">Sign Out</button>
         <p id="googleAuthStatus" class="auth-status">Google sign-in is not configured yet.</p>
+        <p id="googleAuthDebug" class="auth-status">Auth debug: not checked yet.</p>
       </div>
       <p class="notice">Only approved school accounts can open the tracker.</p>
     </section>
@@ -2315,8 +2317,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     };
 
     const googleSignInButton = document.getElementById("googleSignInButton");
+    const googleRedirectButton = document.getElementById("googleRedirectButton");
     const googleSignOutButton = document.getElementById("googleSignOutButton");
     const googleAuthStatus = document.getElementById("googleAuthStatus");
+    const googleAuthDebug = document.getElementById("googleAuthDebug");
     const approvalPanel = document.getElementById("approvalPanel");
     const accessRequests = document.getElementById("accessRequests");
     const incentivesDocId = "incentives";
@@ -2334,10 +2338,17 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       db = getFirestore(app);
 
       googleAuthStatus.textContent = "Sign in with Google to request or open access.";
+      updateAuthDebug("Firebase ready.");
       googleSignInButton.addEventListener("click", signInWithGoogle);
+      googleRedirectButton.addEventListener("click", signInWithGoogleRedirect);
       googleSignOutButton.addEventListener("click", signOutTeacherAccount);
       onAuthStateChanged(auth, handleSignedInUser);
-      getRedirectResult(auth).catch(error => {
+      getRedirectResult(auth).then(result => {
+        updateAuthDebug(result && result.user
+          ? `Redirect returned ${result.user.email || "a Google account"}.`
+          : "Redirect checked; no returned Google account.");
+      }).catch(error => {
+        updateAuthDebug(`Redirect error: ${error.code || error.message}`);
         googleAuthStatus.textContent = `Google sign-in did not finish: ${error.message}`;
       });
       window.openTeacherToolsIfSignedIn = () => {
@@ -2350,7 +2361,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       window.saveRoom113Data = saveRoom113Data;
     } else {
       googleSignInButton.disabled = true;
+      googleRedirectButton.disabled = true;
       googleSignOutButton.disabled = true;
+      updateAuthDebug("Firebase config missing.");
     }
 
     function hasFirebaseConfig(config) {
@@ -2360,16 +2373,24 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     async function signInWithGoogle() {
       markTeacherToolsRequested();
       googleAuthStatus.textContent = "Opening Google sign-in...";
+      updateAuthDebug("Trying Google popup sign-in.");
       try {
         await signInWithPopup(auth, new GoogleAuthProvider());
       } catch (error) {
+        updateAuthDebug(`Popup error: ${error.code || error.message}`);
         if (error.code === "auth/popup-blocked" || error.code === "auth/operation-not-supported-in-this-environment") {
-          googleAuthStatus.textContent = "Popup was blocked. Redirecting to Google sign-in...";
-          await signInWithRedirect(auth, new GoogleAuthProvider());
+          await signInWithGoogleRedirect();
           return;
         }
         googleAuthStatus.textContent = `Google sign-in did not finish: ${error.message}`;
       }
+    }
+
+    async function signInWithGoogleRedirect() {
+      markTeacherToolsRequested();
+      googleAuthStatus.textContent = "Redirecting to Google sign-in...";
+      updateAuthDebug(`Redirect start from ${window.location.hostname}.`);
+      await signInWithRedirect(auth, new GoogleAuthProvider());
     }
 
     async function signOutTeacherAccount() {
@@ -2380,6 +2401,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       document.body.classList.remove("tracker-open", "student-open");
       if (window.clearIdleLogoutTimer) window.clearIdleLogoutTimer();
       googleAuthStatus.textContent = "Signed out.";
+      updateAuthDebug("Signed out.");
+    }
+
+    function updateAuthDebug(message) {
+      if (!googleAuthDebug) return;
+      googleAuthDebug.textContent = `Auth debug: ${message}`;
     }
 
     function markTeacherToolsRequested() {
@@ -2407,8 +2434,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         googleAuthStatus.textContent = hasFirebaseConfig(firebaseConfig)
           ? "Sign in with Google to request or open access."
           : "Google sign-in is not configured yet.";
+        updateAuthDebug(`No signed-in user. Return flag: ${isTeacherToolsRequested() ? "yes" : "no"}.`);
         return;
       }
+
+      updateAuthDebug(`Signed in as ${user.email || "unknown email"}. Return flag: ${isTeacherToolsRequested() ? "yes" : "no"}.`);
 
       if (teacherEmails.includes(user.email)) {
         googleAuthStatus.textContent = `Signed in as ${user.email}. Teacher access approved.`;
