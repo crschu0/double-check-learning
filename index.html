@@ -1038,7 +1038,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org" },
       { name: "Mrs. Ribas", email: "jribas@maldenschool.org" }
     ];
-    const removedDemoStudentNames = ["Matthew Bohms", "Aidan Rossler", "Jace Hampton"];
+    const removedDemoStudentNames = ["Matthew Bohm", "Matthew Bohms", "Aidan Rossler", "Jace Hampton"];
+    const removedDemoStudentPasswords = ["Bohms", "Rossler", "Hampton"];
     const defaultDemoStudents = [];
     const modeOptions = [
       { id: "light", label: "Light" },
@@ -1323,7 +1324,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function filterRemovedDemoStudents(students) {
       const removedNames = removedDemoStudentNames.map(normalizeDemoName);
-      return (students || []).filter(student => !removedNames.includes(normalizeDemoName(student.name)));
+      const removedPasswords = removedDemoStudentPasswords.map(normalizeDemoPassword);
+      return (students || []).filter(student => {
+        return !removedNames.includes(normalizeDemoName(student.name))
+          && !removedPasswords.includes(normalizeDemoPassword(student.password));
+      });
     }
 
     function purgeRemovedDemoStudents(nextState) {
@@ -1587,6 +1592,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     async function checkStudentPassword(event) {
       event.preventDefault();
+      const removedPasswords = removedDemoStudentPasswords.map(normalizeDemoPassword);
+      if (removedPasswords.includes(normalizeDemoPassword(studentDemoPassword.value))) {
+        studentLoginMessage.textContent = "That dashboard has been removed.";
+        return;
+      }
       const matchedStudent = getDemoStudents().find(student => student.password === studentDemoPassword.value);
       if (matchedStudent) {
         studentLoginMessage.textContent = "Loading dashboard...";
@@ -2965,7 +2975,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         if (window.saveRoom113Data) window.saveRoom113Data(state);
         render();
         loadAccessRequests();
-        alert("Matthew Bohms, Aidan Rossler, and Jace Hampton have been purged from demo access, progress, points, and saved preferences.");
+        alert("Matthew Bohm/Bohms, Aidan Rossler, and Jace Hampton have been purged from demo access, progress, points, and saved preferences.");
         return;
       }
       const names = matchingStudents.map(student => student.name).join(", ");
@@ -2979,6 +2989,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function normalizeDemoName(name) {
       return String(name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function normalizeDemoPassword(password) {
+      return String(password || "").trim().toLowerCase();
     }
 
     window.removeDefaultDemoStudentsFromTracker = removeDefaultDemoStudentsFromTracker;
