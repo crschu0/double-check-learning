@@ -1322,6 +1322,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return filterRemovedDemoStudents(state.demoStudents || defaultDemoStudents);
     }
 
+    function getSavedDemoStudents() {
+      return state.demoStudents || defaultDemoStudents;
+    }
+
     function filterRemovedDemoStudents(students) {
       const removedNames = removedDemoStudentNames.map(normalizeDemoName);
       const removedPasswords = removedDemoStudentPasswords.map(normalizeDemoPassword);
@@ -2928,8 +2932,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderDemoStudentAccessList() {
-      const demoAccess = getDemoStudents();
-      if (!demoAccess.length) return `<p class="empty">No student demo logins are active.</p>`;
+      const demoAccess = getSavedDemoStudents();
+      const cleanupRows = [
+        { name: "Matthew Bohm/Bohms", password: "Bohms" },
+        { name: "Aidan Rossler", password: "Rossler" },
+        { name: "Jace Hampton", password: "Hampton" }
+      ];
+      if (!demoAccess.length) {
+        return `
+          <p class="empty">No student demo logins are active.</p>
+          ${renderRemovedDemoCleanupTable(cleanupRows)}
+        `;
+      }
       return `
         <table>
           <thead>
@@ -2944,7 +2958,32 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
               <tr>
                 <td><strong>${authEscapeHtml(student.name)}</strong></td>
                 <td>${authEscapeHtml(student.password)}</td>
-                <td><button class="quick-button secondary" type="button" onclick="removeDemoStudentAccess('${authEscapeHtml(student.password)}')">Remove Demo Access</button></td>
+                <td><button class="quick-button danger" type="button" onclick="removeDemoStudentAccess('${authEscapeHtml(student.password)}')">Delete Demo</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        ${renderRemovedDemoCleanupTable(cleanupRows)}
+      `;
+    }
+
+    function renderRemovedDemoCleanupTable(cleanupRows) {
+      return `
+        <h3>Removed Student Demo Cleanup</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Old Password</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cleanupRows.map(student => `
+              <tr>
+                <td><strong>${authEscapeHtml(student.name)}</strong></td>
+                <td>${authEscapeHtml(student.password)}</td>
+                <td><button class="quick-button danger" type="button" onclick="removeDemoStudentAccess('${authEscapeHtml(student.password)}')">Delete Demo</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -2954,12 +2993,15 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function removeDemoStudentAccess(password) {
       if (!window.canManageProgram || !window.canManageProgram()) return;
-      const student = getDemoStudents().find(item => item.password === password);
-      if (!student) return;
-      if (!confirm(`Remove demo dashboard access for ${student.name}? This will not remove the student from the incentive tracker.`)) return;
-      state.demoStudents = getDemoStudents().filter(item => item.password !== password);
+      const normalizedPassword = normalizeDemoPassword(password);
+      const student = getSavedDemoStudents().find(item => normalizeDemoPassword(item.password) === normalizedPassword);
+      const studentName = student ? student.name : password;
+      if (!confirm(`Delete demo dashboard access for ${studentName}? This will also purge matching removed-student records if they exist.`)) return;
+      state.demoStudents = getSavedDemoStudents().filter(item => normalizeDemoPassword(item.password) !== normalizedPassword);
+      purgeRemovedDemoStudents(state);
       saveState();
       if (window.saveRoom113Data) window.saveRoom113Data(state);
+      render();
       loadAccessRequests();
     }
 
