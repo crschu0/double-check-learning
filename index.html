@@ -1034,11 +1034,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org" },
       { name: "Mrs. Ribas", email: "jribas@maldenschool.org" }
     ];
-    const defaultDemoStudents = [
-      { name: "Matthew Bohms", password: "Bohms" },
-      { name: "Aidan Rossler", password: "Rossler" },
-      { name: "Jace Hampton", password: "Hampton" }
-    ];
+    const removedDemoStudentNames = ["Matthew Bohms", "Aidan Rossler", "Jace Hampton"];
+    const defaultDemoStudents = [];
     const modeOptions = [
       { id: "light", label: "Light" },
       { id: "dark", label: "Dark" }
@@ -1080,7 +1077,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { id: "route", label: "Route" }
     ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
-    let activeDemoStudent = defaultDemoStudents[0];
+    let activeDemoStudent = { name: "Student", password: "" };
     let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
     let firebaseStateReady = false;
@@ -1101,47 +1098,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         users: {}
       },
       freckle: {
-        "aidan rossler": {
-          name: "Aidan Rossler",
-          hasData: true,
-          accuracy: "60",
-          timePracticed: "3 min",
-          questions: "5",
-          correctTotal: "3 / 5",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Expressions & Equations",
-          startingGrade: "6.1",
-          lowestGrade: "6.1",
-          highestGrade: "6.1",
-          latestGrade: "6.1",
-          adaptiveLevelsPassed: "0",
-          domainPractice: [
-            { domain: "Expressions & Equations", questions: "3" },
-            { domain: "Statistics & Probability", questions: "2" }
-          ],
-          importedAt: "2026-05-10"
-        },
-        "jace hampton": {
-          name: "Jace Hampton",
-          hasData: true,
-          accuracy: "75",
-          timePracticed: "5 min",
-          questions: "4",
-          correctTotal: "3 / 4",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Operations & Algebraic Thinking",
-          startingGrade: "4.6",
-          lowestGrade: "4.6",
-          highestGrade: "4.8",
-          latestGrade: "4.8",
-          adaptiveLevelsPassed: "1",
-          domainPractice: [
-            { domain: "Operations & Algebraic Thinking", questions: "4" }
-          ],
-          importedAt: "2026-05-10"
-        },
         "joel salazar": {
           name: "Joel Salazar",
           hasData: true,
@@ -1332,23 +1288,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         "lillian drake": { name: "Lillian Drake", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
         "ella linker": { name: "Ella Linker", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" }
       },
-      scratch: {
-        "matthew bohms": {
-          current: "Add current Scratch assignment.",
-          completed: "Add completed Scratch projects.",
-          nextStep: "Add what Matthew should work on next."
-        },
-        "aidan rossler": {
-          current: "Add current Scratch assignment.",
-          completed: "Add completed Scratch projects.",
-          nextStep: "Add Aidan's next Scratch step."
-        },
-        "jace hampton": {
-          current: "Add current Scratch assignment.",
-          completed: "Add completed Scratch projects.",
-          nextStep: "Add Jace's next Scratch step."
-        }
-      },
+      scratch: {},
       settings: {
         funFridayLimit: 5,
         currentWeekStart: getFriday(today),
@@ -1455,7 +1395,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         const nextState = {
           ...starterState,
           ...parsed,
-          demoStudents: parsed.demoStudents || starterState.demoStudents,
+          demoStudents: filterRemovedDemoStudents(parsed.demoStudents || starterState.demoStudents),
           freckle: {
             ...starterState.freckle,
             ...(parsed.freckle || {})
@@ -1474,9 +1414,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             ...starterState.settings,
             ...parsed.settings
           }
-        };
-        normalizeWeekSettings(nextState);
-        return nextState;
+      };
+      purgeRemovedDemoStudents(nextState);
+      normalizeWeekSettings(nextState);
+      return nextState;
       } catch {
         return starterState;
       }
@@ -1516,6 +1457,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           }
         }
       };
+      purgeRemovedDemoStudents(state);
       normalizeWeekSettings(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
       renderTeacherIdentity();
@@ -1555,7 +1497,25 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function getDemoStudents() {
-      return state.demoStudents || defaultDemoStudents;
+      return filterRemovedDemoStudents(state.demoStudents || defaultDemoStudents);
+    }
+
+    function filterRemovedDemoStudents(students) {
+      const removedNames = removedDemoStudentNames.map(normalizeDemoName);
+      return (students || []).filter(student => !removedNames.includes(normalizeDemoName(student.name)));
+    }
+
+    function purgeRemovedDemoStudents(nextState) {
+      const removedNames = removedDemoStudentNames.map(normalizeDemoName);
+      nextState.students = (nextState.students || []).filter(student => !removedNames.includes(normalizeDemoName(student.name)));
+      nextState.demoStudents = filterRemovedDemoStudents(nextState.demoStudents || []);
+      nextState.points = (nextState.points || []).filter(point => !removedNames.includes(normalizeDemoName(point.studentName)));
+      removedNames.forEach(name => {
+        if (nextState.freckle) delete nextState.freckle[name];
+        if (nextState.scratch) delete nextState.scratch[name];
+        if (nextState.preferences && nextState.preferences.users) delete nextState.preferences.users[`student:${name}`];
+      });
+      return nextState;
     }
 
     function getDashboardPreference(scope) {
@@ -3126,17 +3086,20 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function removeDefaultDemoStudentsFromTracker() {
       if (!window.canManageProgram || !window.canManageProgram()) return;
-      const demoNames = defaultDemoStudents.map(student => normalizeDemoName(student.name));
+      const demoNames = removedDemoStudentNames.map(normalizeDemoName);
       const matchingStudents = state.students.filter(student => demoNames.includes(normalizeDemoName(student.name)));
       if (!matchingStudents.length) {
-        alert("None of the original demo students are currently in the incentive tracker.");
+        purgeRemovedDemoStudents(state);
+        saveState();
+        if (window.saveRoom113Data) window.saveRoom113Data(state);
+        render();
+        loadAccessRequests();
+        alert("Matthew Bohms, Aidan Rossler, and Jace Hampton have been purged from demo access, progress, points, and saved preferences.");
         return;
       }
       const names = matchingStudents.map(student => student.name).join(", ");
-      if (!confirm(`Remove these students from the incentive tracker and demo login list? ${names}`)) return;
-      const matchingIds = new Set(matchingStudents.map(student => student.id));
-      state.students = state.students.filter(student => !matchingIds.has(student.id));
-      state.demoStudents = getDemoStudents().filter(student => !demoNames.includes(normalizeDemoName(student.name)));
+      if (!confirm(`Completely remove these students from the tracker, demo login list, point history, progress records, and saved preferences? ${names}`)) return;
+      purgeRemovedDemoStudents(state);
       saveState();
       if (window.saveRoom113Data) window.saveRoom113Data(state);
       render();
