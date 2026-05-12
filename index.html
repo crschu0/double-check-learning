@@ -1034,7 +1034,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { name: "Mr. Schuchard", email: "cschuchard@maldenschool.org" },
       { name: "Mrs. Ribas", email: "jribas@maldenschool.org" }
     ];
-    const demoStudents = [
+    const defaultDemoStudents = [
       { name: "Matthew Bohms", password: "Bohms" },
       { name: "Aidan Rossler", password: "Rossler" },
       { name: "Jace Hampton", password: "Hampton" }
@@ -1080,7 +1080,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       { id: "route", label: "Route" }
     ];
     const idleLogoutMs = 2 * 60 * 60 * 1000;
-    let activeDemoStudent = demoStudents[0];
+    let activeDemoStudent = defaultDemoStudents[0];
     let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
     let firebaseStateReady = false;
@@ -1094,6 +1094,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const starterState = {
       houses: ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"],
       students: [],
+      demoStudents: defaultDemoStudents,
       points: [],
       history: [],
       preferences: {
@@ -1454,6 +1455,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         const nextState = {
           ...starterState,
           ...parsed,
+          demoStudents: parsed.demoStudents || starterState.demoStudents,
           freckle: {
             ...starterState.freckle,
             ...(parsed.freckle || {})
@@ -1550,6 +1552,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function getPreferenceKey(scope) {
       if (scope === "teacher") return `teacher:${normalizeNameKey(activeTeacherView.email || activeTeacherView.name)}`;
       return `student:${normalizeNameKey(activeDemoStudent.name)}`;
+    }
+
+    function getDemoStudents() {
+      return state.demoStudents || defaultDemoStudents;
     }
 
     function getDashboardPreference(scope) {
@@ -1750,7 +1756,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     async function checkStudentPassword(event) {
       event.preventDefault();
-      const matchedStudent = demoStudents.find(student => student.password === studentDemoPassword.value);
+      const matchedStudent = getDemoStudents().find(student => student.password === studentDemoPassword.value);
       if (matchedStudent) {
         studentLoginMessage.textContent = "Loading dashboard...";
         if (window.loadStudentDashboardData) {
@@ -2940,6 +2946,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return {
         houses: incentives.houses || [],
         students: incentives.students || [],
+        demoStudents: incentives.demoStudents || [],
         points: incentives.points || [],
         history: [],
         preferences: incentives.preferences || { users: {} },
@@ -3079,27 +3086,42 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderDemoStudentAccessList() {
+      const demoAccess = getDemoStudents();
+      if (!demoAccess.length) return `<p class="empty">No student demo logins are active.</p>`;
       return `
         <table>
           <thead>
             <tr>
               <th>Student</th>
               <th>Password</th>
-              <th>Removal</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            ${demoStudents.map(student => `
+            ${demoAccess.map(student => `
               <tr>
                 <td><strong>${authEscapeHtml(student.name)}</strong></td>
                 <td>${authEscapeHtml(student.password)}</td>
-                <td><span class="muted">Requires code change</span></td>
+                <td><button class="quick-button secondary" type="button" onclick="removeDemoStudentAccess('${authEscapeHtml(student.password)}')">Remove Demo Access</button></td>
               </tr>
             `).join("")}
           </tbody>
         </table>
       `;
     }
+
+    function removeDemoStudentAccess(password) {
+      if (!window.canManageProgram || !window.canManageProgram()) return;
+      const student = getDemoStudents().find(item => item.password === password);
+      if (!student) return;
+      if (!confirm(`Remove demo dashboard access for ${student.name}? This will not remove the student from the incentive tracker.`)) return;
+      state.demoStudents = getDemoStudents().filter(item => item.password !== password);
+      saveState();
+      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      loadAccessRequests();
+    }
+
+    window.removeDemoStudentAccess = removeDemoStudentAccess;
 
     function authEscapeHtml(value) {
       return String(value)
