@@ -1274,10 +1274,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           }
         }
       };
-      purgeRemovedDemoStudents(state);
-      applyFreshStartProgressReset(state);
+      const removedStudentData = purgeRemovedDemoStudents(state);
+      const resetProgressData = applyFreshStartProgressReset(state);
       normalizeWeekSettings(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
+      if ((removedStudentData || resetProgressData) && canManageProgram() && window.saveRoom113Data) {
+        window.saveRoom113Data(state);
+      }
       renderTeacherIdentity();
       render();
       if (document.body.classList.contains("student-open")) {
@@ -1325,22 +1328,40 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function purgeRemovedDemoStudents(nextState) {
       const removedNames = removedDemoStudentNames.map(normalizeDemoName);
+      let changed = false;
+      const studentCount = (nextState.students || []).length;
+      const demoCount = (nextState.demoStudents || []).length;
+      const pointCount = (nextState.points || []).length;
       nextState.students = (nextState.students || []).filter(student => !removedNames.includes(normalizeDemoName(student.name)));
       nextState.demoStudents = filterRemovedDemoStudents(nextState.demoStudents || []);
       nextState.points = (nextState.points || []).filter(point => !removedNames.includes(normalizeDemoName(point.studentName)));
+      changed = changed
+        || nextState.students.length !== studentCount
+        || nextState.demoStudents.length !== demoCount
+        || nextState.points.length !== pointCount;
       removedNames.forEach(name => {
-        if (nextState.freckle) delete nextState.freckle[name];
-        if (nextState.scratch) delete nextState.scratch[name];
-        if (nextState.preferences && nextState.preferences.users) delete nextState.preferences.users[`student:${name}`];
+        if (nextState.freckle && Object.prototype.hasOwnProperty.call(nextState.freckle, name)) {
+          delete nextState.freckle[name];
+          changed = true;
+        }
+        if (nextState.scratch && Object.prototype.hasOwnProperty.call(nextState.scratch, name)) {
+          delete nextState.scratch[name];
+          changed = true;
+        }
+        if (nextState.preferences && nextState.preferences.users && Object.prototype.hasOwnProperty.call(nextState.preferences.users, `student:${name}`)) {
+          delete nextState.preferences.users[`student:${name}`];
+          changed = true;
+        }
       });
-      return nextState;
+      return changed;
     }
 
     function applyFreshStartProgressReset(nextState) {
       if ((nextState.settings || {}).progressFreshStartVersion !== progressFreshStartVersion) {
         purgeProgressData(nextState);
+        return true;
       }
-      return nextState;
+      return false;
     }
 
     function purgeProgressData(nextState) {
@@ -2685,12 +2706,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           await setDoc(incentivesRef, {
             ...currentState.incentives,
             updatedAt: serverTimestamp()
-          }, { merge: true });
+          });
           if (window.canManageProgram && window.canManageProgram()) {
             await setDoc(progressRef, {
               ...currentState.progress,
               updatedAt: serverTimestamp()
-            }, { merge: true });
+            });
             progressData = currentState.progress;
           }
           window.markRoom113FirebaseReady();
@@ -2729,17 +2750,17 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         await setDoc(doc(db, "trackerData", incentivesDocId), {
           ...splitState.incentives,
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        });
         if (window.canManageProgram && window.canManageProgram()) {
           await setDoc(doc(db, "privateProgress", progressDocId), {
             ...splitState.progress,
             updatedAt: serverTimestamp()
-          }, { merge: true });
+          });
           await setDoc(doc(db, "publicProgress", studentProgressDocId), {
             freckle: splitState.progress.freckle || {},
             scratch: splitState.progress.scratch || {},
             updatedAt: serverTimestamp()
-          }, { merge: true });
+          });
           await setDoc(doc(db, "publicDashboard", publicDashboardDocId), {
             incentives: buildStudentSafeIncentives(splitState.incentives),
             progress: {
@@ -2747,7 +2768,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
               scratch: splitState.progress.scratch || {}
             },
             updatedAt: serverTimestamp()
-          }, { merge: true });
+          });
         }
       }, 400);
     }
