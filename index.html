@@ -891,7 +891,10 @@
       </section>
 
       <section class="panel span-12 admin-only">
-        <h2>Freckle Teacher Insights</h2>
+        <div class="button-row">
+          <h2 style="margin-right:auto;">Freckle Teacher Insights</h2>
+          <button class="danger" type="button" id="clearProgressDataButton">Clear Freckle/Scratch</button>
+        </div>
         <p class="muted">Roster-filtered patterns from the latest Freckle report data. Click a column heading to sort by name, status, focus, accuracy, or practice.</p>
         <div id="teacherProgressTable"></div>
       </section>
@@ -1025,6 +1028,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const storageKey = "room113HouseTracker";
     const firebaseStatusKey = "room113FirebaseStatus";
     const passcodeKey = "room113TeacherPasscode";
+    const progressFreshStartVersion = "2026-05-11-fresh-start";
     const defaultTeacherPasscode = "room113";
     const teacherViewProfiles = [
       { name: "Mrs. Cunniff", email: "lcunniff@maldenschool.org" },
@@ -1097,197 +1101,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       preferences: {
         users: {}
       },
-      freckle: {
-        "joel salazar": {
-          name: "Joel Salazar",
-          hasData: true,
-          accuracy: "67",
-          timePracticed: "13 min",
-          questions: "3",
-          correctTotal: "2 / 3",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Number System",
-          startingGrade: "7.9",
-          lowestGrade: "7.9",
-          highestGrade: "8",
-          latestGrade: "8",
-          adaptiveLevelsPassed: "1",
-          importedAt: "2026-05-10"
-        },
-        "mary strack": {
-          name: "Mary Strack",
-          hasData: true,
-          accuracy: "72",
-          timePracticed: "20 min",
-          questions: "50",
-          correctTotal: "36 / 50",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Geometry",
-          startingGrade: "4.3",
-          lowestGrade: "4.3",
-          highestGrade: "5.8",
-          latestGrade: "5.8",
-          adaptiveLevelsPassed: "5",
-          importedAt: "2026-05-10"
-        },
-        "oliver noll-ganther": {
-          name: "Oliver Noll-Ganther",
-          hasData: true,
-          accuracy: "71",
-          timePracticed: "5 min",
-          questions: "7",
-          correctTotal: "5 / 7",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Base 10",
-          startingGrade: "5.4",
-          lowestGrade: "5.4",
-          highestGrade: "5.9",
-          latestGrade: "5.9",
-          adaptiveLevelsPassed: "4",
-          importedAt: "2026-05-10"
-        },
-        "john roark": {
-          name: "John Roark",
-          hasData: true,
-          accuracy: "70",
-          timePracticed: "6 min",
-          questions: "10",
-          correctTotal: "7 / 10",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Statistics & Probability",
-          startingGrade: "7.3",
-          lowestGrade: "7.3",
-          highestGrade: "7.7",
-          latestGrade: "7.7",
-          adaptiveLevelsPassed: "5",
-          importedAt: "2026-05-10"
-        },
-        "patience sondgeroth": {
-          name: "Patience Sondgeroth",
-          hasData: true,
-          accuracy: "0",
-          timePracticed: "15 min",
-          questions: "1",
-          correctTotal: "0 / 1",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Expressions & Equations",
-          startingGrade: "6",
-          lowestGrade: "6",
-          highestGrade: "6",
-          latestGrade: "6",
-          adaptiveLevelsPassed: "0",
-          importedAt: "2026-05-10"
-        },
-        "dexter bankes": {
-          name: "Dexter Bankes",
-          hasData: true,
-          accuracy: "76",
-          timePracticed: "15 min",
-          questions: "34",
-          correctTotal: "26 / 34",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Statistics & Probability",
-          startingGrade: "6.8",
-          lowestGrade: "6.4",
-          highestGrade: "7",
-          latestGrade: "7",
-          adaptiveLevelsPassed: "5",
-          importedAt: "2026-05-10"
-        },
-        "isabella barraza": {
-          name: "Isabella Barraza",
-          hasData: true,
-          accuracy: "80",
-          timePracticed: "11 min",
-          questions: "10",
-          correctTotal: "8 / 10",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Geometry",
-          startingGrade: "4.7",
-          lowestGrade: "4.7",
-          highestGrade: "6",
-          latestGrade: "6",
-          adaptiveLevelsPassed: "5",
-          importedAt: "2026-05-10"
-        },
-        "gracelyn morgan": {
-          name: "Gracelyn Morgan",
-          hasData: true,
-          accuracy: "75",
-          timePracticed: "17 min",
-          questions: "4",
-          correctTotal: "3 / 4",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Geometry",
-          startingGrade: "3.5",
-          lowestGrade: "3.5",
-          highestGrade: "4.3",
-          latestGrade: "4.3",
-          adaptiveLevelsPassed: "0",
-          importedAt: "2026-05-10"
-        },
-        "daniel reynolds": {
-          name: "Daniel Reynolds",
-          hasData: true,
-          accuracy: "83",
-          timePracticed: "9 min",
-          questions: "35",
-          correctTotal: "29 / 35",
-          lastPracticed: "Math Adaptive Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "Operations & Algebraic Thinking, Geometry",
-          startingGrade: "1.6",
-          lowestGrade: "1.3",
-          highestGrade: "3",
-          latestGrade: "3",
-          adaptiveLevelsPassed: "10",
-          importedAt: "2026-05-10"
-        },
-        "spartan foster": {
-          name: "Spartan Foster",
-          hasData: true,
-          accuracy: "89",
-          timePracticed: "39 min",
-          questions: "116",
-          correctTotal: "103 / 116",
-          lastPracticed: "All Math Practice",
-          reportDates: "May 4, 2026 - May 10, 2026",
-          focusDomain: "All Math Practice",
-          adaptiveLevelsPassed: "0",
-          importedAt: "2026-05-10"
-        },
-        "maxim morse": { name: "Maxim Morse", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "jase perez": { name: "Jase Perez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "emily anderson": { name: "Emily Anderson", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "nikolai pierson": { name: "Nikolai Pierson", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "madilyn hildebrand": { name: "Madilyn Hildebrand", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "corvin futrell": { name: "Corvin Futrell", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "sadie mitchell": { name: "Sadie Mitchell", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "quinnlyn peach": { name: "Quinnlyn Peach", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "phinnley hansen": { name: "Phinnley Hansen", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "ethan o'shana": { name: "Ethan O'Shana", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "marcy baker": { name: "Marcy Baker", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "aurora hernandez": { name: "Aurora Hernandez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "carlo chavez": { name: "Carlo Chavez", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "brenda hampton": { name: "Brenda Hampton", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "brynleigh bickett": { name: "Brynleigh Bickett", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "julio sandoval": { name: "Julio Sandoval", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "maria vargas-romero": { name: "Maria Vargas-Romero", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "nova yepsen": { name: "Nova Yepsen", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "layla stinar": { name: "Layla Stinar", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "seth duttlinger": { name: "Seth Duttlinger", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "sofia barona": { name: "Sofia Barona", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "lillian drake": { name: "Lillian Drake", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" },
-        "ella linker": { name: "Ella Linker", hasData: false, reportDates: "May 4, 2026 - May 10, 2026", importedAt: "2026-05-10" }
-      },
+      freckle: {},
       scratch: {},
       settings: {
         funFridayLimit: 5,
@@ -1305,6 +1119,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const studentTable = document.getElementById("studentTable");
     const recentLog = document.getElementById("recentLog");
     const teacherProgressTable = document.getElementById("teacherProgressTable");
+    const clearProgressDataButton = document.getElementById("clearProgressDataButton");
     const weeklyWinner = document.getElementById("weeklyWinner");
     const semesterWinner = document.getElementById("semesterWinner");
     const cleanCount = document.getElementById("cleanCount");
@@ -1369,6 +1184,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     document.getElementById("importButton").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", importBackup);
     document.getElementById("downloadCsvButton").addEventListener("click", downloadCsv);
+    clearProgressDataButton.addEventListener("click", clearFreckleScratchData);
     [teacherModeSelect, teacherThemeSelect, teacherBackgroundSelect, teacherAvatarSelect].forEach(select => {
       select.addEventListener("change", () => saveDashboardPreference("teacher"));
     });
@@ -1416,6 +1232,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           }
       };
       purgeRemovedDemoStudents(nextState);
+      applyFreshStartProgressReset(nextState);
       normalizeWeekSettings(nextState);
       return nextState;
       } catch {
@@ -1458,6 +1275,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         }
       };
       purgeRemovedDemoStudents(state);
+      applyFreshStartProgressReset(state);
       normalizeWeekSettings(state);
       localStorage.setItem(storageKey, JSON.stringify(state));
       renderTeacherIdentity();
@@ -1517,6 +1335,38 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       });
       return nextState;
     }
+
+    function applyFreshStartProgressReset(nextState) {
+      if ((nextState.settings || {}).progressFreshStartVersion !== progressFreshStartVersion) {
+        purgeProgressData(nextState);
+      }
+      return nextState;
+    }
+
+    function purgeProgressData(nextState) {
+      nextState.freckle = {};
+      nextState.scratch = {};
+      nextState.settings = {
+        ...(nextState.settings || {}),
+        progressFreshStartVersion
+      };
+      return nextState;
+    }
+
+    function clearFreckleScratchData() {
+      if (!canManageProgram()) return;
+      if (!confirm("Clear all Freckle and Scratch data for every student? This keeps the roster, houses, points, and demo access.")) return;
+      purgeProgressData(state);
+      saveState();
+      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      render();
+      if (document.body.classList.contains("student-open")) {
+        renderStudentPage();
+      }
+      alert("Freckle and Scratch data have been cleared. The blank progress state will sync to Firebase.");
+    }
+
+    window.clearFreckleScratchData = clearFreckleScratchData;
 
     function getDashboardPreference(scope) {
       const users = (state.preferences && state.preferences.users) || {};
@@ -2346,11 +2196,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function getScratchRecord(studentName) {
-      return (state.scratch || {})[studentName.toLowerCase()] || {
-        current: "Add current Scratch assignment.",
-        completed: "Add completed Scratch projects.",
-        nextStep: "Add the student's next Scratch step."
-      };
+      return (state.scratch || {})[studentName.toLowerCase()] || null;
     }
 
     function renderLog() {
@@ -2580,6 +2426,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function renderScratchStats(studentName) {
       const scratch = getScratchRecord(studentName);
+      if (!scratch) {
+        studentScratchStats.innerHTML = `<p class="empty">No Scratch data yet.</p>`;
+        return;
+      }
       studentScratchStats.innerHTML = `
         <ul>
           <li><strong>Current:</strong> ${escapeHtml(scratch.current)}</li>
