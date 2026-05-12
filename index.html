@@ -2996,6 +2996,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           <article class="helpful-text-card">
             <h3>Student Demo Dashboard Access</h3>
             <p class="muted">These are simple demo passwords, not Google accounts.</p>
+            <p><button class="secondary" type="button" onclick="removeDefaultDemoStudentsFromTracker()">Remove Demo Students From Incentive Tracker</button></p>
             ${renderDemoStudentAccessList()}
           </article>
         </div>
@@ -3122,6 +3123,31 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     window.removeDemoStudentAccess = removeDemoStudentAccess;
+
+    function removeDefaultDemoStudentsFromTracker() {
+      if (!window.canManageProgram || !window.canManageProgram()) return;
+      const demoNames = defaultDemoStudents.map(student => normalizeDemoName(student.name));
+      const matchingStudents = state.students.filter(student => demoNames.includes(normalizeDemoName(student.name)));
+      if (!matchingStudents.length) {
+        alert("None of the original demo students are currently in the incentive tracker.");
+        return;
+      }
+      const names = matchingStudents.map(student => student.name).join(", ");
+      if (!confirm(`Remove these students from the incentive tracker and demo login list? ${names}`)) return;
+      const matchingIds = new Set(matchingStudents.map(student => student.id));
+      state.students = state.students.filter(student => !matchingIds.has(student.id));
+      state.demoStudents = getDemoStudents().filter(student => !demoNames.includes(normalizeDemoName(student.name)));
+      saveState();
+      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      render();
+      loadAccessRequests();
+    }
+
+    function normalizeDemoName(name) {
+      return String(name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    window.removeDefaultDemoStudentsFromTracker = removeDefaultDemoStudentsFromTracker;
 
     function authEscapeHtml(value) {
       return String(value)
