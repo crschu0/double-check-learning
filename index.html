@@ -1326,6 +1326,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return state.demoStudents || defaultDemoStudents;
     }
 
+    window.getSavedDemoStudents = getSavedDemoStudents;
+
     function filterRemovedDemoStudents(students) {
       const removedNames = removedDemoStudentNames.map(normalizeDemoName);
       const removedPasswords = removedDemoStudentPasswords.map(normalizeDemoPassword);
@@ -1397,6 +1399,54 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     window.clearFreckleScratchData = clearFreckleScratchData;
+
+    function removeDemoStudentAccess(password) {
+      if (!canManageProgram()) return;
+      const normalizedPassword = normalizeDemoPassword(password);
+      const student = getSavedDemoStudents().find(item => normalizeDemoPassword(item.password) === normalizedPassword);
+      const studentName = student ? student.name : password;
+      if (!confirm(`Delete demo dashboard access for ${studentName}? This will also purge matching removed-student records if they exist.`)) return;
+      state.demoStudents = getSavedDemoStudents().filter(item => normalizeDemoPassword(item.password) !== normalizedPassword);
+      purgeRemovedDemoStudents(state);
+      saveState();
+      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      render();
+      if (window.loadAccessRequests) window.loadAccessRequests();
+    }
+
+    window.removeDemoStudentAccess = removeDemoStudentAccess;
+
+    function removeDefaultDemoStudentsFromTracker() {
+      if (!canManageProgram()) return;
+      const demoNames = removedDemoStudentNames.map(normalizeDemoName);
+      const matchingStudents = state.students.filter(student => demoNames.includes(normalizeDemoName(student.name)));
+      if (!matchingStudents.length) {
+        purgeRemovedDemoStudents(state);
+        saveState();
+        if (window.saveRoom113Data) window.saveRoom113Data(state);
+        render();
+        if (window.loadAccessRequests) window.loadAccessRequests();
+        alert("Matthew Bohm/Bohms, Aidan Rossler, and Jace Hampton have been purged from demo access, progress, points, and saved preferences.");
+        return;
+      }
+      const names = matchingStudents.map(student => student.name).join(", ");
+      if (!confirm(`Completely remove these students from the tracker, demo login list, point history, progress records, and saved preferences? ${names}`)) return;
+      purgeRemovedDemoStudents(state);
+      saveState();
+      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      render();
+      if (window.loadAccessRequests) window.loadAccessRequests();
+    }
+
+    window.removeDefaultDemoStudentsFromTracker = removeDefaultDemoStudentsFromTracker;
+
+    function normalizeDemoName(name) {
+      return String(name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function normalizeDemoPassword(password) {
+      return String(password || "").trim().toLowerCase();
+    }
 
     function getDashboardPreference(scope) {
       const users = (state.preferences && state.preferences.users) || {};
@@ -2880,6 +2930,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       });
     }
 
+    window.loadAccessRequests = loadAccessRequests;
+
     function renderBuiltInTeacherList(teachers) {
       return `
         <table>
@@ -2932,7 +2984,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderDemoStudentAccessList() {
-      const demoAccess = getSavedDemoStudents();
+      const demoAccess = window.getSavedDemoStudents ? window.getSavedDemoStudents() : [];
       const cleanupRows = [
         { name: "Matthew Bohm/Bohms", password: "Bohms" },
         { name: "Aidan Rossler", password: "Rossler" },
@@ -2990,54 +3042,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         </table>
       `;
     }
-
-    function removeDemoStudentAccess(password) {
-      if (!window.canManageProgram || !window.canManageProgram()) return;
-      const normalizedPassword = normalizeDemoPassword(password);
-      const student = getSavedDemoStudents().find(item => normalizeDemoPassword(item.password) === normalizedPassword);
-      const studentName = student ? student.name : password;
-      if (!confirm(`Delete demo dashboard access for ${studentName}? This will also purge matching removed-student records if they exist.`)) return;
-      state.demoStudents = getSavedDemoStudents().filter(item => normalizeDemoPassword(item.password) !== normalizedPassword);
-      purgeRemovedDemoStudents(state);
-      saveState();
-      if (window.saveRoom113Data) window.saveRoom113Data(state);
-      render();
-      loadAccessRequests();
-    }
-
-    window.removeDemoStudentAccess = removeDemoStudentAccess;
-
-    function removeDefaultDemoStudentsFromTracker() {
-      if (!window.canManageProgram || !window.canManageProgram()) return;
-      const demoNames = removedDemoStudentNames.map(normalizeDemoName);
-      const matchingStudents = state.students.filter(student => demoNames.includes(normalizeDemoName(student.name)));
-      if (!matchingStudents.length) {
-        purgeRemovedDemoStudents(state);
-        saveState();
-        if (window.saveRoom113Data) window.saveRoom113Data(state);
-        render();
-        loadAccessRequests();
-        alert("Matthew Bohm/Bohms, Aidan Rossler, and Jace Hampton have been purged from demo access, progress, points, and saved preferences.");
-        return;
-      }
-      const names = matchingStudents.map(student => student.name).join(", ");
-      if (!confirm(`Completely remove these students from the tracker, demo login list, point history, progress records, and saved preferences? ${names}`)) return;
-      purgeRemovedDemoStudents(state);
-      saveState();
-      if (window.saveRoom113Data) window.saveRoom113Data(state);
-      render();
-      loadAccessRequests();
-    }
-
-    function normalizeDemoName(name) {
-      return String(name || "").trim().toLowerCase().replace(/\s+/g, " ");
-    }
-
-    function normalizeDemoPassword(password) {
-      return String(password || "").trim().toLowerCase();
-    }
-
-    window.removeDefaultDemoStudentsFromTracker = removeDefaultDemoStudentsFromTracker;
 
     function authEscapeHtml(value) {
       return String(value)
