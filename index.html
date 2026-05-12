@@ -2985,17 +2985,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function renderDemoStudentAccessList() {
       const demoAccess = window.getSavedDemoStudents ? window.getSavedDemoStudents() : [];
-      const cleanupRows = [
-        { name: "Matthew Bohm/Bohms", password: "Bohms" },
-        { name: "Aidan Rossler", password: "Rossler" },
-        { name: "Jace Hampton", password: "Hampton" }
-      ];
-      if (!demoAccess.length) {
-        return `
-          <p class="empty">No student demo logins are active.</p>
-          ${renderRemovedDemoCleanupTable(cleanupRows)}
-        `;
-      }
+      if (!demoAccess.length) return `<p class="empty">No student demo logins are active.</p>`;
       return `
         <table>
           <thead>
@@ -3007,31 +2997,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           </thead>
           <tbody>
             ${demoAccess.map(student => `
-              <tr>
-                <td><strong>${authEscapeHtml(student.name)}</strong></td>
-                <td>${authEscapeHtml(student.password)}</td>
-                <td><button class="quick-button danger" type="button" onclick="removeDemoStudentAccess('${authEscapeHtml(student.password)}')">Delete Demo</button></td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-        ${renderRemovedDemoCleanupTable(cleanupRows)}
-      `;
-    }
-
-    function renderRemovedDemoCleanupTable(cleanupRows) {
-      return `
-        <h3>Removed Student Demo Cleanup</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Old Password</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${cleanupRows.map(student => `
               <tr>
                 <td><strong>${authEscapeHtml(student.name)}</strong></td>
                 <td>${authEscapeHtml(student.password)}</td>
