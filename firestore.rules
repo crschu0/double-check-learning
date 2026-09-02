@@ -58,12 +58,12 @@ service cloud.firestore {
     }
 
     match /publicProgress/studentProgress {
-      allow read: if isApprovedTeacher();
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
 
     match /publicDashboard/dashboard {
-      allow read: if isApprovedTeacher();
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
   }
