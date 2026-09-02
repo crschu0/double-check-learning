@@ -58,6 +58,15 @@ async function downloadText(fileId) {
   return String(response.data);
 }
 
+function reportNameFallback(sourceName) {
+  const cleaned = String(sourceName || "")
+    .replace(/\\s*\\.\\s*$/, "")
+    .replace(/\\s+/g, " ")
+    .trim();
+  if (!cleaned || /^not here$/i.test(cleaned)) return null;
+  return cleaned;
+}
+
 async function main() {
   const files = selectLatestReportSet(await listCsvFiles());
   if (!files.length) throw new Error("No dated Freckle Activity CSV files were found.");
@@ -75,7 +84,8 @@ async function main() {
   for (const file of files) {
     const rows = parseFreckleCsv(await downloadText(file.id));
     for (const row of rows) {
-      const rosterName = resolveRosterName(row.sourceName, rosterIndex);
+      const rosterName = resolveRosterName(row.sourceName, rosterIndex)
+        || reportNameFallback(row.sourceName);
       if (!rosterName) {
         skipped.push(`${row.sourceName} (${file.report.className})`);
         continue;
