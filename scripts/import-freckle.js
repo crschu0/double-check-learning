@@ -58,6 +58,16 @@ async function downloadText(fileId) {
   return String(response.data);
 }
 
+async function latestRichDataFile() {
+  const response = await drive.files.list({
+    q: `'${folderId}' in parents and trashed = false and name contains 'Freckle Rich Data'`,
+    fields: "files(id,name,modifiedTime)",
+    orderBy: "modifiedTime desc",
+    pageSize: 10
+  });
+  return (response.data.files || []).find(file => /\.json$/i.test(file.name)) || null;
+}
+
 function reportNameFallback(sourceName) {
   const cleaned = String(sourceName || "")
     .replace(/\s*\.\s*$/, "")
@@ -97,32 +107,72 @@ async function main() {
   const progressRef = db.doc("privateProgress/progress");
   const progressSnap = await progressRef.get();
   const progress = progressSnap.exists ? progressSnap.data() : {};
+
+  const richFile = await latestRichDataFile();
+  const richData = richFile ? JSON.parse(await downloadText(richFile.id)) : {};
+  const richByStudent = {};
+
+  for (const item of richData.growth || []) {
+    const rosterName = resolveRosterName(item.name, rosterIndex) || reportNameFallback(item.name);
+    if (!rosterName) continue;
+    const key = normalizeName(rosterName);
+    richByStudent[key] ||= { name: rosterName, growth: [], sessions: [] };
+    richByStudent[key].growth.push({
+      domain: item.domain,
+      starting: item.starting,
+      current: item.current,
+      progress: Number(item.progress || 0)
+    });
+  }
+
+  for (const item of richData.sessions || []) {
+    const rosterName = resolveRosterName(item.name, rosterIndex) || reportNameFallback(item.name);
+    if (!rosterName) continue;
+    const key = normalizeName(rosterName);
+    richByStudent[key] ||= { name: rosterName, growth: [], sessions: [] };
+    richByStudent[key].sessions.push({
+      completedAt: item.completedAt,
+      type: item.type,
+      contentLevel: item.contentLevel,
+      timePracticed: item.timePracticed,
+      questions: Number(item.questions || 0),
+      accuracy: Number(item.accuracy || 0)
+    });
+  }
+
+  for (const [key, rich] of Object.entries(richByStudent)) {
+    updates[key] = {
+      ...((progress.freckle || {})[key] || {}),
+      ...(updates[key] || {}),
+      ...rich
+    };
+  }
+
+  const freckleInsights = {
+    generatedAt: richData.generatedAt || importedAt,
+    source: richData.source || "Freckle weekly reports",
+    standards: (richData.standards || []).map(item => ({
+      className: item.className,
+      domain: item.domain,
+      code: item.code,
+      name: item.name,
+      questions: Number(item.questions || 0),
+      below50: Number(item.below50 || 0),
+      from50to79: Number(item.from50to79 || 0),
+      above79: Number(item.above79 || 0)
+    }))
+  };
+
   const mergedFreckle = { ...(progress.freckle || {}), ...updates };
   const serverTime = FieldValue.serverTimestamp();
-
-  const dashboardRef = db.doc("publicDashboard/dashboard");
-  const dashboardSnap = await dashboardRef.get();
-  const dashboard = dashboardSnap.exists ? dashboardSnap.data() : {};
-
-  const batch = db.batch();
-  batch.set(progressRef, { ...progress, freckle: mergedFreckle, updatedAt: serverTime }, { merge: true });
-  batch.set(db.doc("publicProgress/studentProgress"), {
+  await progressRef.set({
+    ...progress,
     freckle: mergedFreckle,
-    scratch: progress.scratch || {},
+    freckleInsights,
     updatedAt: serverTime
   }, { merge: true });
-  batch.set(dashboardRef, {
-    ...dashboard,
-    progress: {
-      ...(dashboard.progress || {}),
-      freckle: mergedFreckle,
-      scratch: progress.scratch || {}
-    },
-    updatedAt: serverTime
-  }, { merge: true });
-  await batch.commit();
 
-  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files.`);
+  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}.`);
   if (skipped.length) console.log(`Skipped unmatched rows: ${skipped.join(", ")}`);
 }
 
