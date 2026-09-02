@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/import-freckle.yml"
+      - "firestore.rules"
       - "scripts/**"
       - "package.json"
       - "package-lock.json"
@@ -26,6 +27,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Prepare Google credentials
+        run: |
+          credential_file="$RUNNER_TEMP/google-service-account.json"
+          printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" > "$credential_file"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$credential_file" >> "$GITHUB_ENV"
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      - name: Deploy private Firestore rules
+        run: npx --yes firebase-tools@latest deploy --only firestore:rules --project "$FIREBASE_PROJECT_ID" --non-interactive
+        env:
+          FIREBASE_PROJECT_ID: incentive-program-6bf45
       - run: npm run import:freckle
         env:
           FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
