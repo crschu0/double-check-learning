@@ -47,7 +47,7 @@ function selectLatestReportSet(files) {
 
   const byClass = new Map();
   for (const file of parsed.filter(item => Date.parse(item.report.endDate) === latestEnd)) {
-    const key = item.report.className.toLowerCase();
+    const key = file.report.className.toLowerCase();
     if (!byClass.has(key)) byClass.set(key, file);
   }
   return [...byClass.values()];
