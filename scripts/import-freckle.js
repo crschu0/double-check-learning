@@ -60,8 +60,8 @@ async function downloadText(fileId) {
 
 function reportNameFallback(sourceName) {
   const cleaned = String(sourceName || "")
-    .replace(/\\s*\\.\\s*$/, "")
-    .replace(/\\s+/g, " ")
+    .replace(/\s*\.\s*$/, "")
+    .replace(/\s+/g, " ")
     .trim();
   if (!cleaned || /^not here$/i.test(cleaned)) return null;
   return cleaned;
