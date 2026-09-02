@@ -2262,16 +2262,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function allProgressRecords() {
-      const trackerRecords = state.students.map(student => ({ name: student.name, student }));
-      const trackerNames = new Set(trackerRecords.map(record => normalizeNameKey(record.name)));
-      const reportOnlyRecords = Object.entries(state.freckle || {})
-        .filter(([key]) => !trackerNames.has(normalizeNameKey(key)))
-        .map(([key, freckle]) => ({
-          name: freckle && freckle.name ? freckle.name : key,
-          student: null
-        }));
-
-      return [...trackerRecords, ...reportOnlyRecords]
+      return state.students
+        .map(student => ({ name: student.name, student }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
 
