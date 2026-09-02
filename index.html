@@ -403,6 +403,30 @@
       margin: 14px 0;
     }
 
+    .rich-report-section {
+      margin: 22px 0;
+      padding-top: 16px;
+      border-top: 2px solid var(--line);
+    }
+
+    .rich-report-section h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .rich-report-table {
+      max-height: 430px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .rich-report-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
     .insight-card {
       border: 1px solid var(--line);
       border-left: 5px solid var(--accent);
@@ -1103,6 +1127,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         users: {}
       },
       freckle: {},
+      freckleInsights: { standards: [] },
       scratch: {},
       settings: {
         funFridayLimit: 5,
@@ -1249,10 +1274,14 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function splitStateForFirebase(nextState) {
-      const { freckle, scratch, ...incentives } = nextState;
+      const { freckle, freckleInsights, scratch, ...incentives } = nextState;
       return {
         incentives,
-        progress: { freckle: freckle || {}, scratch: scratch || {} }
+        progress: {
+          freckle: freckle || {},
+          freckleInsights: freckleInsights || { standards: [] },
+          scratch: scratch || {}
+        }
       };
     }
 
@@ -1264,6 +1293,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           ...starterState.freckle,
           ...((progress && progress.freckle) || {})
         } : {},
+        freckleInsights: canManageProgram()
+          ? ((progress && progress.freckleInsights) || { standards: [] })
+          : { standards: [] },
         scratch: canManageProgram() ? {
           ...starterState.scratch,
           ...((progress && progress.scratch) || {})
@@ -1377,6 +1409,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     function purgeProgressData(nextState) {
       nextState.freckle = {};
+      nextState.freckleInsights = { standards: [] };
       nextState.scratch = {};
       nextState.settings = {
         ...(nextState.settings || {}),
@@ -2145,6 +2178,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           ${renderInsightCard("High Flyer", categories.highFlyer, "Students with strong accuracy and enough work to trust the signal.", "ok")}
           ${renderInsightCard("Productive Practice", categories.productivePractice, "Students doing steady work without a major flag.", "")}
         </div>
+        ${renderFreckleGrowth()}
+        ${renderStandardsAttention()}
+        ${renderRecentFreckleSessions()}
         <div class="table-wrap">
           <table>
             <thead>
@@ -2175,6 +2211,90 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             </tbody>
           </table>
         </div>
+      `;
+    }
+
+    function renderFreckleGrowth() {
+      const rows = Object.values(state.freckle || {})
+        .flatMap(record => (record.growth || []).map(item => ({ student: record.name, ...item })))
+        .sort((a, b) => parseNumber(b.progress) - parseNumber(a.progress) || a.student.localeCompare(b.student));
+
+      return `
+        <section class="rich-report-section">
+          <div class="button-row">
+            <h3 style="margin-right:auto;">Student Growth</h3>
+            <span class="muted">${rows.length} student-domain records</span>
+          </div>
+          <p class="muted">Starting and current adaptive levels by math domain.</p>
+          ${rows.length ? `<div class="table-wrap rich-report-table"><table>
+            <thead><tr><th>Student</th><th>Domain</th><th>Starting Level</th><th>Current Level</th><th>Progress</th></tr></thead>
+            <tbody>${rows.map(row => `<tr>
+              <td><strong>${escapeHtml(row.student)}</strong></td>
+              <td>${escapeHtml(row.domain)}</td>
+              <td>${escapeHtml(row.starting)}</td>
+              <td>${escapeHtml(row.current)}</td>
+              <td>${escapeHtml(row.progress)}</td>
+            </tr>`).join("")}</tbody>
+          </table></div>` : `<p class="empty">Growth details will appear after the rich Freckle report is imported.</p>`}
+        </section>
+      `;
+    }
+
+    function renderStandardsAttention() {
+      const rows = ((state.freckleInsights && state.freckleInsights.standards) || [])
+        .filter(item => parseNumber(item.below50) + parseNumber(item.from50to79) > 0)
+        .sort((a, b) => parseNumber(b.below50) - parseNumber(a.below50)
+          || parseNumber(b.from50to79) - parseNumber(a.from50to79)
+          || parseNumber(b.questions) - parseNumber(a.questions));
+
+      return `
+        <section class="rich-report-section">
+          <div class="button-row">
+            <h3 style="margin-right:auto;">Standards Needing Attention</h3>
+            <span class="muted">${rows.length} flagged standards</span>
+          </div>
+          <p class="muted">Standards with at least one student below 80% in the selected Freckle week.</p>
+          ${rows.length ? `<div class="table-wrap rich-report-table"><table>
+            <thead><tr><th>Class</th><th>Domain</th><th>Standard</th><th>Skill</th><th>Questions</th><th>&lt;50%</th><th>50–79%</th></tr></thead>
+            <tbody>${rows.map(row => `<tr>
+              <td>${escapeHtml(row.className)}</td>
+              <td>${escapeHtml(row.domain)}</td>
+              <td><strong>${escapeHtml(row.code)}</strong></td>
+              <td>${escapeHtml(row.name)}</td>
+              <td>${escapeHtml(row.questions)}</td>
+              <td>${parseNumber(row.below50) ? `<span class="tag danger">${escapeHtml(row.below50)}</span>` : "0"}</td>
+              <td>${parseNumber(row.from50to79) ? `<span class="tag warning">${escapeHtml(row.from50to79)}</span>` : "0"}</td>
+            </tr>`).join("")}</tbody>
+          </table></div>` : `<p class="empty">No standards are currently flagged.</p>`}
+        </section>
+      `;
+    }
+
+    function renderRecentFreckleSessions() {
+      const rows = Object.values(state.freckle || {})
+        .flatMap(record => (record.sessions || []).map(item => ({ student: record.name, ...item })))
+        .sort((a, b) => Date.parse(b.completedAt) - Date.parse(a.completedAt));
+
+      return `
+        <section class="rich-report-section">
+          <div class="button-row">
+            <h3 style="margin-right:auto;">Recent Sessions</h3>
+            <span class="muted">${rows.length} detailed sessions</span>
+          </div>
+          <p class="muted">Exact Freckle practice sessions captured from the current report period.</p>
+          ${rows.length ? `<div class="table-wrap rich-report-table"><table>
+            <thead><tr><th>Completed</th><th>Student</th><th>Activity</th><th>Level</th><th>Time</th><th>Questions</th><th>Accuracy</th></tr></thead>
+            <tbody>${rows.map(row => `<tr>
+              <td>${escapeHtml(row.completedAt)}</td>
+              <td><strong>${escapeHtml(row.student)}</strong></td>
+              <td>${escapeHtml(row.type)}</td>
+              <td>${escapeHtml(row.contentLevel)}</td>
+              <td>${escapeHtml(row.timePracticed)}</td>
+              <td>${escapeHtml(row.questions)}</td>
+              <td>${escapeHtml(row.accuracy)}%</td>
+            </tr>`).join("")}</tbody>
+          </table></div>` : `<p class="empty">No detailed sessions were included in this import.</p>`}
+        </section>
       `;
     }
 
@@ -2826,19 +2946,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         if (window.canManageProgram && window.canManageProgram()) {
           await setDoc(doc(db, "privateProgress", progressDocId), {
             ...splitState.progress,
-            updatedAt: serverTimestamp()
-          });
-          await setDoc(doc(db, "publicProgress", studentProgressDocId), {
-            freckle: splitState.progress.freckle || {},
-            scratch: splitState.progress.scratch || {},
-            updatedAt: serverTimestamp()
-          });
-          await setDoc(doc(db, "publicDashboard", publicDashboardDocId), {
-            incentives: buildStudentSafeIncentives(splitState.incentives),
-            progress: {
-              freckle: splitState.progress.freckle || {},
-              scratch: splitState.progress.scratch || {}
-            },
             updatedAt: serverTimestamp()
           });
         }
