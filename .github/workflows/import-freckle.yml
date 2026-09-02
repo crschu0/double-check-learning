@@ -1,0 +1,26 @@
+name: Import weekly Freckle activity
+
+on:
+  schedule:
+    - cron: "0 12 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run import:freckle
+        env:
+          FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
+          FIREBASE_PROJECT_ID: incentive-program-6bf45
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
