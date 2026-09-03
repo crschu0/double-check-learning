@@ -1976,6 +1976,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function addQuickPoint(studentId) {
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
+      const enteredReason = prompt(`Why is ${student.name} receiving a point?`);
+      if (enteredReason === null) return;
+      const reason = enteredReason.trim();
+      if (!reason) {
+        alert("Enter a reason before adding the point.");
+        return;
+      }
       const now = new Date();
       const teacher = window.getSignedInTeacherAudit
         ? window.getSignedInTeacherAudit()
@@ -1986,7 +1993,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         studentId: student.id,
         studentName: student.name,
         house: student.house,
-        reason: "Quick add",
+        reason,
         value: 1,
         date: centralDateText(now),
         createdAt: now.toISOString(),
@@ -2425,7 +2432,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                   <td class="points-cell">${semester}</td>
                   <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
-                    <button class="quick-button" onclick="addQuickPoint('${student.id}')">+1</button>
+                    <button class="quick-button" onclick="addQuickPoint('${student.id}')">Add Point</button>
                     <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">-1</button>
                     <button class="quick-button secondary" onclick="openStudentPointHistory('${student.id}')">Point History</button>
                     ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
