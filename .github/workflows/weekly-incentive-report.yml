@@ -1,0 +1,72 @@
+name: Generate and reset weekly incentive report
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/weekly-incentive-report.yml"
+      - "scripts/weekly-incentive-report.js"
+  schedule:
+    # 9:15 PM Central Thursday, with a daylight-saving-time guard below.
+    - cron: "15 2,3 * * 5"
+  workflow_dispatch:
+    inputs:
+      reset_week:
+        description: "Archive and reset the incentive week after creating the report"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Choose the Central Time run
+        id: cadence
+        shell: bash
+        run: |
+          local_hour=$(TZ=America/Chicago date +%H)
+          local_day=$(TZ=America/Chicago date +%u)
+          run_report=true
+          reset_week=false
+
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            if [[ "$local_day" != "4" || "$local_hour" != "21" ]]; then
+              run_report=false
+            else
+              reset_week=true
+            fi
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "${{ inputs.reset_week }}" == "true" ]]; then
+            reset_week=true
+          fi
+
+          echo "run_report=$run_report" >> "$GITHUB_OUTPUT"
+          echo "reset_week=$reset_week" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.cadence.outputs.run_report == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.cadence.outputs.run_report == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+        if: steps.cadence.outputs.run_report == 'true'
+
+      - run: npm test
+        if: steps.cadence.outputs.run_report == 'true'
+
+      - name: Generate the printable report, then archive and reset
+        if: steps.cadence.outputs.run_report == 'true'
+        run: node scripts/weekly-incentive-report.js
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: incentive-program-6bf45
+          INCENTIVE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
+          INCENTIVE_REPORT_NAME: Current Weekly Incentive Report
+          AUTO_RESET_WEEK: ${{ steps.cadence.outputs.reset_week }}
