@@ -16,6 +16,7 @@ const folderId = process.env.FRECKLE_DRIVE_FOLDER_ID || "18_Eu6JDgzXCatO-4_GecSF
 const projectId = process.env.FIREBASE_PROJECT_ID || "incentive-program-6bf45";
 const rawCredential = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 const saveWeeklySnapshot = process.env.SAVE_WEEKLY_SNAPSHOT === "true";
+const historyStartDate = process.env.FRECKLE_HISTORY_START || "2026-08-01";
 const localDownloadDir = process.env.FRECKLE_DOWNLOAD_DIR
   ? path.resolve(process.env.FRECKLE_DOWNLOAD_DIR)
   : null;
@@ -201,6 +202,10 @@ async function main() {
 
   const serverTime = FieldValue.serverTimestamp();
   const weekId = reportWeekId(files, importedAt);
+  const weeklySnapshots = await db.collection("privateProgressWeekly").get();
+  const oldWeeklySnapshots = weeklySnapshots.docs.filter(snapshot =>
+    /^\d{4}-\d{2}-\d{2}$/.test(snapshot.id) && snapshot.id < historyStartDate
+  );
   const batch = db.batch();
   batch.update(progressRef, {
     freckle: updates,
@@ -217,10 +222,14 @@ async function main() {
       updatedAt: serverTime
     }, { merge: true });
   }
+  for (const snapshot of oldWeeklySnapshots) batch.delete(snapshot.ref);
   await batch.commit();
 
   const snapshotMessage = saveWeeklySnapshot ? `; saved weekly snapshot ${weekId}` : "; refreshed current dashboard data";
   console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}${snapshotMessage}.`);
+  if (oldWeeklySnapshots.length) {
+    console.log(`Removed ${oldWeeklySnapshots.length} weekly snapshots dated before ${historyStartDate}.`);
+  }
   if (skipped.length) console.log(`Skipped unmatched rows: ${skipped.join(", ")}`);
 }
 
