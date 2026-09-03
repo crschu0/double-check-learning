@@ -13,6 +13,7 @@ import {
 const folderId = process.env.FRECKLE_DRIVE_FOLDER_ID || "18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d";
 const projectId = process.env.FIREBASE_PROJECT_ID || "incentive-program-6bf45";
 const rawCredential = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+const saveWeeklySnapshot = process.env.SAVE_WEEKLY_SNAPSHOT === "true";
 
 if (!rawCredential) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is required.");
 const credential = JSON.parse(rawCredential);
@@ -172,7 +173,6 @@ async function main() {
   const mergedFreckle = { ...(progress.freckle || {}), ...updates };
   const serverTime = FieldValue.serverTimestamp();
   const weekId = reportWeekId(files, importedAt);
-  const weeklyRef = db.doc(`privateProgressWeekly/${weekId}`);
   const batch = db.batch();
   batch.set(progressRef, {
     ...progress,
@@ -180,17 +180,20 @@ async function main() {
     freckleInsights,
     updatedAt: serverTime
   }, { merge: true });
-  batch.set(weeklyRef, {
-    weekId,
-    reportDates: files[0].report ? `${files[0].report.startDate} - ${files[0].report.endDate}` : weekId,
-    importedAt,
-    freckle: updates,
-    freckleInsights,
-    updatedAt: serverTime
-  }, { merge: true });
+  if (saveWeeklySnapshot) {
+    batch.set(db.doc(`privateProgressWeekly/${weekId}`), {
+      weekId,
+      reportDates: files[0].report ? `${files[0].report.startDate} - ${files[0].report.endDate}` : weekId,
+      importedAt,
+      freckle: updates,
+      freckleInsights,
+      updatedAt: serverTime
+    }, { merge: true });
+  }
   await batch.commit();
 
-  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}; saved weekly snapshot ${weekId}.`);
+  const snapshotMessage = saveWeeklySnapshot ? `; saved weekly snapshot ${weekId}` : "; refreshed current dashboard data";
+  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}${snapshotMessage}.`);
   if (skipped.length) console.log(`Skipped unmatched rows: ${skipped.join(", ")}`);
 }
 
