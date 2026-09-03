@@ -72,18 +72,31 @@ async function selectClass(page, className) {
       break;
     }
   }
-  if (!opened) throw new Error(`Could not find the Freckle class selector while switching to ${className}.`);
-
-  const option = page.getByText(className, { exact: true }).filter({ visible: true });
-  await option.first().waitFor({ state: "visible", timeout: 10000 });
-  await option.first().click();
-  await page.waitForTimeout(1500);
-  link = await waitForExport(page);
-  filename = await link.getAttribute("download");
-  if (!filenameMatchesClass(filename, className)) {
-    throw new Error(`Freckle did not switch the activity export to ${className}.`);
+  if (opened) {
+    const option = page.getByText(className, { exact: true }).filter({ visible: true });
+    if (await option.count()) {
+      await option.first().click();
+      await page.waitForTimeout(1500);
+      link = await waitForExport(page);
+      filename = await link.getAttribute("download");
+      if (filenameMatchesClass(filename, className)) return link;
+    }
   }
-  return link;
+
+  for (const route of ["/dashboard", "/rosters"]) {
+    await page.goto(`https://classroom.freckle.com${route}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForTimeout(1200);
+    const classChoice = page.getByText(className, { exact: true }).filter({ visible: true });
+    if (!await classChoice.count()) continue;
+    await classChoice.first().click();
+    await page.waitForTimeout(1000);
+    await page.goto("https://classroom.freckle.com/activity-feed", { waitUntil: "domcontentloaded", timeout: 60000 });
+    link = await waitForExport(page);
+    filename = await link.getAttribute("download");
+    if (filenameMatchesClass(filename, className)) return link;
+  }
+
+  throw new Error(`Could not switch the Freckle activity export to ${className}.`);
 }
 
 async function uploadCsv(filePath, filename) {
