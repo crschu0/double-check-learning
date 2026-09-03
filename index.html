@@ -2315,7 +2315,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const totalCorrect = activeReports.reduce((sum, record) => sum + record.correct, 0);
       const totalQuestions = activeReports.reduce((sum, record) => sum + record.questions, 0);
       const averageAccuracy = totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : "-";
+      const scheduledPracticePending = isBeforeScheduledFreckleReview();
       const categories = {
+        notScheduled: insightRecords.filter(record => record.category === "Not Scheduled Yet"),
         noActivity: insightRecords.filter(record => record.category === "No Activity"),
         needsCheckIn: insightRecords.filter(record => record.category === "Needs Check-In"),
         productivePractice: insightRecords.filter(record => record.category === "Productive Practice"),
@@ -2344,9 +2346,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             <span class="muted">${activeReports.length} with Freckle activity</span>
           </div>
           <div class="stat">
-            <span class="muted">No activity</span>
+            <span class="muted">${scheduledPracticePending ? "Not scheduled yet" : "No activity"}</span>
             <strong>${noActivityReports.length}</strong>
-            <span class="muted">students need a start</span>
+            <span class="muted">${scheduledPracticePending ? "regular practice is Wednesday" : "students need a start"}</span>
           </div>
           <div class="stat">
             <span class="muted">Class accuracy</span>
@@ -2356,7 +2358,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         </div>
         <div class="insight-board">
           ${renderInsightCard("Needs Check-In", categories.needsCheckIn, "Students whose report suggests confusion, low output, or low accuracy.", "danger")}
-          ${renderInsightCard("No Activity", categories.noActivity, "Students on the tracker with no usable Freckle activity in the latest report.", "warning")}
+          ${scheduledPracticePending
+            ? renderInsightCard("Not Scheduled Yet", categories.notScheduled, "These students have not practiced yet, but regular Freckle time is Wednesday.", "")
+            : renderInsightCard("No Activity", categories.noActivity, "Students on the tracker with no usable Freckle activity after the scheduled Wednesday session.", "warning")}
           ${renderInsightCard("Growth Spotlight", categories.growthSpotlight, "Students showing meaningful level movement or several levels passed.", "ok")}
           ${renderInsightCard("High Flyer", categories.highFlyer, "Students with strong accuracy and enough work to trust the signal.", "ok")}
           ${renderInsightCard("Productive Practice", categories.productivePractice, "Students doing steady work without a major flag.", "")}
@@ -2400,7 +2404,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function performanceScanStatus(record) {
-      if (!record.hasActivity) return { key: "inactive", label: "No activity", note: "No usable work this week" };
+      if (!record.hasActivity) {
+        return isBeforeScheduledFreckleReview()
+          ? { key: "inactive", label: "Not scheduled yet", note: "Regular practice is Wednesday" }
+          : { key: "inactive", label: "No activity", note: "No usable work after Wednesday" };
+      }
       const minutes = parseNumber(record.freckle && record.freckle.timePracticed);
       const secondsPerQuestion = record.questions ? (minutes * 60) / record.questions : 0;
       if (record.questions >= 10 && record.accuracy >= 90 && secondsPerQuestion > 0 && secondsPerQuestion < 4) {
@@ -2428,7 +2436,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             <span class="scan-summary strong">Performing ${counts.strong || 0}</span>
             <span class="scan-summary watch">Watch ${((counts.watch || 0) + (counts.check || 0))}</span>
             <span class="scan-summary pace">Review pace ${counts.pace || 0}</span>
-            <span class="scan-summary inactive">No activity ${counts.inactive || 0}</span>
+            <span class="scan-summary inactive">${isBeforeScheduledFreckleReview() ? "Not scheduled" : "No activity"} ${counts.inactive || 0}</span>
           </div>
           <p class="muted">A quick pattern check—not proof of cheating. “Review pace” means the speed and accuracy combination deserves a closer look.</p>
           <div class="performance-scan-grid">
@@ -2577,6 +2585,18 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       `;
     }
 
+    function isBeforeScheduledFreckleReview() {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Chicago",
+        weekday: "short",
+        hour: "numeric",
+        hourCycle: "h23"
+      }).formatToParts(new Date());
+      const weekday = parts.find(part => part.type === "weekday")?.value;
+      const hour = Number(parts.find(part => part.type === "hour")?.value || 0);
+      return ["Mon", "Tue", "Wed"].includes(weekday) || (weekday === "Thu" && hour < 8);
+    }
+
     function buildFreckleInsight(record) {
       const freckle = state.freckle[normalizeNameKey(record.name)];
       const questions = freckle ? getFreckleQuestionCount(freckle) : 0;
@@ -2587,8 +2607,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const growth = freckle ? parseNumber(freckle.latestGrade) - parseNumber(freckle.startingGrade) : 0;
       const hasActivity = Boolean(freckle && freckle.hasData !== false && (questions > 0 || accuracy > 0 || minutes > 0));
       const domain = freckle && freckle.focusDomain ? freckle.focusDomain : "Freckle";
-      let category = "No Activity";
-      let teacherMove = "Have student complete one short Freckle session.";
+      const scheduledPracticePending = isBeforeScheduledFreckleReview();
+      let category = scheduledPracticePending ? "Not Scheduled Yet" : "No Activity";
+      let teacherMove = scheduledPracticePending
+        ? "Regular Freckle practice is scheduled for Wednesday."
+        : "Have student complete one short Freckle session.";
 
       if (hasActivity) {
         if (accuracy <= 60 || (minutes >= 10 && questions <= 2)) {
@@ -2635,6 +2658,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function freckleInsightTag(record) {
+      if (record.category === "Not Scheduled Yet") return `<span class="tag">Not Scheduled Yet</span>`;
       if (record.category === "No Activity") return `<span class="tag warning">No Activity</span>`;
       if (record.category === "Needs Check-In") return `<span class="tag danger">Needs Check-In</span>`;
       if (record.category === "Growth Spotlight") return `<span class="tag ok">Growth</span>`;
