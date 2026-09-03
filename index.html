@@ -1976,24 +1976,15 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function addQuickPoint(studentId) {
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
-      const enteredReason = prompt(`Why is ${student.name} receiving a point?`);
-      if (enteredReason === null) return;
-      const reason = enteredReason.trim();
-      if (!reason) {
-        alert("Enter a reason before adding the point.");
-        return;
-      }
       const now = new Date();
-      const teacher = window.getSignedInTeacherAudit
-        ? window.getSignedInTeacherAudit()
-        : { teacherName: activeTeacherView.name, teacherEmail: activeTeacherView.email };
+      const teacher = currentTeacherAudit();
 
       state.points.push({
         id: crypto.randomUUID(),
         studentId: student.id,
         studentName: student.name,
         house: student.house,
-        reason,
+        reason: "",
         value: 1,
         date: centralDateText(now),
         createdAt: now.toISOString(),
@@ -2037,6 +2028,49 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       };
     }
 
+    function currentTeacherAudit() {
+      return window.getSignedInTeacherAudit
+        ? window.getSignedInTeacherAudit()
+        : { teacherName: activeTeacherView.name, teacherEmail: activeTeacherView.email };
+    }
+
+    function pointBelongsToCurrentTeacher(point) {
+      const currentEmail = String(currentTeacherAudit().teacherEmail || "").trim().toLowerCase();
+      const ownerEmail = String(point.teacherEmail || "").trim().toLowerCase();
+      return Boolean(currentEmail && ownerEmail && currentEmail === ownerEmail);
+    }
+
+    function updatePointReason(pointId, studentId) {
+      const point = state.points.find(item => item.id === pointId);
+      if (!point || !pointBelongsToCurrentTeacher(point)) {
+        alert("Only the teacher who added this point can edit its reason.");
+        return;
+      }
+
+      const enteredReason = prompt("Optional reason for this point:", point.reason || "");
+      if (enteredReason === null) return;
+      const teacher = currentTeacherAudit();
+      point.reason = enteredReason.trim();
+      point.reasonUpdatedAt = new Date().toISOString();
+      point.reasonUpdatedBy = teacher.teacherEmail;
+      saveState();
+      render();
+      openStudentPointHistory(studentId);
+    }
+
+    function removePointFromHistory(pointId, studentId) {
+      const point = state.points.find(item => item.id === pointId);
+      if (!point || !pointBelongsToCurrentTeacher(point)) {
+        alert("Only the teacher who added this point can remove it.");
+        return;
+      }
+      if (!confirm("Remove your point from the tracker?")) return;
+      state.points = state.points.filter(item => item.id !== pointId);
+      saveState();
+      render();
+      openStudentPointHistory(studentId);
+    }
+
     function openStudentPointHistory(studentId) {
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
@@ -2056,8 +2090,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         current.entries += 1;
         current.points += Number(point.value) || 0;
         teacherTotals.set(teacher, current);
-        const reason = point.reason || "No reason recorded";
-        reasonTotals.set(reason, (reasonTotals.get(reason) || 0) + 1);
+        const reason = String(point.reason || "").trim();
+        if (reason) reasonTotals.set(reason, (reasonTotals.get(reason) || 0) + 1);
       });
       const topTeacher = [...teacherTotals.entries()].sort((a, b) => b[1].entries - a[1].entries)[0];
       const topReason = [...reasonTotals.entries()].sort((a, b) => b[1] - a[1])[0];
@@ -2073,17 +2107,25 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         const teacherEmail = point.teacherEmail
           ? `<small>${escapeHtml(point.teacherEmail)}</small>`
           : `<small>Teacher was not stored on older entries</small>`;
+        const ownsPoint = pointBelongsToCurrentTeacher(point);
+        const actions = ownsPoint
+          ? `<div class="history-actions">
+              <button class="small secondary" type="button" onclick="window.opener.updatePointReason('${point.id}', '${studentId}')">${point.reason ? "Edit Reason" : "Add Reason"}</button>
+              <button class="small danger" type="button" onclick="window.opener.removePointFromHistory('${point.id}', '${studentId}')">Remove My Point</button>
+            </div>`
+          : `<span class="muted">Locked</span>`;
         return `
           <tr>
             <td>${escapeHtml(when.date)}</td>
             <td>${escapeHtml(when.time)}</td>
             <td><strong>${escapeHtml(teacherName)}</strong>${teacherEmail}</td>
             <td class="number">${Number(point.value) || 0}</td>
-            <td>${escapeHtml(point.reason || "No reason recorded")}</td>
+            <td>${escapeHtml(point.reason || "No reason added")}</td>
             <td>${escapeHtml(point.house || student.house || "")}</td>
+            <td>${actions}</td>
           </tr>
         `;
-      }).join("") : `<tr><td colspan="6" class="empty">No points have been recorded for this student.</td></tr>`;
+      }).join("") : `<tr><td colspan="7" class="empty">No points have been recorded for this student.</td></tr>`;
 
       const teacherRows = teacherTotals.size ? [...teacherTotals.entries()]
         .sort((a, b) => b[1].entries - a[1].entries || a[0].localeCompare(b[0]))
@@ -2108,6 +2150,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
             h2 { margin:0 0 12px; font-size:1.15rem; }
             p { margin:0; }
             button { border:0; border-radius:6px; padding:10px 14px; color:#fff; background:var(--brand); font-weight:700; cursor:pointer; }
+            button.small { padding:6px 8px; margin:0 4px 4px 0; font-size:.82rem; }
+            button.secondary { color:#245e70; background:#e6f1f4; }
+            button.danger { background:#b64b4b; }
+            .history-actions { min-width:160px; }
             .muted, small { display:block; color:var(--muted); }
             .cards { display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
             .card, section { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:14px; }
@@ -2143,12 +2189,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
               </section>
               <section>
                 <h2>How to read this</h2>
-                <p>New entries include the signed-in teacher and exact Central Time. Entries made before this feature was added keep their original date and are marked as legacy records.</p>
+                <p>New entries include the signed-in teacher and exact Central Time. A reason is optional and can be added later. Only the teacher who awarded a point can edit its reason or remove it. Older entries without a recorded teacher stay locked.</p>
               </section>
             </div>
             <section>
               <h2>Complete Point History</h2>
-              <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Teacher</th><th class="number">Points</th><th>Reason</th><th>House</th></tr></thead><tbody>${pointRows}</tbody></table></div>
+              <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Teacher</th><th class="number">Points</th><th>Reason</th><th>House</th><th>Actions</th></tr></thead><tbody>${pointRows}</tbody></table></div>
             </section>
           </main>
         </body>
@@ -2161,10 +2207,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const pointIndex = state.points
         .map((point, index) => ({ point, index }))
         .reverse()
-        .find(item => item.point.studentId === studentId);
+        .find(item => item.point.studentId === studentId && pointBelongsToCurrentTeacher(item.point));
 
       if (!pointIndex) {
-        alert("There are no points to remove for this student.");
+        alert("You do not have any of your own points to remove for this student.");
         return;
       }
 
@@ -2353,7 +2399,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function removePoint(pointId) {
-      if (!confirm("Remove this point from the tracker?")) return;
+      const point = state.points.find(item => item.id === pointId);
+      if (!point || !pointBelongsToCurrentTeacher(point)) {
+        alert("Only the teacher who added this point can remove it.");
+        return;
+      }
+      if (!confirm("Remove your point from the tracker?")) return;
       state.points = state.points.filter(point => point.id !== pointId);
       saveState();
       render();
@@ -2433,7 +2484,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                   <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">Add Point</button>
-                    <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">-1</button>
+                    <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">Undo Mine</button>
                     <button class="quick-button secondary" onclick="openStudentPointHistory('${student.id}')">Point History</button>
                     ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
                   </td>
@@ -2914,9 +2965,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
               <tr>
                 <td>${escapeHtml(point.date)}</td>
                 <td>${escapeHtml(point.studentName)}</td>
-                <td>${escapeHtml(point.reason)}</td>
+                <td>${escapeHtml(point.reason || "No reason added")}</td>
                 <td>${point.value}</td>
-                <td><button class="quick-button secondary" onclick="removePoint('${point.id}')">Remove Point</button></td>
+                <td>${pointBelongsToCurrentTeacher(point)
+                  ? `<button class="quick-button secondary" onclick="removePoint('${point.id}')">Remove My Point</button>`
+                  : `<span class="muted">Locked</span>`}</td>
               </tr>
             `).join("")}
           </tbody>
