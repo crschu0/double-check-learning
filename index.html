@@ -1189,6 +1189,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     const firebaseStatusKey = "room113FirebaseStatus";
     const passcodeKey = "room113TeacherPasscode";
     const progressFreshStartVersion = "2026-05-11-fresh-start";
+    const schoolYearStart = "2026-08-01";
     const defaultTeacherPasscode = "room113";
     const teacherViewProfiles = [
       { name: "Mrs. Cunniff", email: "lcunniff@maldenschool.org" },
@@ -1368,6 +1369,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
 
     render();
 
+    function filterCurrentSchoolYearHistory(history) {
+      return (history || []).filter(week => !week.ended || week.ended >= schoolYearStart);
+    }
+
     function loadState() {
       const saved = localStorage.getItem(storageKey);
       if (!saved) return starterState;
@@ -1378,6 +1383,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           ...starterState,
           ...parsed,
           demoStudents: filterRemovedDemoStudents(parsed.demoStudents || starterState.demoStudents),
+          history: filterCurrentSchoolYearHistory(parsed.history),
           freckle: {
             ...starterState.freckle,
             ...(parsed.freckle || {})
@@ -1416,7 +1422,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function splitStateForFirebase(nextState) {
       const { freckle, freckleInsights, freckleImportStatus, freckleWeeklyHistory, scratch, ...incentives } = nextState;
       return {
-        incentives,
+        incentives: {
+          ...incentives,
+          history: filterCurrentSchoolYearHistory(incentives.history)
+        },
         progress: {
           freckle: freckle || {},
           freckleInsights: freckleInsights || { standards: [] },
@@ -1430,6 +1439,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       state = {
         ...state,
         ...(incentives || {}),
+        history: filterCurrentSchoolYearHistory((incentives && incentives.history) || state.history),
         freckle: canManageProgram() ? {
           ...starterState.freckle,
           ...((progress && progress.freckle) || {})
