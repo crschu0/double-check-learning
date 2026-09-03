@@ -86,14 +86,23 @@ async function selectClass(page, className) {
   for (const route of ["/dashboard", "/rosters"]) {
     await page.goto(`https://classroom.freckle.com${route}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForTimeout(1200);
-    const classChoice = page.getByText(className, { exact: true }).filter({ visible: true });
-    if (!await classChoice.count()) continue;
-    await classChoice.first().click();
-    await page.waitForTimeout(1000);
-    await page.goto("https://classroom.freckle.com/activity-feed", { waitUntil: "domcontentloaded", timeout: 60000 });
-    link = await waitForExport(page);
-    filename = await link.getAttribute("download");
-    if (filenameMatchesClass(filename, className)) return link;
+    const classPattern = new RegExp(`(^|\\s)${className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`, "i");
+    const routeChoices = [
+      page.locator('button,a,[role="button"],rgh-clickable').filter({ hasText: classPattern, visible: true }),
+      page.getByText(className, { exact: true }).filter({ visible: true }),
+      page.getByText(classPattern).filter({ visible: true })
+    ];
+    for (const classChoice of routeChoices) {
+      if (!await classChoice.count()) continue;
+      await classChoice.first().click();
+      await page.waitForTimeout(1000);
+      await page.goto("https://classroom.freckle.com/activity-feed", { waitUntil: "domcontentloaded", timeout: 60000 });
+      link = await waitForExport(page);
+      filename = await link.getAttribute("download");
+      if (filenameMatchesClass(filename, className)) return link;
+      await page.goto(`https://classroom.freckle.com${route}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.waitForTimeout(800);
+    }
   }
 
   throw new Error(`Could not switch the Freckle activity export to ${className}.`);
