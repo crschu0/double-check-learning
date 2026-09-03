@@ -117,7 +117,12 @@ async function main() {
   const incentivesSnap = await incentivesRef.get();
   if (!incentivesSnap.exists) throw new Error("trackerData/incentives does not exist.");
 
-  const students = incentivesSnap.data().students || [];
+  const incentivesData = incentivesSnap.data();
+  const students = incentivesData.students || [];
+  const incentiveHistory = incentivesData.history || [];
+  const currentSchoolYearHistory = incentiveHistory.filter(week =>
+    !week.ended || week.ended >= historyStartDate
+  );
   const rosterIndex = buildRosterIndex(students);
   const importedAt = new Date().toISOString().slice(0, 10);
   const updates = {};
@@ -207,6 +212,12 @@ async function main() {
     /^\d{4}-\d{2}-\d{2}$/.test(snapshot.id) && snapshot.id < historyStartDate
   );
   const batch = db.batch();
+  if (currentSchoolYearHistory.length !== incentiveHistory.length) {
+    batch.update(incentivesRef, {
+      history: currentSchoolYearHistory,
+      updatedAt: serverTime
+    });
+  }
   batch.update(progressRef, {
     freckle: updates,
     freckleInsights,
@@ -229,6 +240,10 @@ async function main() {
   console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}${snapshotMessage}.`);
   if (oldWeeklySnapshots.length) {
     console.log(`Removed ${oldWeeklySnapshots.length} weekly snapshots dated before ${historyStartDate}.`);
+  }
+  const removedIncentiveWeeks = incentiveHistory.length - currentSchoolYearHistory.length;
+  if (removedIncentiveWeeks) {
+    console.log(`Removed ${removedIncentiveWeeks} archived incentive weeks dated before ${historyStartDate}.`);
   }
   if (skipped.length) console.log(`Skipped unmatched rows: ${skipped.join(", ")}`);
 }
