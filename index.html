@@ -1056,6 +1056,7 @@
           <button class="danger" type="button" id="clearProgressDataButton">Clear Freckle/Scratch</button>
         </div>
         <p class="muted">Roster-filtered patterns from the latest Freckle report data. Click a column heading to sort by name, status, focus, accuracy, or practice.</p>
+        <div id="freckleHealthBanner"></div>
         <div id="teacherProgressTable"></div>
       </section>
 
@@ -2300,6 +2301,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function renderTeacherProgress() {
+      const healthBanner = document.getElementById("freckleHealthBanner");
+      if (healthBanner) healthBanner.innerHTML = renderFreckleImportHealth();
       const records = allProgressRecords();
       if (!records.length) {
         teacherProgressTable.innerHTML = `<p class="empty">Add students to the tracker to build Freckle insights.</p>`;
@@ -2334,7 +2337,6 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       });
 
       teacherProgressTable.innerHTML = `
-        ${renderFreckleImportHealth()}
         <div class="progress-summary">
           <div class="stat">
             <span class="muted">Tracker students</span>
