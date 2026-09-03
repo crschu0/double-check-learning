@@ -77,6 +77,12 @@ function reportNameFallback(sourceName) {
   return cleaned;
 }
 
+function reportWeekId(files, fallback) {
+  const endDate = files[0] && files[0].report && files[0].report.endDate;
+  const parsed = endDate ? new Date(endDate) : new Date(fallback);
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString().slice(0, 10);
+}
+
 async function main() {
   const files = selectLatestReportSet(await listCsvFiles());
   if (!files.length) throw new Error("No dated Freckle Activity CSV files were found.");
@@ -165,14 +171,26 @@ async function main() {
 
   const mergedFreckle = { ...(progress.freckle || {}), ...updates };
   const serverTime = FieldValue.serverTimestamp();
-  await progressRef.set({
+  const weekId = reportWeekId(files, importedAt);
+  const weeklyRef = db.doc(`privateProgressWeekly/${weekId}`);
+  const batch = db.batch();
+  batch.set(progressRef, {
     ...progress,
     freckle: mergedFreckle,
     freckleInsights,
     updatedAt: serverTime
   }, { merge: true });
+  batch.set(weeklyRef, {
+    weekId,
+    reportDates: files[0].report ? `${files[0].report.startDate} - ${files[0].report.endDate}` : weekId,
+    importedAt,
+    freckle: updates,
+    freckleInsights,
+    updatedAt: serverTime
+  }, { merge: true });
+  await batch.commit();
 
-  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}.`);
+  console.log(`Imported ${Object.keys(updates).length} students from ${files.length} Freckle CSV files${richFile ? " plus private rich report data" : ""}; saved weekly snapshot ${weekId}.`);
   if (skipped.length) console.log(`Skipped unmatched rows: ${skipped.join(", ")}`);
 }
 

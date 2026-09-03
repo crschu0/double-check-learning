@@ -427,6 +427,126 @@
       z-index: 1;
     }
 
+    .performance-scan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .scan-tile {
+      border: 1px solid var(--line);
+      border-left: 7px solid var(--brand);
+      border-radius: 8px;
+      padding: 11px;
+      background: #fbfdfe;
+      color: var(--ink);
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    body[data-mode="dark"] .scan-tile {
+      background: var(--panel);
+    }
+
+    .scan-tile:hover,
+    .scan-tile:focus {
+      background: #f0f5f7;
+      color: var(--ink);
+    }
+
+    body[data-mode="dark"] .scan-tile:hover,
+    body[data-mode="dark"] .scan-tile:focus {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .scan-tile.strong { border-left-color: var(--ok); }
+    .scan-tile.steady { border-left-color: var(--brand); }
+    .scan-tile.watch { border-left-color: #d69200; }
+    .scan-tile.check { border-left-color: var(--danger); }
+    .scan-tile.pace { border-left-color: #7b4ab5; }
+    .scan-tile.inactive { border-left-color: var(--muted); }
+
+    .scan-tile-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .scan-tile-heading span,
+    .scan-tile small {
+      color: var(--muted);
+    }
+
+    .scan-meter {
+      height: 8px;
+      margin: 9px 0 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--line);
+    }
+
+    .scan-meter span {
+      display: block;
+      height: 100%;
+      background: var(--brand);
+    }
+
+    .scan-tile.strong .scan-meter span { background: var(--ok); }
+    .scan-tile.check .scan-meter span { background: var(--danger); }
+    .scan-tile.pace .scan-meter span { background: #7b4ab5; }
+
+    .scan-summary {
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #eef4f6;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .scan-summary.strong { background: #e5f3eb; color: var(--ok); }
+    .scan-summary.watch { background: #fff3cf; color: #7a5b00; }
+    .scan-summary.pace { background: #eee5f7; color: #653595; }
+    .scan-summary.inactive { color: var(--muted); }
+
+    .history-strip {
+      display: flex;
+      align-items: end;
+      gap: 14px;
+      min-height: 150px;
+      padding: 12px 4px;
+      overflow-x: auto;
+    }
+
+    .history-week {
+      display: grid;
+      grid-template-rows: auto 92px auto;
+      gap: 5px;
+      min-width: 48px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .history-bar {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      background: var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .history-bar i {
+      display: block;
+      width: 100%;
+      background: var(--brand);
+    }
+
+    .history-week strong {
+      color: var(--ink);
+    }
+
     .insight-card {
       border: 1px solid var(--line);
       border-left: 5px solid var(--accent);
@@ -1110,6 +1230,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     let activeTeacherView = teacherViewProfiles[4];
     let idleLogoutTimer;
     let firebaseStateReady = false;
+    let selectedProgressHistoryStudent = "";
     const tableSortState = {
       students: { key: "name", direction: "asc" },
       freckle: { key: "category", direction: "asc" },
@@ -1128,6 +1249,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       },
       freckle: {},
       freckleInsights: { standards: [] },
+      freckleWeeklyHistory: [],
       scratch: {},
       settings: {
         funFridayLimit: 5,
@@ -1274,7 +1396,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function splitStateForFirebase(nextState) {
-      const { freckle, freckleInsights, scratch, ...incentives } = nextState;
+      const { freckle, freckleInsights, freckleWeeklyHistory, scratch, ...incentives } = nextState;
       return {
         incentives,
         progress: {
@@ -1296,6 +1418,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         freckleInsights: canManageProgram()
           ? ((progress && progress.freckleInsights) || { standards: [] })
           : { standards: [] },
+        freckleWeeklyHistory: canManageProgram()
+          ? ((progress && progress.freckleWeeklyHistory) || state.freckleWeeklyHistory || [])
+          : [],
         scratch: canManageProgram() ? {
           ...starterState.scratch,
           ...((progress && progress.scratch) || {})
@@ -2178,6 +2303,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           ${renderInsightCard("High Flyer", categories.highFlyer, "Students with strong accuracy and enough work to trust the signal.", "ok")}
           ${renderInsightCard("Productive Practice", categories.productivePractice, "Students doing steady work without a major flag.", "")}
         </div>
+        ${renderPerformanceScan(insightRecords)}
+        ${renderStudentProgressHistory()}
         ${renderFreckleGrowth()}
         ${renderStandardsAttention()}
         ${renderRecentFreckleSessions()}
@@ -2212,6 +2339,100 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           </table>
         </div>
       `;
+    }
+
+    function performanceScanStatus(record) {
+      if (!record.hasActivity) return { key: "inactive", label: "No activity", note: "No usable work this week" };
+      const minutes = parseNumber(record.freckle && record.freckle.timePracticed);
+      const secondsPerQuestion = record.questions ? (minutes * 60) / record.questions : 0;
+      if (record.questions >= 10 && record.accuracy >= 90 && secondsPerQuestion > 0 && secondsPerQuestion < 4) {
+        return { key: "pace", label: "Review pace", note: `${Math.round(secondsPerQuestion)} sec/question at ${record.accuracy}%` };
+      }
+      if (record.accuracy < 60) return { key: "check", label: "Check in", note: `${record.accuracy}% accuracy` };
+      if (record.questions < 10) return { key: "watch", label: "Low output", note: `${record.questions} questions` };
+      if (record.accuracy >= 80 && record.questions >= 20) return { key: "strong", label: "Performing", note: `${record.accuracy}% on ${record.questions} questions` };
+      return { key: "steady", label: "Steady", note: `${record.accuracy}% on ${record.questions} questions` };
+    }
+
+    function renderPerformanceScan(records) {
+      const rows = records.map(record => ({ ...record, scan: performanceScanStatus(record) }));
+      const priority = { pace: 0, check: 1, watch: 2, inactive: 3, steady: 4, strong: 5 };
+      rows.sort((a, b) => priority[a.scan.key] - priority[b.scan.key] || a.name.localeCompare(b.name));
+      const counts = rows.reduce((result, row) => {
+        result[row.scan.key] = (result[row.scan.key] || 0) + 1;
+        return result;
+      }, {});
+
+      return `
+        <section class="rich-report-section">
+          <div class="button-row">
+            <h3 style="margin-right:auto;">Weekly Performance Scan</h3>
+            <span class="scan-summary strong">Performing ${counts.strong || 0}</span>
+            <span class="scan-summary watch">Watch ${((counts.watch || 0) + (counts.check || 0))}</span>
+            <span class="scan-summary pace">Review pace ${counts.pace || 0}</span>
+            <span class="scan-summary inactive">No activity ${counts.inactive || 0}</span>
+          </div>
+          <p class="muted">A quick pattern check—not proof of cheating. “Review pace” means the speed and accuracy combination deserves a closer look.</p>
+          <div class="performance-scan-grid">
+            ${rows.map(row => `<button type="button" class="scan-tile ${row.scan.key}" data-student="${escapeAttribute(row.name)}" onclick="setProgressHistoryStudent(this.dataset.student)">
+              <div class="scan-tile-heading"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.scan.label)}</span></div>
+              <div class="scan-meter" role="progressbar" aria-label="${escapeAttribute(row.name)} accuracy" aria-valuenow="${Math.max(0, Math.min(100, row.accuracy || 0))}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.max(0, Math.min(100, row.accuracy || 0))}%"></span></div>
+              <small>${escapeHtml(row.scan.note)}</small>
+            </button>`).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function setProgressHistoryStudent(name) {
+      selectedProgressHistoryStudent = name;
+      renderTeacherProgress();
+    }
+    window.setProgressHistoryStudent = setProgressHistoryStudent;
+
+    function renderStudentProgressHistory() {
+      const snapshots = [...(state.freckleWeeklyHistory || [])]
+        .sort((a, b) => String(b.weekId || "").localeCompare(String(a.weekId || "")));
+      const availableNames = state.students.map(student => student.name).sort((a, b) => a.localeCompare(b));
+      if (!selectedProgressHistoryStudent || !availableNames.includes(selectedProgressHistoryStudent)) {
+        selectedProgressHistoryStudent = availableNames[0] || "";
+      }
+      const key = normalizeNameKey(selectedProgressHistoryStudent);
+      const history = snapshots.map(snapshot => ({
+        snapshot,
+        record: (snapshot.freckle || {})[key]
+      })).filter(item => item.record);
+
+      return `
+        <section class="rich-report-section">
+          <div class="button-row">
+            <h3 style="margin-right:auto;">Student Progress History</h3>
+            <label for="progressHistoryStudent" class="muted">Student</label>
+            <select id="progressHistoryStudent" onchange="setProgressHistoryStudent(this.value)">
+              ${availableNames.map(name => `<option value="${escapeAttribute(name)}"${name === selectedProgressHistoryStudent ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}
+            </select>
+          </div>
+          ${history.length ? `<div class="history-strip" aria-label="Weekly accuracy history">
+            ${history.slice().reverse().map(item => {
+              const accuracy = parseNumber(item.record.accuracy);
+              return `<div class="history-week"><span>${escapeHtml(shortWeekLabel(item.snapshot.weekId))}</span><div class="history-bar"><i style="height:${Math.max(4, Math.min(100, accuracy))}%"></i></div><strong>${accuracy}%</strong></div>`;
+            }).join("")}
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Week</th><th>Accuracy</th><th>Questions</th><th>Practice</th><th>Domains</th><th>Levels advanced</th><th>Last activity</th></tr></thead>
+            <tbody>${history.map(item => {
+              const growth = item.record.growth || [];
+              const advanced = growth.reduce((sum, row) => sum + Math.max(0, parseNumber(row.progress)), 0);
+              return `<tr><td><strong>${escapeHtml(item.snapshot.reportDates || item.snapshot.weekId)}</strong></td><td>${formatAccuracy(item.record)}</td><td>${escapeHtml(getFreckleQuestionCount(item.record))}</td><td>${escapeHtml(item.record.timePracticed || "-")}</td><td>${growth.length}</td><td>${advanced}</td><td>${escapeHtml(item.record.lastPracticed || "-")}</td></tr>`;
+            }).join("")}</tbody>
+          </table></div>` : `<p class="empty">The first dated snapshot will appear here after the weekly importer runs.</p>`}
+        </section>
+      `;
+    }
+
+    function shortWeekLabel(value) {
+      const parts = String(value || "").split("-");
+      return parts.length === 3 ? `${Number(parts[1])}/${Number(parts[2])}` : value;
     }
 
     function renderFreckleGrowth() {
@@ -2883,10 +3104,16 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const progressRef = doc(db, "privateProgress", progressDocId);
       const incentivesSnap = await getDoc(incentivesRef);
       let progressData = {};
+      let weeklyHistory = [];
 
       if (window.canManageProgram && window.canManageProgram()) {
         const progressSnap = await getDoc(progressRef);
         progressData = progressSnap.exists() ? progressSnap.data() : {};
+        const weeklySnap = await getDocs(collection(db, "privateProgressWeekly"));
+        weeklyHistory = weeklySnap.docs.map(snapshot => ({
+          ...snapshot.data(),
+          weekId: (snapshot.data() && snapshot.data().weekId) || snapshot.id
+        }));
       }
 
       if (!incentivesSnap.exists()) {
@@ -2911,6 +3138,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         }
       }
 
+      progressData = { ...progressData, freckleWeeklyHistory: weeklyHistory };
       if (window.mergeRoom113FirebaseState) {
         window.mergeRoom113FirebaseState(incentivesSnap.exists() ? incentivesSnap.data() : {}, progressData);
       }
