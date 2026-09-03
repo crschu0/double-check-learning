@@ -120,6 +120,7 @@ async function main() {
   const rosterIndex = buildRosterIndex(students);
   const importedAt = new Date().toISOString().slice(0, 10);
   const updates = {};
+  const activeStudentKeys = new Set();
   const skipped = [];
 
   for (const file of files) {
@@ -131,7 +132,9 @@ async function main() {
         skipped.push(`${row.sourceName} (${file.report.className})`);
         continue;
       }
-      updates[normalizeName(rosterName)] = toFreckleRecord(row, rosterName, file.report, importedAt);
+      const key = normalizeName(rosterName);
+      activeStudentKeys.add(key);
+      updates[key] = toFreckleRecord(row, rosterName, file.report, importedAt);
     }
   }
 
@@ -147,6 +150,7 @@ async function main() {
     const rosterName = resolveRosterName(item.name, rosterIndex) || reportNameFallback(item.name);
     if (!rosterName) continue;
     const key = normalizeName(rosterName);
+    if (!activeStudentKeys.has(key)) continue;
     richByStudent[key] ||= { name: rosterName, growth: [], sessions: [] };
     richByStudent[key].growth.push({
       domain: item.domain,
@@ -160,6 +164,7 @@ async function main() {
     const rosterName = resolveRosterName(item.name, rosterIndex) || reportNameFallback(item.name);
     if (!rosterName) continue;
     const key = normalizeName(rosterName);
+    if (!activeStudentKeys.has(key)) continue;
     richByStudent[key] ||= { name: rosterName, growth: [], sessions: [] };
     richByStudent[key].sessions.push({
       completedAt: item.completedAt,
@@ -194,16 +199,14 @@ async function main() {
     }))
   };
 
-  const mergedFreckle = { ...(progress.freckle || {}), ...updates };
   const serverTime = FieldValue.serverTimestamp();
   const weekId = reportWeekId(files, importedAt);
   const batch = db.batch();
-  batch.set(progressRef, {
-    ...progress,
-    freckle: mergedFreckle,
+  batch.update(progressRef, {
+    freckle: updates,
     freckleInsights,
     updatedAt: serverTime
-  }, { merge: true });
+  });
   if (saveWeeklySnapshot) {
     batch.set(db.doc(`privateProgressWeekly/${weekId}`), {
       weekId,
