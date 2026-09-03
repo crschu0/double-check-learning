@@ -1976,6 +1976,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     function addQuickPoint(studentId) {
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
+      const now = new Date();
+      const teacher = window.getSignedInTeacherAudit
+        ? window.getSignedInTeacherAudit()
+        : { teacherName: activeTeacherView.name, teacherEmail: activeTeacherView.email };
 
       state.points.push({
         id: crypto.randomUUID(),
@@ -1984,11 +1988,166 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         house: student.house,
         reason: "Quick add",
         value: 1,
-        date: new Date().toISOString().slice(0, 10)
+        date: centralDateText(now),
+        createdAt: now.toISOString(),
+        teacherName: teacher.teacherName,
+        teacherEmail: teacher.teacherEmail
       });
 
       saveState();
       render();
+    }
+
+    function centralDateText(date) {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Chicago",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(date);
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+
+    function pointDateTime(point) {
+      const timestamp = Date.parse(point.createdAt || "");
+      if (!Number.isFinite(timestamp)) {
+        return { date: point.date || "Unknown date", time: "Not recorded" };
+      }
+      const date = new Date(timestamp);
+      return {
+        date: new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago",
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }).format(date),
+        time: new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago",
+          hour: "numeric",
+          minute: "2-digit"
+        }).format(date)
+      };
+    }
+
+    function openStudentPointHistory(studentId) {
+      const student = state.students.find(item => item.id === studentId);
+      if (!student) return;
+      const points = state.points
+        .filter(point => point.studentId === studentId)
+        .sort((a, b) => {
+          const aTime = Date.parse(a.createdAt || `${a.date || "1970-01-01"}T00:00:00`) || 0;
+          const bTime = Date.parse(b.createdAt || `${b.date || "1970-01-01"}T00:00:00`) || 0;
+          return bTime - aTime;
+        });
+      const weekPoints = points.filter(point => point.date >= state.settings.currentWeekStart);
+      const teacherTotals = new Map();
+      const reasonTotals = new Map();
+      points.forEach(point => {
+        const teacher = point.teacherName || point.teacherEmail || "Not recorded (legacy)";
+        const current = teacherTotals.get(teacher) || { entries: 0, points: 0 };
+        current.entries += 1;
+        current.points += Number(point.value) || 0;
+        teacherTotals.set(teacher, current);
+        const reason = point.reason || "No reason recorded";
+        reasonTotals.set(reason, (reasonTotals.get(reason) || 0) + 1);
+      });
+      const topTeacher = [...teacherTotals.entries()].sort((a, b) => b[1].entries - a[1].entries)[0];
+      const topReason = [...reasonTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+      const popup = window.open("", `point-history-${studentId}`, "width=1040,height=760,resizable=yes,scrollbars=yes");
+      if (!popup) {
+        alert("The point-history window was blocked. Allow pop-ups for this site and try again.");
+        return;
+      }
+
+      const pointRows = points.length ? points.map(point => {
+        const when = pointDateTime(point);
+        const teacherName = point.teacherName || "Not recorded (legacy)";
+        const teacherEmail = point.teacherEmail
+          ? `<small>${escapeHtml(point.teacherEmail)}</small>`
+          : `<small>Teacher was not stored on older entries</small>`;
+        return `
+          <tr>
+            <td>${escapeHtml(when.date)}</td>
+            <td>${escapeHtml(when.time)}</td>
+            <td><strong>${escapeHtml(teacherName)}</strong>${teacherEmail}</td>
+            <td class="number">${Number(point.value) || 0}</td>
+            <td>${escapeHtml(point.reason || "No reason recorded")}</td>
+            <td>${escapeHtml(point.house || student.house || "")}</td>
+          </tr>
+        `;
+      }).join("") : `<tr><td colspan="6" class="empty">No points have been recorded for this student.</td></tr>`;
+
+      const teacherRows = teacherTotals.size ? [...teacherTotals.entries()]
+        .sort((a, b) => b[1].entries - a[1].entries || a[0].localeCompare(b[0]))
+        .map(([teacher, totals]) => `
+          <tr><td>${escapeHtml(teacher)}</td><td class="number">${totals.entries}</td><td class="number">${totals.points}</td></tr>
+        `).join("") : `<tr><td colspan="3" class="empty">No teacher trends yet.</td></tr>`;
+
+      popup.document.open();
+      popup.document.write(`<!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${escapeHtml(student.name)} - Point History</title>
+          <style>
+            :root { --ink:#1f2a33; --muted:#667580; --line:#d9e2e8; --brand:#2f7d95; --panel:#fff; --page:#f5f8fa; }
+            * { box-sizing:border-box; }
+            body { margin:0; padding:24px; color:var(--ink); background:var(--page); font:15px/1.45 Arial,sans-serif; }
+            main { max-width:1100px; margin:0 auto; }
+            header { display:flex; justify-content:space-between; gap:16px; align-items:start; margin-bottom:18px; }
+            h1 { margin:0 0 4px; color:var(--brand); }
+            h2 { margin:0 0 12px; font-size:1.15rem; }
+            p { margin:0; }
+            button { border:0; border-radius:6px; padding:10px 14px; color:#fff; background:var(--brand); font-weight:700; cursor:pointer; }
+            .muted, small { display:block; color:var(--muted); }
+            .cards { display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+            .card, section { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:14px; }
+            .card strong { display:block; font-size:1.45rem; }
+            section { margin-bottom:18px; }
+            .table-wrap { overflow:auto; }
+            table { width:100%; border-collapse:collapse; }
+            th, td { padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+            th { color:#40505c; background:#f0f5f7; font-size:.8rem; text-transform:uppercase; }
+            .number { text-align:right; }
+            .empty { color:var(--muted); text-align:center; padding:24px; }
+            .split { display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr); gap:18px; }
+            @media (max-width:760px) { .cards,.split { grid-template-columns:1fr 1fr; } }
+            @media print { body { padding:0; background:#fff; } button { display:none; } .card,section { break-inside:avoid; } }
+          </style>
+        </head>
+        <body>
+          <main>
+            <header>
+              <div><h1>${escapeHtml(student.name)}</h1><p class="muted">${escapeHtml(student.house)} point history and teacher trends</p></div>
+              <button type="button" onclick="window.print()">Print History</button>
+            </header>
+            <div class="cards">
+              <div class="card"><span class="muted">This week</span><strong>${weekPoints.reduce((sum, point) => sum + (Number(point.value) || 0), 0)}</strong><span class="muted">points</span></div>
+              <div class="card"><span class="muted">All records</span><strong>${points.length}</strong><span class="muted">point entries</span></div>
+              <div class="card"><span class="muted">Most frequent teacher</span><strong>${escapeHtml(topTeacher ? topTeacher[0] : "None yet")}</strong><span class="muted">${topTeacher ? `${topTeacher[1].entries} entries` : "No data"}</span></div>
+              <div class="card"><span class="muted">Most common reason</span><strong>${escapeHtml(topReason ? topReason[0] : "None yet")}</strong><span class="muted">${topReason ? `${topReason[1]} entries` : "No data"}</span></div>
+            </div>
+            <div class="split">
+              <section>
+                <h2>Teacher Summary</h2>
+                <div class="table-wrap"><table><thead><tr><th>Teacher</th><th class="number">Entries</th><th class="number">Points</th></tr></thead><tbody>${teacherRows}</tbody></table></div>
+              </section>
+              <section>
+                <h2>How to read this</h2>
+                <p>New entries include the signed-in teacher and exact Central Time. Entries made before this feature was added keep their original date and are marked as legacy records.</p>
+              </section>
+            </div>
+            <section>
+              <h2>Complete Point History</h2>
+              <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Teacher</th><th class="number">Points</th><th>Reason</th><th>House</th></tr></thead><tbody>${pointRows}</tbody></table></div>
+            </section>
+          </main>
+        </body>
+        </html>`);
+      popup.document.close();
+      popup.focus();
     }
 
     function removeLatestPointForStudent(studentId) {
@@ -2268,6 +2427,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">+1</button>
                     <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">-1</button>
+                    <button class="quick-button secondary" onclick="openStudentPointHistory('${student.id}')">Point History</button>
                     ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
                   </td>
                 </tr>
@@ -3047,6 +3207,14 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       window.signOutTeacherAccount = signOutTeacherAccount;
       window.saveRoom113Data = saveRoom113Data;
       window.loadStudentDashboardData = loadStudentDashboardData;
+      window.getSignedInTeacherAudit = () => {
+        const user = auth.currentUser;
+        const email = String(user && user.email || "").trim().toLowerCase();
+        return {
+          teacherName: String(user && user.displayName || email || "Unknown teacher").trim(),
+          teacherEmail: email
+        };
+      };
     } else {
       googleSignInButton.disabled = true;
       googleRedirectButton.disabled = true;
