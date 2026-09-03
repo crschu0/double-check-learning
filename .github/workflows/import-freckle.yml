@@ -1,4 +1,4 @@
-name: Import weekly Freckle activity
+name: Import daily and weekly Freckle activity
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - "package.json"
       - "package-lock.json"
   schedule:
-    - cron: "0 12 * * 0"
+    - cron: "20 12,13 * * 1-6"
   workflow_dispatch:
 
 permissions:
@@ -20,26 +20,65 @@ jobs:
   import:
     runs-on: ubuntu-latest
     steps:
+      - name: Choose the Central Time run
+        id: cadence
+        shell: bash
+        run: |
+          local_hour=$(TZ=America/Chicago date +%H)
+          local_day=$(TZ=America/Chicago date +%u)
+          run_import=true
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" && "$local_hour" != "07" ]]; then
+            run_import=false
+          fi
+          save_weekly=false
+          if [[ "$run_import" == "true" && "$local_day" == "6" ]]; then
+            save_weekly=true
+          fi
+          echo "run_import=$run_import" >> "$GITHUB_OUTPUT"
+          echo "save_weekly=$save_weekly" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: steps.cadence.outputs.run_import == 'true'
       - uses: actions/setup-node@v4
+        if: steps.cadence.outputs.run_import == 'true'
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+        if: steps.cadence.outputs.run_import == 'true'
       - run: npm test
+        if: steps.cadence.outputs.run_import == 'true'
+      - name: Install Freckle browser
+        if: steps.cadence.outputs.run_import == 'true'
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
       - name: Prepare Google credentials
+        if: steps.cadence.outputs.run_import == 'true'
         run: |
           credential_file="$RUNNER_TEMP/google-service-account.json"
           printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" > "$credential_file"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$credential_file" >> "$GITHUB_ENV"
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      - name: Download Freckle activity CSVs
+        if: steps.cadence.outputs.run_import == 'true'
+        run: node scripts/download-freckle.js
+        env:
+          FRECKLE_EMAIL: ${{ secrets.FRECKLE_EMAIL }}
+          FRECKLE_PASSWORD: ${{ secrets.FRECKLE_PASSWORD }}
+          FRECKLE_CLASSES: 5th,Phinnley
+          FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       - name: Deploy private Firestore rules
+        if: steps.cadence.outputs.run_import == 'true'
         run: npx --yes firebase-tools@latest deploy --only firestore:rules --project "$FIREBASE_PROJECT_ID" --non-interactive
         env:
           FIREBASE_PROJECT_ID: incentive-program-6bf45
-      - run: npm run import:freckle
+      - name: Import Freckle data
+        if: steps.cadence.outputs.run_import == 'true'
+        run: npm run import:freckle
         env:
           FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
           FIREBASE_PROJECT_ID: incentive-program-6bf45
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SAVE_WEEKLY_SNAPSHOT: ${{ steps.cadence.outputs.save_weekly }}
