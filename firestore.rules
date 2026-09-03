@@ -19,7 +19,8 @@ service cloud.firestore {
           "anichols@maldenschool.org",
           "slennon@maldenschool.org",
           "mpatterson@maldenschool.org",
-          "jribas@maldenschool.org"
+          "jribas@maldenschool.org",
+          "dbickett@maldengradeschool.org"
         ];
     }
 
