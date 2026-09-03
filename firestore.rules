@@ -20,7 +20,7 @@ service cloud.firestore {
           "slennon@maldenschool.org",
           "mpatterson@maldenschool.org",
           "jribas@maldenschool.org",
-          "dbickett@maldengradeschool.org"
+          "dbickett@maldenschool.org"
         ];
     }
 
