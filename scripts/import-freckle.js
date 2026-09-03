@@ -1,5 +1,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 import { google } from "googleapis";
 import {
   buildRosterIndex,
@@ -14,6 +16,9 @@ const folderId = process.env.FRECKLE_DRIVE_FOLDER_ID || "18_Eu6JDgzXCatO-4_GecSF
 const projectId = process.env.FIREBASE_PROJECT_ID || "incentive-program-6bf45";
 const rawCredential = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 const saveWeeklySnapshot = process.env.SAVE_WEEKLY_SNAPSHOT === "true";
+const localDownloadDir = process.env.FRECKLE_DOWNLOAD_DIR
+  ? path.resolve(process.env.FRECKLE_DOWNLOAD_DIR)
+  : null;
 
 if (!rawCredential) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is required.");
 const credential = JSON.parse(rawCredential);
@@ -37,6 +42,20 @@ async function listCsvFiles() {
   return (response.data.files || []).filter(file => parseReportFilename(file.name));
 }
 
+async function listLocalCsvFiles() {
+  if (!localDownloadDir) return [];
+  let names;
+  try {
+    names = await readdir(localDownloadDir);
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+  return names
+    .filter(name => parseReportFilename(name))
+    .map(name => ({ name, localPath: path.join(localDownloadDir, name) }));
+}
+
 function selectLatestReportSet(files) {
   const parsed = files.map(file => ({ ...file, report: parseReportFilename(file.name) }));
   if (!parsed.length) return [];
@@ -54,7 +73,9 @@ function selectLatestReportSet(files) {
   return [...byClass.values()];
 }
 
-async function downloadText(fileId) {
+async function downloadText(file) {
+  if (file.localPath) return readFile(file.localPath, "utf8");
+  const fileId = file.id;
   const response = await drive.files.get({ fileId, alt: "media" }, { responseType: "text" });
   return String(response.data);
 }
@@ -85,7 +106,10 @@ function reportWeekId(files, fallback) {
 }
 
 async function main() {
-  const files = selectLatestReportSet(await listCsvFiles());
+  const files = selectLatestReportSet([
+    ...await listLocalCsvFiles(),
+    ...await listCsvFiles()
+  ]);
   if (!files.length) throw new Error("No dated Freckle Activity CSV files were found.");
 
   const incentivesRef = db.doc("trackerData/incentives");
@@ -99,7 +123,7 @@ async function main() {
   const skipped = [];
 
   for (const file of files) {
-    const rows = parseFreckleCsv(await downloadText(file.id));
+    const rows = parseFreckleCsv(await downloadText(file));
     for (const row of rows) {
       const rosterName = resolveRosterName(row.sourceName, rosterIndex)
         || reportNameFallback(row.sourceName);
@@ -116,7 +140,7 @@ async function main() {
   const progress = progressSnap.exists ? progressSnap.data() : {};
 
   const richFile = await latestRichDataFile();
-  const richData = richFile ? JSON.parse(await downloadText(richFile.id)) : {};
+  const richData = richFile ? JSON.parse(await downloadText(richFile)) : {};
   const richByStudent = {};
 
   for (const item of richData.growth || []) {

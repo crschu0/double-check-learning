@@ -1,28 +1,16 @@
-import { createReadStream } from "node:fs";
-import { mkdtemp } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
-import { google } from "googleapis";
 
 const email = process.env.FRECKLE_EMAIL;
 const password = process.env.FRECKLE_PASSWORD;
-const rawCredential = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-const folderId = process.env.FRECKLE_DRIVE_FOLDER_ID || "18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d";
+const downloadDir = path.resolve(process.env.FRECKLE_DOWNLOAD_DIR || ".freckle-downloads");
 const wantedClasses = (process.env.FRECKLE_CLASSES || "5th,Phinnley")
   .split(",")
   .map(value => value.trim())
   .filter(Boolean);
 
 if (!email || !password) throw new Error("FRECKLE_EMAIL and FRECKLE_PASSWORD are required.");
-if (!rawCredential) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is required.");
-
-const credential = JSON.parse(rawCredential);
-const auth = new google.auth.GoogleAuth({
-  credentials: credential,
-  scopes: ["https://www.googleapis.com/auth/drive"]
-});
-const drive = google.drive({ version: "v3", auth });
 
 function filenameMatchesClass(filename, className) {
   return String(filename || "").toLowerCase().endsWith(` ${className.toLowerCase()}.csv`);
@@ -108,31 +96,10 @@ async function selectClass(page, className) {
   throw new Error(`Could not switch the Freckle activity export to ${className}.`);
 }
 
-async function uploadCsv(filePath, filename) {
-  const escaped = filename.replace(/'/g, "\\'");
-  const existing = await drive.files.list({
-    q: `'${folderId}' in parents and trashed = false and name = '${escaped}'`,
-    fields: "files(id,name)",
-    pageSize: 10
-  });
-  const media = { mimeType: "text/csv", body: createReadStream(filePath) };
-  const match = (existing.data.files || [])[0];
-  if (match) {
-    await drive.files.update({ fileId: match.id, media, fields: "id,name" });
-  } else {
-    await drive.files.create({
-      requestBody: { name: filename, parents: [folderId], mimeType: "text/csv" },
-      media,
-      fields: "id,name"
-    });
-  }
-  console.log(`Uploaded ${filename} to the private Freckle Drive folder.`);
-}
-
 async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ acceptDownloads: true });
-  const downloadDir = await mkdtemp(path.join(tmpdir(), "freckle-"));
+  await mkdir(downloadDir, { recursive: true });
 
   try {
     await page.goto("https://classroom.freckle.com/login", { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -152,7 +119,7 @@ async function main() {
       const download = await downloadPromise;
       const filePath = path.join(downloadDir, filename);
       await download.saveAs(filePath);
-      await uploadCsv(filePath, filename);
+      console.log(`Downloaded ${filename} for direct private import.`);
     }
   } finally {
     await browser.close();

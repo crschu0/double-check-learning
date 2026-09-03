@@ -67,8 +67,7 @@ jobs:
           FRECKLE_EMAIL: ${{ secrets.FRECKLE_EMAIL }}
           FRECKLE_PASSWORD: ${{ secrets.FRECKLE_PASSWORD }}
           FRECKLE_CLASSES: Phinnley
-          FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          FRECKLE_DOWNLOAD_DIR: ${{ runner.temp }}/freckle-downloads
       - name: Deploy private Firestore rules
         if: steps.cadence.outputs.run_import == 'true'
         run: npx --yes firebase-tools@latest deploy --only firestore:rules --project "$FIREBASE_PROJECT_ID" --non-interactive
@@ -81,4 +80,5 @@ jobs:
           FRECKLE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
           FIREBASE_PROJECT_ID: incentive-program-6bf45
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          FRECKLE_DOWNLOAD_DIR: ${{ runner.temp }}/freckle-downloads
           SAVE_WEEKLY_SNAPSHOT: ${{ steps.cadence.outputs.save_weekly }}
