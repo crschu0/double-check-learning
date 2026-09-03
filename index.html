@@ -3079,7 +3079,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         status: "pending",
         requestedAt: serverTimestamp()
       }, { merge: true });
-      googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Your access request is waiting for teacher approval.`;\n    }\n\n    function openApprovedTracker() {
+      googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Your access request is waiting for teacher approval.`;
+    }
+
+    function openApprovedTracker() {
       if (window.setActiveTeacherView && auth.currentUser) {
         window.setActiveTeacherView(auth.currentUser.email);
       }
