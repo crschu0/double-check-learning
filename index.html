@@ -2040,14 +2040,16 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return Boolean(currentEmail && ownerEmail && currentEmail === ownerEmail);
     }
 
-    function updatePointReason(pointId, studentId) {
+    function updatePointReason(pointId, studentId, suppliedReason) {
       const point = state.points.find(item => item.id === pointId);
       if (!point || !pointBelongsToCurrentTeacher(point)) {
         alert("Only the teacher who added this point can edit its reason.");
         return;
       }
 
-      const enteredReason = prompt("Optional reason for this point:", point.reason || "");
+      const enteredReason = suppliedReason === undefined
+        ? prompt("Optional reason for this point:", point.reason || "")
+        : suppliedReason;
       if (enteredReason === null) return;
       const teacher = currentTeacherAudit();
       point.reason = enteredReason.trim();
@@ -2110,7 +2112,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         const ownsPoint = pointBelongsToCurrentTeacher(point);
         const actions = ownsPoint
           ? `<div class="history-actions">
-              <button class="small secondary" type="button" onclick="window.opener.updatePointReason('${point.id}', '${studentId}')">${point.reason ? "Edit Reason" : "Add Reason"}</button>
+              <button class="small secondary" type="button" data-reason="${escapeAttribute(point.reason || "")}" onclick="const enteredReason = window.prompt('Optional reason for this point:', this.dataset.reason || ''); if (enteredReason !== null) window.opener.updatePointReason('${point.id}', '${studentId}', enteredReason)">${point.reason ? "Edit Reason" : "Add Reason"}</button>
               <button class="small danger" type="button" onclick="window.opener.removePointFromHistory('${point.id}', '${studentId}')">Remove My Point</button>
             </div>`
           : `<span class="muted">Locked</span>`;
