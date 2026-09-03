@@ -34,7 +34,7 @@ jobs:
           reset_week=false
 
           if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
-            if [[ "$local_day" != "4" || "$local_hour" != "21" ]]; then
+            if [[ "$local_day" != "4" || "$local_hour" -lt "21" ]]; then
               run_report=false
             else
               reset_week=true
