@@ -147,6 +147,14 @@ async function main() {
   const progressRef = db.doc("privateProgress/progress");
   const progressSnap = await progressRef.get();
   const progress = progressSnap.exists ? progressSnap.data() : {};
+  const activeStudentCount = activeStudentKeys.size;
+  const previousStudentCount = Object.keys(progress.freckle || {}).length;
+  if (activeStudentCount < 10) {
+    throw new Error(`Freckle safety check stopped the import: only ${activeStudentCount} active students were exported.`);
+  }
+  if (previousStudentCount >= 20 && activeStudentCount < previousStudentCount * 0.5) {
+    throw new Error(`Freckle safety check stopped the import: roster count fell from ${previousStudentCount} to ${activeStudentCount}.`);
+  }
 
   const richFile = await latestRichDataFile();
   const richData = richFile ? JSON.parse(await downloadText(richFile)) : {};
@@ -205,6 +213,14 @@ async function main() {
     }))
   };
 
+  const freckleImportStatus = {
+    status: "success",
+    completedAt: new Date().toISOString(),
+    reportEndDate: files[0].report ? files[0].report.endDate : importedAt,
+    studentCount: activeStudentCount,
+    classNames: files.map(file => file.report.className)
+  };
+
   const serverTime = FieldValue.serverTimestamp();
   const weekId = reportWeekId(files, importedAt);
   const weeklySnapshots = await db.collection("privateProgressWeekly").get();
@@ -221,6 +237,7 @@ async function main() {
   batch.update(progressRef, {
     freckle: updates,
     freckleInsights,
+    freckleImportStatus,
     updatedAt: serverTime
   });
   if (saveWeeklySnapshot) {
