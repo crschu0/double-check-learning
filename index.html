@@ -1835,9 +1835,10 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function setActiveTeacherView(email) {
-      activeTeacherView = teacherViewProfiles.find(profile => profile.email === email) || {
+      const normalizedEmail = String(email || "").trim().toLowerCase();
+      activeTeacherView = teacherViewProfiles.find(profile => profile.email === normalizedEmail) || {
         name: "Approved Teacher",
-        email: email || "Google sign-in"
+        email: normalizedEmail || "Google sign-in"
       };
       if (teacherViewAs && teacherViewProfiles.some(profile => profile.email === activeTeacherView.email)) {
         teacherViewAs.value = activeTeacherView.email;
@@ -3045,48 +3046,40 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         return;
       }
 
-      updateAuthDebug(`Signed in as ${user.email || "unknown email"}. Return flag: ${isTeacherToolsRequested() ? "yes" : "no"}.`);
+      const signedInEmail = String(user.email || "").trim().toLowerCase();
+      updateAuthDebug(`Signed in as ${signedInEmail || "unknown email"}. Return flag: ${isTeacherToolsRequested() ? "yes" : "no"}.`);
 
-      if (teacherEmails.includes(user.email)) {
-        googleAuthStatus.textContent = `Signed in as ${user.email}. Teacher access approved.`;
-        if (isTeacherToolsRequested()) {
-          clearTeacherToolsRequested();
-          openApprovedTracker();
-          await loadAccessRequests();
-        }
+      if (teacherEmails.includes(signedInEmail)) {
+        googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Teacher access approved.`;
+        clearTeacherToolsRequested();
+        openApprovedTracker();
+        await loadAccessRequests();
         return;
       }
 
-      if (approvedEmails.includes(user.email)) {
-        googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (isTeacherToolsRequested()) {
-          clearTeacherToolsRequested();
-          openApprovedTracker();
-        }
+      if (approvedEmails.includes(signedInEmail)) {
+        googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Access approved.`;
+        clearTeacherToolsRequested();
+        openApprovedTracker();
         return;
       }
 
       const approval = await getDoc(doc(db, "approvedUsers", user.uid));
       if (approval.exists() && approval.data().status === "approved") {
-        googleAuthStatus.textContent = `Signed in as ${user.email}. Access approved.`;
-        if (isTeacherToolsRequested()) {
-          clearTeacherToolsRequested();
-          openApprovedTracker();
-        }
+        googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Access approved.`;
+        clearTeacherToolsRequested();
+        openApprovedTracker();
         return;
       }
 
       await setDoc(doc(db, "accessRequests", user.uid), {
         uid: user.uid,
-        email: user.email,
+        email: signedInEmail,
         displayName: user.displayName || "",
         status: "pending",
         requestedAt: serverTimestamp()
       }, { merge: true });
-      googleAuthStatus.textContent = `Signed in as ${user.email}. Your access request is waiting for teacher approval.`;
-    }
-
-    function openApprovedTracker() {
+      googleAuthStatus.textContent = `Signed in as ${signedInEmail}. Your access request is waiting for teacher approval.`;\n    }\n\n    function openApprovedTracker() {
       if (window.setActiveTeacherView && auth.currentUser) {
         window.setActiveTeacherView(auth.currentUser.email);
       }
