@@ -1979,7 +1979,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const now = new Date();
       const teacher = currentTeacherAudit();
 
-      state.points.push({
+      const point = {
         id: crypto.randomUUID(),
         studentId: student.id,
         studentName: student.name,
@@ -1990,7 +1990,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         createdAt: now.toISOString(),
         teacherName: teacher.teacherName,
         teacherEmail: teacher.teacherEmail
-      });
+      };
+      state.points.push(point);
+      if (window.createIncentivePoint) {
+        window.createIncentivePoint(point).catch(error => {
+          alert(`The point could not be saved: ${error.message}`);
+        });
+      }
 
       saveState();
       render();
@@ -2055,6 +2061,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       point.reason = enteredReason.trim();
       point.reasonUpdatedAt = new Date().toISOString();
       point.reasonUpdatedBy = teacher.teacherEmail;
+      if (window.updateIncentivePoint) {
+        window.updateIncentivePoint({ ...point }).catch(error => {
+          alert(`The reason could not be saved: ${error.message}`);
+        });
+      }
       saveState();
       render();
       openStudentPointHistory(studentId);
@@ -2068,6 +2079,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       }
       if (!confirm("Remove your point from the tracker?")) return;
       state.points = state.points.filter(item => item.id !== pointId);
+      if (window.deleteIncentivePoint) {
+        window.deleteIncentivePoint(pointId).catch(error => {
+          alert(`The point could not be removed: ${error.message}`);
+        });
+      }
       saveState();
       render();
       openStudentPointHistory(studentId);
@@ -2216,7 +2232,13 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         return;
       }
 
+      const removedPoint = pointIndex.point;
       state.points.splice(pointIndex.index, 1);
+      if (window.deleteIncentivePoint) {
+        window.deleteIncentivePoint(removedPoint.id).catch(error => {
+          alert(`The point could not be removed: ${error.message}`);
+        });
+      }
       saveState();
       render();
     }
@@ -2408,6 +2430,11 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       }
       if (!confirm("Remove your point from the tracker?")) return;
       state.points = state.points.filter(point => point.id !== pointId);
+      if (window.deleteIncentivePoint) {
+        window.deleteIncentivePoint(pointId).catch(error => {
+          alert(`The point could not be removed: ${error.message}`);
+        });
+      }
       saveState();
       render();
     }
@@ -3196,6 +3223,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       getDocs,
       getFirestore,
       query,
+      runTransaction,
       serverTimestamp,
       setDoc,
       updateDoc,
@@ -3269,6 +3297,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       window.signOutTeacherAccount = signOutTeacherAccount;
       window.saveRoom113Data = saveRoom113Data;
       window.loadStudentDashboardData = loadStudentDashboardData;
+      window.createIncentivePoint = createIncentivePoint;
+      window.updateIncentivePoint = updateIncentivePoint;
+      window.deleteIncentivePoint = deleteIncentivePoint;
       window.getSignedInTeacherAudit = () => {
         const user = auth.currentUser;
         const email = String(user && user.email || "").trim().toLowerCase();
@@ -3470,15 +3501,67 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       }
     }
 
+    async function createIncentivePoint(point) {
+      if (!auth || !auth.currentUser || !point?.id) throw new Error("Sign in again and retry.");
+      const ref = doc(db, "trackerData", incentivesDocId);
+      await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists()) throw new Error("The shared incentive tracker was not found.");
+        const points = Array.isArray(snapshot.data().points) ? snapshot.data().points : [];
+        if (points.some(item => item.id === point.id)) return;
+        transaction.update(ref, {
+          points: [...points, point],
+          updatedAt: serverTimestamp()
+        });
+      });
+    }
+
+    async function updateIncentivePoint(point) {
+      if (!auth || !auth.currentUser || !point?.id) throw new Error("Sign in again and retry.");
+      const teacherEmail = String(auth.currentUser.email || "").trim().toLowerCase();
+      const ref = doc(db, "trackerData", incentivesDocId);
+      await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists()) throw new Error("The shared incentive tracker was not found.");
+        const points = Array.isArray(snapshot.data().points) ? snapshot.data().points : [];
+        const index = points.findIndex(item => item.id === point.id);
+        if (index < 0) throw new Error("That point no longer exists.");
+        const ownerEmail = String(points[index].teacherEmail || "").trim().toLowerCase();
+        if (!teacherEmail || teacherEmail !== ownerEmail) throw new Error("Only the teacher who added this point can edit it.");
+        points[index] = point;
+        transaction.update(ref, { points, updatedAt: serverTimestamp() });
+      });
+    }
+
+    async function deleteIncentivePoint(pointId) {
+      if (!auth || !auth.currentUser || !pointId) throw new Error("Sign in again and retry.");
+      const teacherEmail = String(auth.currentUser.email || "").trim().toLowerCase();
+      const ref = doc(db, "trackerData", incentivesDocId);
+      await runTransaction(db, async transaction => {
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists()) throw new Error("The shared incentive tracker was not found.");
+        const points = Array.isArray(snapshot.data().points) ? snapshot.data().points : [];
+        const point = points.find(item => item.id === pointId);
+        if (!point) return;
+        const ownerEmail = String(point.teacherEmail || "").trim().toLowerCase();
+        if (!teacherEmail || teacherEmail !== ownerEmail) throw new Error("Only the teacher who added this point can remove it.");
+        transaction.update(ref, {
+          points: points.filter(item => item.id !== pointId),
+          updatedAt: serverTimestamp()
+        });
+      });
+    }
+
     function saveRoom113Data(nextState) {
       if (!auth || !auth.currentUser || !window.getRoom113StateForFirebase) return;
       if (saveTimer) clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         const splitState = window.getRoom113StateForFirebase();
+        const { points: ignoredPoints, ...incentivesWithoutPoints } = splitState.incentives;
         await setDoc(doc(db, "trackerData", incentivesDocId), {
-          ...splitState.incentives,
+          ...incentivesWithoutPoints,
           updatedAt: serverTimestamp()
-        });
+        }, { merge: true });
         if (window.canManageProgram && window.canManageProgram()) {
           await setDoc(doc(db, "privateProgress", progressDocId), {
             ...splitState.progress,
