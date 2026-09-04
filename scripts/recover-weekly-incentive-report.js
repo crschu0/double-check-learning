@@ -90,7 +90,7 @@ function buildReport(data, cutoff) {
   const points = allPoints.filter(p => {
     if (p.date < weekStart || p.date > weekEnd) return false;
     const ms = pointTimestamp(p);
-    return Number.isFinite(ms) ? ms <= cutoffMs : p.date < cutoffDate;
+    return Number.isFinite(ms) ? ms <= cutoffMs : p.date <= cutoffDate;
   });
   const totals = Object.fromEntries(houses.map(h => [h, 0]));
   for (const p of points) totals[p.house] = (totals[p.house] || 0) + num(p.value);
