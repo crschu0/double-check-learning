@@ -6,13 +6,21 @@ on:
     paths:
       - ".github/workflows/weekly-incentive-report.yml"
       - "scripts/weekly-incentive-report.js"
+      - "scripts/recover-weekly-incentive-report.js"
   schedule:
-    # 9:15 PM Central Thursday, with a daylight-saving-time guard below.
+    # GitHub cron is UTC. During CDT, 02:15 Friday = 9:15 PM Thursday Central.
+    # During CST, 03:15 Friday = 9:15 PM Thursday Central.
+    # The guard below permits only the exact 9:15 PM Central occurrence.
     - cron: "15 2,3 * * 5"
   workflow_dispatch:
     inputs:
       reset_week:
         description: "Archive and reset the incentive week after creating the report"
+        required: false
+        default: false
+        type: boolean
+      recover_previous_week:
+        description: "Regenerate the most recently completed Thursday 9:15 PM snapshot without resetting"
         required: false
         default: false
         type: boolean
@@ -29,22 +37,31 @@ jobs:
         shell: bash
         run: |
           local_hour=$(TZ=America/Chicago date +%H)
+          local_minute=$(TZ=America/Chicago date +%M)
           local_day=$(TZ=America/Chicago date +%u)
           run_report=true
           reset_week=false
+          recovery=false
 
           if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
-            if [[ "$local_day" != "4" || "$local_hour" -lt "21" ]]; then
+            if [[ "$local_day" != "4" || "$local_hour" != "21" || "$local_minute" != "15" ]]; then
               run_report=false
             else
               reset_week=true
             fi
-          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "${{ inputs.reset_week }}" == "true" ]]; then
-            reset_week=true
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.recover_previous_week }}" == "true" ]]; then
+              recovery=true
+            elif [[ "${{ inputs.reset_week }}" == "true" ]]; then
+              reset_week=true
+            fi
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            recovery=true
           fi
 
           echo "run_report=$run_report" >> "$GITHUB_OUTPUT"
           echo "reset_week=$reset_week" >> "$GITHUB_OUTPUT"
+          echo "recovery=$recovery" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
         if: steps.cadence.outputs.run_report == 'true'
@@ -61,8 +78,17 @@ jobs:
       - run: npm test
         if: steps.cadence.outputs.run_report == 'true'
 
-      - name: Generate the printable report, then archive and reset
-        if: steps.cadence.outputs.run_report == 'true'
+      - name: Recover the most recent completed 9:15 PM Thursday snapshot
+        if: steps.cadence.outputs.run_report == 'true' && steps.cadence.outputs.recovery == 'true'
+        run: node scripts/recover-weekly-incentive-report.js
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: incentive-program-6bf45
+          INCENTIVE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
+          INCENTIVE_REPORT_NAME: Current Weekly Incentive Report.pdf
+
+      - name: Generate the scheduled printable report, then archive and reset
+        if: steps.cadence.outputs.run_report == 'true' && steps.cadence.outputs.recovery != 'true'
         run: node scripts/weekly-incentive-report.js
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
