@@ -37,14 +37,15 @@ jobs:
         shell: bash
         run: |
           local_hour=$(TZ=America/Chicago date +%H)
-          local_minute=$(TZ=America/Chicago date +%M)
           local_day=$(TZ=America/Chicago date +%u)
           run_report=true
           reset_week=false
           recovery=false
 
           if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
-            if [[ "$local_day" != "4" || "$local_hour" != "21" || "$local_minute" != "15" ]]; then
+            # GitHub may start scheduled jobs late. Accept Thursday after 9 PM
+            # or Friday, while the report script prevents a duplicate reset.
+            if ! { [[ "$local_day" == "4" && "$local_hour" -ge "21" ]] || [[ "$local_day" == "5" ]]; }; then
               run_report=false
             else
               reset_week=true
