@@ -31,6 +31,12 @@ function fridayFor(dateText) {
   return addDays(dateText, -daysSinceFriday);
 }
 
+function thursdayFor(dateText) {
+  const day = new Date(`${dateText}T12:00:00Z`).getUTCDay();
+  const daysSinceThursday = (day + 3) % 7;
+  return addDays(dateText, -daysSinceThursday);
+}
+
 function displayDate(dateText) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
@@ -68,9 +74,9 @@ function column(value, width, align = "left") {
   return align === "right" ? text.padStart(width) : text.padEnd(width);
 }
 
-function buildReport(data, now = new Date()) {
+function buildReport(data, now = new Date(), weekStartOverride = null) {
   const today = centralDateText(now);
-  const weekStart = fridayFor(today);
+  const weekStart = weekStartOverride || data.settings?.currentWeekStart || fridayFor(today);
   const weekEnd = addDays(weekStart, 6);
   const houses = Array.isArray(data.houses) ? data.houses : [];
   const students = Array.isArray(data.students) ? data.students : [];
@@ -314,7 +320,15 @@ async function main() {
   const snapshot = await incentivesRef.get();
   if (!snapshot.exists) throw new Error("trackerData/incentives does not exist.");
 
-  const report = buildReport(snapshot.data());
+  const incentives = snapshot.data();
+  const today = centralDateText();
+  const completedWeekStart = addDays(thursdayFor(today), -6);
+  if (autoReset && incentives.settings?.currentWeekStart > completedWeekStart) {
+    console.log("The completed incentive week was already archived and reset; no report was overwritten.");
+    return;
+  }
+
+  const report = buildReport(incentives, new Date(), autoReset ? completedWeekStart : null);
   const reportFile = await findReportFile(drive, folderId, reportName);
   await replacePdf(drive, reportFile.id, report);
   console.log(`Updated the private weekly incentive report for ${report.summary.weekStart} through ${report.summary.weekEnd}.`);
