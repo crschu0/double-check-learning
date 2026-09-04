@@ -57,7 +57,8 @@ jobs:
               reset_week=true
             fi
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            recovery=true
+            # One-time approved reset for the completed August 28-September 3 week.
+            reset_week=true
           fi
 
           echo "run_report=$run_report" >> "$GITHUB_OUTPUT"
