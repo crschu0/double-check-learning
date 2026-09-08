@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 
@@ -44,6 +44,10 @@ async function waitForExport(page) {
         .slice(0, 50),
       pageText: String(document.body?.innerText || "").replace(/\s+/g, " ").slice(0, 2500)
     }));
+    if (/Ask students to practice in Freckle to see daily activity/i.test(diagnostics.pageText)) {
+      console.log("Freckle reports no activity for the selected current-week class.");
+      return null;
+    }
     console.error("Freckle export diagnostics:", JSON.stringify(diagnostics));
     throw error;
   }
@@ -51,6 +55,7 @@ async function waitForExport(page) {
 
 async function selectClass(page, className) {
   let link = await waitForExport(page);
+  if (!link) return null;
   let filename = await link.getAttribute("download");
   if (filenameMatchesClass(filename, className)) return link;
 
@@ -133,15 +138,29 @@ async function main() {
     ]);
 
     await page.goto("https://classroom.freckle.com/activity-feed", { waitUntil: "domcontentloaded", timeout: 60000 });
+    const noActivityClasses = [];
+    let downloadedCount = 0;
     for (const className of wantedClasses) {
       const link = await selectClass(page, className);
+      if (!link) {
+        noActivityClasses.push(className);
+        continue;
+      }
       const filename = path.basename(await link.getAttribute("download"));
       const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
       await link.click();
       const download = await downloadPromise;
       const filePath = path.join(downloadDir, filename);
       await download.saveAs(filePath);
+      downloadedCount += 1;
       console.log(`Downloaded ${filename} for direct private import.`);
+    }
+    if (!downloadedCount && noActivityClasses.length) {
+      await writeFile(path.join(downloadDir, ".freckle-no-activity.json"), JSON.stringify({
+        observedAt: new Date().toISOString(),
+        classNames: noActivityClasses
+      }));
+      console.log(`Recorded a successful no-activity check for ${noActivityClasses.join(", ")}.`);
     }
   } finally {
     await browser.close();
