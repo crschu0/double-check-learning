@@ -10,7 +10,9 @@ on:
       - "package.json"
       - "package-lock.json"
   schedule:
-    - cron: "20 12,13 * * 1-6"
+    # One daily run. GitHub may start it late, so the job does not reject delayed starts.
+    # 13:30 UTC is 8:30 AM CDT / 7:30 AM CST, Monday through Saturday.
+    - cron: "30 13 * * 1-6"
   workflow_dispatch:
 
 permissions:
@@ -24,12 +26,8 @@ jobs:
         id: cadence
         shell: bash
         run: |
-          local_hour=$(TZ=America/Chicago date +%H)
           local_day=$(TZ=America/Chicago date +%u)
           run_import=true
-          if [[ "$GITHUB_EVENT_NAME" == "schedule" && "$local_hour" != "07" ]]; then
-            run_import=false
-          fi
           save_weekly=false
           if [[ "$run_import" == "true" && "$local_day" == "6" ]]; then
             save_weekly=true
