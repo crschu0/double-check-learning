@@ -1576,17 +1576,17 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return nextState;
     }
 
-    function clearFreckleScratchData() {
+    async function clearFreckleScratchData() {
       if (!canManageProgram()) return;
       if (!confirm("Clear all Freckle and Scratch data for every student? This keeps the roster, houses, points, and demo access.")) return;
       purgeProgressData(state);
       saveState();
-      if (window.saveRoom113Data) window.saveRoom113Data(state);
+      if (window.clearRoom113ProgressData) await window.clearRoom113ProgressData();
       render();
       if (document.body.classList.contains("student-open")) {
         renderStudentPage();
       }
-      alert("Freckle and Scratch data have been cleared. The blank progress state will sync to Firebase.");
+      alert("Freckle and Scratch data have been cleared.");
     }
 
     window.clearFreckleScratchData = clearFreckleScratchData;
@@ -3296,6 +3296,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       };
       window.signOutTeacherAccount = signOutTeacherAccount;
       window.saveRoom113Data = saveRoom113Data;
+      window.clearRoom113ProgressData = clearRoom113ProgressData;
       window.loadStudentDashboardData = loadStudentDashboardData;
       window.createIncentivePoint = createIncentivePoint;
       window.updateIncentivePoint = updateIncentivePoint;
@@ -3563,12 +3564,25 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           updatedAt: serverTimestamp()
         }, { merge: true });
         if (window.canManageProgram && window.canManageProgram()) {
+          // Freckle data and import health are owned by the automated importer.
+          // Browser saves must not replace them with an older cached dashboard copy.
           await setDoc(doc(db, "privateProgress", progressDocId), {
-            ...splitState.progress,
+            scratch: splitState.progress.scratch || {},
             updatedAt: serverTimestamp()
-          });
+          }, { merge: true });
         }
       }, 400);
+    }
+
+    async function clearRoom113ProgressData() {
+      if (!auth || !auth.currentUser || !window.canManageProgram || !window.canManageProgram()) return;
+      await setDoc(doc(db, "privateProgress", progressDocId), {
+        freckle: {},
+        freckleInsights: { standards: [] },
+        freckleImportStatus: {},
+        scratch: {},
+        updatedAt: serverTimestamp()
+      });
     }
 
     function buildStudentSafeIncentives(incentives) {
