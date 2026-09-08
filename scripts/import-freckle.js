@@ -57,6 +57,18 @@ async function listLocalCsvFiles() {
     .map(name => ({ name, localPath: path.join(localDownloadDir, name) }));
 }
 
+async function readNoActivityMarker() {
+  if (!localDownloadDir) return null;
+  try {
+    return JSON.parse(
+      await readFile(path.join(localDownloadDir, ".freckle-no-activity.json"), "utf8")
+    );
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 function selectLatestReportSet(files) {
   const parsed = files.map(file => ({ ...file, report: parseReportFilename(file.name) }));
   if (!parsed.length) return [];
@@ -107,8 +119,33 @@ function reportWeekId(files, fallback) {
 }
 
 async function main() {
+  const localFiles = await listLocalCsvFiles();
+  const noActivity = await readNoActivityMarker();
+  if (noActivity && !localFiles.length) {
+    const progressRef = db.doc("privateProgress/progress");
+    const progressSnap = await progressRef.get();
+    const progress = progressSnap.exists ? progressSnap.data() : {};
+    const studentCount = Object.keys(progress.freckle || {}).length;
+    const completedAt = new Date().toISOString();
+
+    await progressRef.set({
+      freckleImportStatus: {
+        status: "success",
+        completedAt,
+        reportEndDate: completedAt.slice(0, 10),
+        studentCount,
+        classNames: Array.isArray(noActivity.classNames) ? noActivity.classNames : [],
+        noActivity: true
+      },
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`Freckle check succeeded with no current-week activity; retained ${studentCount} existing student records.`);
+    return;
+  }
+
   const files = selectLatestReportSet([
-    ...await listLocalCsvFiles(),
+    ...localFiles,
     ...await listCsvFiles()
   ]);
   if (!files.length) throw new Error("No dated Freckle Activity CSV files were found.");
