@@ -118,6 +118,7 @@ function reportWeekId(files, fallback) {
   return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString().slice(0, 10);
 }
 
+// This server-side importer is the authoritative writer for Freckle data and import health.
 async function main() {
   const localFiles = await listLocalCsvFiles();
   const noActivity = await readNoActivityMarker();
