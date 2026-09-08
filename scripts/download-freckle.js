@@ -23,8 +23,30 @@ function classFromFilename(filename) {
 
 async function waitForExport(page) {
   const link = page.locator('a[download][href^="blob:"]');
-  await link.waitFor({ state: "visible", timeout: 60000 });
-  return link;
+  try {
+    await link.waitFor({ state: "visible", timeout: 60000 });
+    return link;
+  } catch (error) {
+    const diagnostics = await page.evaluate(() => ({
+      url: location.href,
+      title: document.title,
+      buttons: [...document.querySelectorAll("button,[role=button],rgh-clickable")]
+        .map(element => String(element.innerText || element.textContent || "").trim())
+        .filter(Boolean)
+        .slice(0, 40),
+      links: [...document.querySelectorAll("a")]
+        .map(element => ({
+          text: String(element.innerText || element.textContent || "").trim(),
+          href: element.getAttribute("href"),
+          download: element.getAttribute("download")
+        }))
+        .filter(item => item.text || item.href || item.download)
+        .slice(0, 50),
+      pageText: String(document.body?.innerText || "").replace(/\s+/g, " ").slice(0, 2500)
+    }));
+    console.error("Freckle export diagnostics:", JSON.stringify(diagnostics));
+    throw error;
+  }
 }
 
 async function selectClass(page, className) {
