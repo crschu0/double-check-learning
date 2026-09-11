@@ -1019,7 +1019,7 @@
         <p><strong>This week:</strong> <span id="weeklyWinner">Add students to begin.</span></p>
         <p><strong>Incentive week:</strong> Friday to Thursday</p>
         <p><strong>Semester:</strong> <span id="semesterWinner">Add students to begin.</span></p>
-        <p><strong>Clean week:</strong> <span id="cleanCount">0</span> students</p>
+        <p class="admin-only"><strong>Clean week:</strong> <span id="cleanCount">0</span> students</p>
         <p><strong>Fun Friday limit:</strong> <span id="limitText">5</span> points</p>
       </section>
 
@@ -1262,6 +1262,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       students: [],
       demoStudents: defaultDemoStudents,
       points: [],
+      absences: [],
       history: [],
       preferences: {
         users: {}
@@ -1421,7 +1422,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
     }
 
     function splitStateForFirebase(nextState) {
-      const { freckle, freckleInsights, freckleImportStatus, freckleWeeklyHistory, scratch, ...incentives } = nextState;
+      const { absences, freckle, freckleInsights, freckleImportStatus, freckleWeeklyHistory, scratch, ...incentives } = nextState;
       return {
         incentives: {
           ...incentives,
@@ -1431,6 +1432,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           freckle: freckle || {},
           freckleInsights: freckleInsights || { standards: [] },
           freckleImportStatus: freckleImportStatus || {},
+          absences: absences || [],
           scratch: scratch || {}
         }
       };
@@ -1453,6 +1455,9 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           : {},
         freckleWeeklyHistory: canManageProgram()
           ? ((progress && progress.freckleWeeklyHistory) || state.freckleWeeklyHistory || [])
+          : [],
+        absences: canManageProgram()
+          ? ((progress && progress.absences) || [])
           : [],
         scratch: canManageProgram() ? {
           ...starterState.scratch,
@@ -1947,6 +1952,49 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         .reduce((sum, point) => sum + point.value, 0);
     }
 
+    function currentWeekAbsences() {
+      return (state.absences || []).filter(absence => absence.date >= state.settings.currentWeekStart);
+    }
+
+    function studentWeeklyAbsenceCount(studentId) {
+      return currentWeekAbsences().filter(absence => absence.studentId === studentId).length;
+    }
+
+    function studentHasCleanWeek(studentId) {
+      return studentWeeklyTotal(studentId) === 0 && studentWeeklyAbsenceCount(studentId) === 0;
+    }
+
+    function addAbsence(studentId) {
+      if (!canManageProgram()) return;
+      const student = state.students.find(item => item.id === studentId);
+      if (!student) return;
+      const date = centralDateText(new Date());
+      const alreadyRecorded = (state.absences || []).some(absence => absence.studentId === studentId && absence.date === date);
+      if (alreadyRecorded) {
+        alert(`${student.name} already has an absence recorded for today.`);
+        return;
+      }
+      state.absences = state.absences || [];
+      state.absences.push({ id: crypto.randomUUID(), studentId, studentName: student.name, date });
+      saveState();
+      render();
+    }
+
+    function removeLatestAbsence(studentId) {
+      if (!canManageProgram()) return;
+      const absenceIndex = (state.absences || [])
+        .map((absence, index) => ({ absence, index }))
+        .reverse()
+        .find(item => item.absence.studentId === studentId && item.absence.date >= state.settings.currentWeekStart);
+      if (!absenceIndex) {
+        alert("This student has no absence to undo for the current incentive week.");
+        return;
+      }
+      state.absences.splice(absenceIndex.index, 1);
+      saveState();
+      render();
+    }
+
     function lowestHouseLabel(totals) {
       if (!state.houses.length) return "No houses yet.";
       const lowest = Math.min(...state.houses.map(house => totals[house] || 0));
@@ -2271,7 +2319,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       if (!canManageProgram()) return;
       const weekPoints = currentWeekPoints();
       const totals = totalsByHouse(weekPoints);
-      const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
+      const cleanStudents = state.students.filter(student => studentHasCleanWeek(student.id));
       const nextWeekStart = getNextFriday(state.settings.currentWeekStart);
       const currentFriday = getFriday(new Date());
 
@@ -2434,7 +2482,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const weekPoints = currentWeekPoints();
       const weeklyTotals = totalsByHouse(weekPoints);
       const semesterTotals = totalsByHouse(state.points);
-      const cleanStudents = state.students.filter(student => studentWeeklyTotal(student.id) === 0);
+      const cleanStudents = state.students.filter(student => studentHasCleanWeek(student.id));
 
       studentHouse.innerHTML = state.houses.map(house => `<option value="${escapeAttribute(house)}">${escapeHtml(house)}</option>`).join("");
       funFridayLimit.value = state.settings.funFridayLimit;
@@ -2466,9 +2514,12 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       const studentRows = sortRows(state.students.map(student => {
         const weekly = studentWeeklyTotal(student.id);
         const semester = studentSemesterTotal(student.id);
+        const absences = canManageProgram() ? studentWeeklyAbsenceCount(student.id) : 0;
         const canPlay = weekly < state.settings.funFridayLimit;
-        const status = weekly === 0 ? "Clean week" : canPlay ? "Eligible" : "Fun Friday hold";
-        return { student, weekly, semester, canPlay, status };
+        const status = weekly === 0 && absences > 0
+          ? "Not clean-week eligible"
+          : weekly === 0 ? "Clean week" : canPlay ? "Eligible" : "Fun Friday hold";
+        return { student, weekly, semester, absences, canPlay, status };
       }), "students", (row, key) => {
         const values = {
           name: row.student.name,
@@ -2494,19 +2545,25 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           </thead>
           <tbody>
             ${studentRows.map(row => {
-              const { student, weekly, semester, canPlay } = row;
+              const { student, weekly, semester, absences, canPlay } = row;
               return `
                 <tr>
                   <td><strong>${escapeHtml(student.name)}</strong></td>
                   <td>${escapeHtml(student.house)}</td>
                   <td class="points-cell">${weekly}</td>
                   <td class="points-cell">${semester}</td>
-                  <td>${weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
+                  <td>${weekly === 0 && absences > 0
+                    ? `<span class="tag warning">Not clean-week eligible</span><small class="muted">${absences} absence${absences === 1 ? "" : "s"} this week</small>`
+                    : weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">Add Point</button>
                     <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">Undo Mine</button>
                     <button class="quick-button secondary" onclick="openStudentPointHistory('${student.id}')">Point History</button>
-                    ${canManageProgram() ? `<button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>` : ""}
+                    ${canManageProgram() ? `
+                      <button class="quick-button secondary" onclick="addAbsence('${student.id}')">Add Absence</button>
+                      <button class="quick-button secondary" onclick="removeLatestAbsence('${student.id}')">Undo Absence</button>
+                      <button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>
+                    ` : ""}
                   </td>
                 </tr>
               `;
@@ -3558,6 +3615,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
           // Freckle data and import health are owned by the automated importer.
           // Browser saves must not replace them with an older cached dashboard copy.
           await setDoc(doc(db, "privateProgress", progressDocId), {
+            absences: splitState.progress.absences || [],
             scratch: splitState.progress.scratch || {},
             updatedAt: serverTimestamp()
           }, { merge: true });
@@ -3573,7 +3631,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         freckleImportStatus: {},
         scratch: {},
         updatedAt: serverTimestamp()
-      });
+      }, { merge: true });
     }
 
     function buildStudentSafeIncentives(incentives) {
