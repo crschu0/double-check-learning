@@ -2071,22 +2071,34 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       openStudentPointHistory(studentId);
     }
 
-    function removePointFromHistory(pointId, studentId) {
+    async function removeTeacherOwnedPoint(pointId, options = {}) {
       const point = state.points.find(item => item.id === pointId);
       if (!point || !pointBelongsToCurrentTeacher(point)) {
         alert("Only the teacher who added this point can remove it.");
-        return;
+        return false;
       }
-      if (!confirm("Remove your point from the tracker?")) return;
+
+      const shouldConfirm = options.confirm !== false;
+      if (shouldConfirm && !confirm("Remove your point from the tracker?")) return false;
+
+      try {
+        if (window.deleteIncentivePoint) {
+          await window.deleteIncentivePoint(pointId);
+        }
+      } catch (error) {
+        alert(`The point could not be removed: ${error.message}`);
+        return false;
+      }
+
       state.points = state.points.filter(item => item.id !== pointId);
-      if (window.deleteIncentivePoint) {
-        window.deleteIncentivePoint(pointId).catch(error => {
-          alert(`The point could not be removed: ${error.message}`);
-        });
-      }
       saveState();
       render();
-      openStudentPointHistory(studentId);
+      return true;
+    }
+
+    async function removePointFromHistory(pointId, studentId) {
+      const removed = await removeTeacherOwnedPoint(pointId);
+      if (removed) openStudentPointHistory(studentId);
     }
 
     function openStudentPointHistory(studentId) {
@@ -2221,7 +2233,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       popup.focus();
     }
 
-    function removeLatestPointForStudent(studentId) {
+    async function removeLatestPointForStudent(studentId) {
       const pointIndex = state.points
         .map((point, index) => ({ point, index }))
         .reverse()
@@ -2232,15 +2244,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
         return;
       }
 
-      const removedPoint = pointIndex.point;
-      state.points.splice(pointIndex.index, 1);
-      if (window.deleteIncentivePoint) {
-        window.deleteIncentivePoint(removedPoint.id).catch(error => {
-          alert(`The point could not be removed: ${error.message}`);
-        });
-      }
-      saveState();
-      render();
+      await removeTeacherOwnedPoint(pointIndex.point.id, { confirm: false });
     }
 
     function addHouse() {
@@ -2422,21 +2426,8 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       render();
     }
 
-    function removePoint(pointId) {
-      const point = state.points.find(item => item.id === pointId);
-      if (!point || !pointBelongsToCurrentTeacher(point)) {
-        alert("Only the teacher who added this point can remove it.");
-        return;
-      }
-      if (!confirm("Remove your point from the tracker?")) return;
-      state.points = state.points.filter(point => point.id !== pointId);
-      if (window.deleteIncentivePoint) {
-        window.deleteIncentivePoint(pointId).catch(error => {
-          alert(`The point could not be removed: ${error.message}`);
-        });
-      }
-      saveState();
-      render();
+    async function removePoint(pointId) {
+      await removeTeacherOwnedPoint(pointId);
     }
 
     function render() {
