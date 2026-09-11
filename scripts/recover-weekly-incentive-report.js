@@ -86,20 +86,23 @@ function buildReport(data, cutoff) {
   const houses = Array.isArray(data.houses) ? data.houses : [];
   const students = Array.isArray(data.students) ? data.students : [];
   const allPoints = Array.isArray(data.points) ? data.points : [];
+  const allAbsences = Array.isArray(data.absences) ? data.absences : [];
   const cutoffMs = cutoff.getTime();
   const points = allPoints.filter(p => {
     if (p.date < weekStart || p.date > weekEnd) return false;
     const ms = pointTimestamp(p);
     return Number.isFinite(ms) ? ms <= cutoffMs : p.date <= cutoffDate;
   });
+  const absences = allAbsences.filter(a => a.date >= weekStart && a.date <= weekEnd);
   const totals = Object.fromEntries(houses.map(h => [h, 0]));
   for (const p of points) totals[p.house] = (totals[p.house] || 0) + num(p.value);
   const lowest = houses.length ? Math.min(...houses.map(h => totals[h] || 0)) : 0;
   const winner = houses.length ? houses.filter(h => (totals[h] || 0) === lowest).join(", ") : "No houses configured";
-  const rows = students.map(s => ({
-    name: s.name || "Unnamed student", house: s.house || "Unassigned",
-    total: points.filter(p => p.studentId === s.id).reduce((a,p) => a + num(p.value), 0)
-  })).sort((a,b) => b.total - a.total || a.name.localeCompare(b.name));
+  const rows = students.map(s => {
+    const total = points.filter(p => p.studentId === s.id).reduce((a,p) => a + num(p.value), 0);
+    const absenceCount = absences.filter(a => a.studentId === s.id).length;
+    return { name: s.name || "Unnamed student", house: s.house || "Unassigned", total, absenceCount };
+  }).sort((a,b) => b.total - a.total || a.name.localeCompare(b.name));
   const limit = Math.max(1, num(data.settings?.funFridayLimit) || 5);
   const fmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday:"long", month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", timeZoneName:"short" });
   const lines = [];
@@ -120,7 +123,7 @@ function buildReport(data, cutoff) {
   lines.push("STUDENT CHECK - HIGHEST POINTS FIRST");
   lines.push(`${col("Student",25)}  ${col("House",16)}  ${col("Points",6,true)}  Status`);
   lines.push(`${"-".repeat(25)}  ${"-".repeat(16)}  ${"-".repeat(6)}  ${"-".repeat(13)}`);
-  for (const r of rows) lines.push(`${col(r.name,25)}  ${col(r.house,16)}  ${col(r.total,6,true)}  ${r.total===0?"CLEAN":r.total>=limit?"AT/OVER LIMIT":"HAS POINTS"}`);
+  for (const r of rows) lines.push(`${col(r.name,25)}  ${col(r.house,16)}  ${col(r.total,6,true)}  ${r.total===0&&r.absenceCount>0?"NO CLEAN: ABSENCE":r.total===0?"CLEAN":r.total>=limit?"AT/OVER LIMIT":"HAS POINTS"}`);
   lines.push("");
   lines.push("POINT DETAILS");
   lines.push(`${col("Date",10)}  ${col("Student",23)}  ${col("House",14)}  ${col("Pts",4,true)}  Reason`);
@@ -157,11 +160,17 @@ async function main() {
   const credential = JSON.parse(raw);
   if (!getApps().length) initializeApp({ credential: cert(credential), projectId: PROJECT_ID });
   const db = getFirestore();
-  const snap = await db.doc("trackerData/incentives").get();
+  const [snap, privateSnap] = await Promise.all([
+    db.doc("trackerData/incentives").get(),
+    db.doc("privateProgress/progress").get()
+  ]);
   if (!snap.exists) throw new Error("trackerData/incentives does not exist.");
   const cutoff = process.env.REPORT_AS_OF ? new Date(process.env.REPORT_AS_OF) : mostRecentThursdayCutoff();
   if (!Number.isFinite(cutoff.getTime())) throw new Error("Invalid REPORT_AS_OF timestamp.");
-  const lines = buildReport(snap.data(), cutoff);
+  const lines = buildReport({
+    ...snap.data(),
+    absences: privateSnap.exists ? (privateSnap.data().absences || []) : []
+  }, cutoff);
   const auth = new google.auth.GoogleAuth({ credentials: credential, scopes:["https://www.googleapis.com/auth/drive"] });
   const drive = google.drive({ version:"v3", auth });
   const safe = REPORT_NAME.replaceAll("'","\\'");
