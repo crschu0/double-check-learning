@@ -81,7 +81,9 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
   const houses = Array.isArray(data.houses) ? data.houses : [];
   const students = Array.isArray(data.students) ? data.students : [];
   const allPoints = Array.isArray(data.points) ? data.points : [];
+  const allAbsences = Array.isArray(data.absences) ? data.absences : [];
   const points = allPoints.filter(point => point.date >= weekStart && point.date <= weekEnd);
+  const absences = allAbsences.filter(absence => absence.date >= weekStart && absence.date <= weekEnd);
   const limit = Math.max(1, numberValue(data.settings?.funFridayLimit) || 5);
   const totals = Object.fromEntries(houses.map(house => [house, 0]));
   for (const point of points) {
@@ -92,12 +94,16 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
     const total = points
       .filter(point => point.studentId === student.id)
       .reduce((sum, point) => sum + numberValue(point.value), 0);
+    const absenceCount = absences.filter(absence => absence.studentId === student.id).length;
     return {
       id: student.id,
       name: student.name || "Unnamed student",
       house: student.house || "Unassigned",
       total,
-      status: total === 0 ? "CLEAN" : total >= limit ? "AT/OVER LIMIT" : "HAS POINTS"
+      absenceCount,
+      status: total === 0 && absenceCount > 0
+        ? "NO CLEAN: ABSENCE"
+        : total === 0 ? "CLEAN" : total >= limit ? "AT/OVER LIMIT" : "HAS POINTS"
     };
   }).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
@@ -107,7 +113,8 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
   const winner = houses.length
     ? houses.filter(house => (totals[house] || 0) === lowest).join(", ")
     : "No houses configured";
-  const cleanCount = studentRows.filter(row => row.total === 0).length;
+  const cleanCount = studentRows.filter(row => row.total === 0 && row.absenceCount === 0).length;
+  const absenceCount = studentRows.filter(row => row.absenceCount > 0).length;
   const atLimitCount = studentRows.filter(row => row.total >= limit).length;
 
   const lines = [];
@@ -131,6 +138,7 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
   append("QUICK SUMMARY\n", "heading");
   append(`Winning house (fewest points): ${winner}\n`);
   append(`Students with a clean week: ${cleanCount} of ${students.length}\n`);
+  append(`Students ineligible for clean week due to absence: ${absenceCount}\n`);
   append(`Students at or over the limit: ${atLimitCount}\n`);
   append(`Point entries recorded: ${points.length}\n\n`);
 
@@ -144,10 +152,10 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
   append("\n");
 
   append("STUDENT CHECK - HIGHEST POINTS FIRST\n", "heading");
-  append(`${column("Student", 25)}  ${column("House", 16)}  ${column("Points", 6, "right")}  ${column("Status", 13)}\n`, "mono");
-  append(`${"-".repeat(25)}  ${"-".repeat(16)}  ${"-".repeat(6)}  ${"-".repeat(13)}\n`, "mono");
+  append(`${column("Student", 25)}  ${column("House", 16)}  ${column("Points", 6, "right")}  ${column("Status", 18)}\n`, "mono");
+  append(`${"-".repeat(25)}  ${"-".repeat(16)}  ${"-".repeat(6)}  ${"-".repeat(18)}\n`, "mono");
   for (const row of studentRows) {
-    append(`${column(row.name, 25)}  ${column(row.house, 16)}  ${column(row.total, 6, "right")}  ${column(row.status, 13)}\n`, "mono");
+    append(`${column(row.name, 25)}  ${column(row.house, 16)}  ${column(row.total, 6, "right")}  ${column(row.status, 18)}\n`, "mono");
   }
   if (!studentRows.length) append("No students are configured.\n", "mono");
   append("\n");
@@ -167,7 +175,7 @@ function buildReport(data, now = new Date(), weekStartOverride = null) {
   return {
     text: lines.join(""),
     ranges,
-    summary: { weekStart, weekEnd, totals, winner, cleanCount, atLimitCount, pointCount: points.length }
+    summary: { weekStart, weekEnd, totals, winner, cleanCount, absenceCount, atLimitCount, pointCount: points.length }
   };
 }
 
@@ -317,10 +325,16 @@ async function main() {
   const db = getFirestore();
 
   const incentivesRef = db.doc("trackerData/incentives");
-  const snapshot = await incentivesRef.get();
+  const [snapshot, privateSnapshot] = await Promise.all([
+    incentivesRef.get(),
+    db.doc("privateProgress/progress").get()
+  ]);
   if (!snapshot.exists) throw new Error("trackerData/incentives does not exist.");
 
-  const incentives = snapshot.data();
+  const incentives = {
+    ...snapshot.data(),
+    absences: privateSnapshot.exists ? (privateSnapshot.data().absences || []) : []
+  };
   const today = centralDateText();
   const completedWeekStart = addDays(thursdayFor(today), -6);
   if (autoReset && incentives.settings?.currentWeekStart > completedWeekStart) {
