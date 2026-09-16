@@ -367,6 +367,14 @@
       padding: 6px 10px;
     }
 
+    .absence-check {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--danger);
+      cursor: pointer;
+    }
+
     .tag {
       display: inline-block;
       border-radius: 999px;
@@ -1967,33 +1975,29 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
       return studentWeeklyTotal(studentId) === 0 && studentWeeklyAbsenceCount(studentId) === 0;
     }
 
-    function addAbsence(studentId) {
+    function setStudentAbsence(studentId, hasAbsence) {
       if (!canManageProgram()) return;
       const student = state.students.find(item => item.id === studentId);
       if (!student) return;
-      const date = centralDateText(new Date());
-      const alreadyRecorded = (state.absences || []).some(absence => absence.studentId === studentId && absence.date === date);
-      if (alreadyRecorded) {
-        alert(`${student.name} already has an absence recorded for today.`);
-        return;
-      }
-      state.absences = state.absences || [];
-      state.absences.push({ id: crypto.randomUUID(), studentId, studentName: student.name, date });
-      saveState();
-      render();
-    }
 
-    function removeLatestAbsence(studentId) {
-      if (!canManageProgram()) return;
-      const absenceIndex = (state.absences || [])
-        .map((absence, index) => ({ absence, index }))
-        .reverse()
-        .find(item => item.absence.studentId === studentId && item.absence.date >= state.settings.currentWeekStart);
-      if (!absenceIndex) {
-        alert("This student has no absence to undo for the current incentive week.");
-        return;
+      state.absences = state.absences || [];
+
+      if (hasAbsence) {
+        const alreadyMarked = studentWeeklyAbsenceCount(studentId) > 0;
+        if (!alreadyMarked) {
+          state.absences.push({
+            id: crypto.randomUUID(),
+            studentId,
+            studentName: student.name,
+            date: centralDateText(new Date())
+          });
+        }
+      } else {
+        state.absences = state.absences.filter(absence =>
+          absence.studentId !== studentId || absence.date < state.settings.currentWeekStart
+        );
       }
-      state.absences.splice(absenceIndex.index, 1);
+
       saveState();
       render();
     }
@@ -2542,6 +2546,7 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
               <th>${sortableHeading("students", "house", "House")}</th>
               <th>${sortableHeading("students", "weekly", "This Week")}</th>
               <th>${sortableHeading("students", "semester", "Semester")}</th>
+              ${canManageProgram() ? `<th>Absent?</th>` : ""}
               <th>${sortableHeading("students", "status", "Status")}</th>
               <th>Actions</th>
             </tr>
@@ -2555,16 +2560,25 @@ If you cannot display a 4250 x 5500 image directly in the chat, say so clearly i
                   <td>${escapeHtml(student.house)}</td>
                   <td class="points-cell">${weekly}</td>
                   <td class="points-cell">${semester}</td>
+                  ${canManageProgram() ? `
+                    <td>
+                      <input
+                        class="absence-check"
+                        type="checkbox"
+                        aria-label="Mark ${escapeAttribute(student.name)} absent for this incentive week"
+                        ${absences > 0 ? "checked" : ""}
+                        onchange="setStudentAbsence('${student.id}', this.checked)"
+                      >
+                    </td>
+                  ` : ""}
                   <td>${weekly === 0 && absences > 0
-                    ? `<span class="tag warning">Not clean-week eligible</span><small class="muted">${absences} absence${absences === 1 ? "" : "s"} this week</small>`
+                    ? `<span class="tag warning">Not clean-week eligible</span><small class="muted">Absence this week</small>`
                     : weekly === 0 ? `<span class="tag ok">Clean week</span>` : canPlay ? `<span class="tag">Eligible</span>` : `<span class="tag warning">Fun Friday hold</span>`}</td>
                   <td class="button-row">
                     <button class="quick-button" onclick="addQuickPoint('${student.id}')">Add Point</button>
                     <button class="quick-button secondary" onclick="removeLatestPointForStudent('${student.id}')">Undo Mine</button>
                     <button class="quick-button secondary" onclick="openStudentPointHistory('${student.id}')">Point History</button>
                     ${canManageProgram() ? `
-                      <button class="quick-button secondary" onclick="addAbsence('${student.id}')">Add Absence</button>
-                      <button class="quick-button secondary" onclick="removeLatestAbsence('${student.id}')">Undo Absence</button>
                       <button class="quick-button secondary" onclick="removeStudent('${student.id}')">Remove Student</button>
                     ` : ""}
                   </td>
