@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/weekly-incentive-report.yml"
       - "scripts/weekly-incentive-report.js"
+      - "scripts/backup-incentive-data.js"
       - "scripts/recover-weekly-incentive-report.js"
   schedule:
     # GitHub cron is UTC. During CDT, 02:15 Friday = 9:15 PM Thursday Central.
@@ -87,6 +88,16 @@ jobs:
           FIREBASE_PROJECT_ID: incentive-program-6bf45
           INCENTIVE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
           INCENTIVE_REPORT_NAME: Current Weekly Incentive Report.pdf
+
+      # Always capture and verify private student data before making the Thursday reset.
+      # Skip the backup on report-recovery runs, which are read-only reconstructions.
+      - name: Back up and verify all Firestore student data before weekly report/reset
+        if: steps.cadence.outputs.run_report == 'true' && steps.cadence.outputs.recovery != 'true'
+        run: node scripts/backup-incentive-data.js
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: incentive-program-6bf45
+          INCENTIVE_DRIVE_FOLDER_ID: 18_Eu6JDgzXCatO-4_GecSFWx-uRsHn9d
 
       - name: Generate the scheduled printable report, then archive and reset
         if: steps.cadence.outputs.run_report == 'true' && steps.cadence.outputs.recovery != 'true'
