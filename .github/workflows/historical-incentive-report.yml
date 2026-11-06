@@ -1,0 +1,45 @@
+name: Export archived historical incentive PDF (no reset)
+
+on:
+  workflow_dispatch:
+    inputs:
+      week_start:
+        description: 'Historical Friday, YYYY-MM-DD'
+        required: true
+        type: string
+      revision_id:
+        description: 'Original Current Weekly PDF revision ID, verified for this week'
+        required: true
+        type: string
+      target_file_id:
+        description: 'Separate school-owned dated destination PDF ID in freckle data'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-incentive-export
+  cancel-in-progress: false
+
+jobs:
+  historical-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Copy and verify archived PDF without accessing Firestore
+        run: node scripts/export-historical-incentive-report.js
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          REPORT_WEEK_START: ${{ inputs.week_start }}
+          REPORT_REVISION_ID: ${{ inputs.revision_id }}
+          HISTORICAL_REPORT_FILE_ID: ${{ inputs.target_file_id }}
+          CURRENT_INCENTIVE_REPORT_FILE_ID: ${{ secrets.CURRENT_INCENTIVE_REPORT_FILE_ID }}
+          INCENTIVE_REPORT_FOLDER_ID: ${{ secrets.INCENTIVE_REPORT_FOLDER_ID }}
