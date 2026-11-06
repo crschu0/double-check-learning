@@ -6,6 +6,17 @@ import { createHash } from "node:crypto";
 
 const projectId = process.env.FIREBASE_PROJECT_ID || "incentive-program-6bf45";
 const parentFolder = process.env.INCENTIVE_DRIVE_FOLDER_ID;
+// School-owned private backup slots: updates use the owner's Drive quota.
+const backupSlots = [
+  "1iG0HgQHvZ0tMFsSPJOInfyHtorpksEoG",
+  "1afsxJIBiazSz4-_S7P6m1dAKjg-o70Sc",
+  "1NIwXcPy0UETq3iWlzjfxshJRr2UBx9z8",
+  "1o1nqN16she5nc1Hu2U6vzlBZcaucW-qi",
+  "1RGqRoL-DicW-AZwfP8rQWkTMeZeMZxvF",
+  "1ApqtLOmhkbewEMCOGRf11AVUoBSAn-Lf",
+  "18RHLReLXeu_6EvzNI3zEIvksZYTh_3sk",
+  "1y6GrkbvREQZFkXvb22nsaWCSqK3fjPek"
+];
 const credentialsText = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 if (!credentialsText || !parentFolder) throw new Error("Firebase service account and private Drive folder are required.");
 
@@ -64,19 +75,23 @@ async function main() {
     documents: docs
   }, null, 2) + "\n", "utf8");
   const sha256 = createHash("sha256").update(payload).digest("hex");
+  const weekNumber = Math.floor(now.getTime() / (7 * 24 * 60 * 60 * 1000));
+  const slot = ((weekNumber % backupSlots.length) + backupSlots.length) % backupSlots.length;
+  const backupFileId = backupSlots[slot];
   const filename = `Room113-Student-Data-${date}-${stamp}.json`;
 
-  const uploaded = await drive.files.create({
-    requestBody: {
-      name: filename,
-      parents: [parentFolder],
-      description: "Private, full Firestore snapshot created before the weekly incentive reset. Contains student information; restrict sharing."
-    },
+  // Update an existing school-owned file; service accounts cannot create files
+  // in regular My Drive folders. Rotate weekly to retain seven prior backups.
+  const uploaded = await drive.files.update({
+    fileId: backupFileId,
     media: { mimeType: "application/json", body: Readable.from([payload]) },
     fields: "id,name,size,md5Checksum,parents",
     supportsAllDrives: true
   });
-  if (!uploaded.data.id) throw new Error("Backup upload did not return a Drive file ID.");
+  if (uploaded.data.id !== backupFileId) throw new Error("Backup update returned the wrong file ID.");
+  if (!uploaded.data.parents?.includes(parentFolder)) {
+    throw new Error("Backup file is not in the expected private folder.");
+  }
 
   // Read it back; don't allow the incentive week to reset if the stored copy differs.
   const response = await drive.files.get({ fileId: uploaded.data.id, alt: "media", supportsAllDrives: true }, { responseType: "arraybuffer" });
@@ -86,7 +101,7 @@ async function main() {
   const parsed = JSON.parse(downloaded.toString("utf8"));
   if (parsed.documentCount !== docs.length) throw new Error("Backup failed verification: document count differs.");
 
-  console.log(`Verified private Drive backup ${filename}: ${docs.length} Firestore documents, ${payload.length} bytes, SHA-256 ${sha256}.`);
+  console.log(`Verified private Drive backup ${filename}, slot ${slot + 1} (${backupFileId}): ${docs.length} Firestore documents, ${payload.length} bytes, SHA-256 ${sha256}.`);
 }
 
 main().catch(error => {
