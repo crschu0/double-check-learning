@@ -58,7 +58,13 @@ jobs:
               reset_week=true
             fi
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            recovery=true
+            if [[ "$GITHUB_HEAD_REF" == "unused-weekly-reset" ]]; then
+              reset_week=true
+            elif [[ "${{ contains(github.event.head_commit.message, '[weekly-reset]') }}" == "true" ]]; then
+              reset_week=true
+            else
+              recovery=true
+            fi
           fi
 
           echo "run_report=$run_report" >> "$GITHUB_OUTPUT"
